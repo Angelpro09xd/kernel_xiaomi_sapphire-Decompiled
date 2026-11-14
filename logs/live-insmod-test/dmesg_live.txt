@@ -1,0 +1,1879 @@
+[  120.290232] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  120.290392] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  120.290519] real_type=9
+[  120.290632] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  120.347392] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.354450] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.905078] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.905130] smblib_get_prop_input_suspend:input_suspend is 0 
+[  121.905178] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.907579] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  121.909058] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.909831] smb5_batt_get_prop:charge_full_design is 5000000 
+[  121.910562] smb5_batt_get_prop:charge_full_design is 5000000 
+[  121.913820] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  121.913877] QCOM-STEPCHG: handle_jeita: temp = 270, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  121.913902] VBAT_BASED_RECHG_BIT write 1
+[  121.913924] VBAT_BASED_RECHG_BIT read 2
+[  121.913974] FCC: effective voting is now 4900000 voted by STEP_CHG_VOTER,6
+[  121.914002] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  121.914018] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  121.914047] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4490275 Step-FCC = 4900000uA taper-fcc: 1
+[  121.914114] FCC_MAIN: effective voting is now 4900000 voted by FCC_STEPPER_VOTER,0
+[  121.914133] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  121.914144] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  121.921896] healthd: battery l=100 v=4490 t=27.0 h=2 st=2 c=-196838 fc=4820000 cc=25 chg=a
+[  121.922188] smb5_batt_get_prop:charge_full_design is 5000000 
+[  121.923957] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  122.361525] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  122.595163] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  123.362488] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  123.362630] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  123.362756] real_type=9
+[  123.362864] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  123.366322] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  124.370883] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  124.386064] N7 call monitor_smart_chg
+[  124.386097] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  124.394842] OSSTEST: >>> insmod audio_prm_dlkm.ko
+[  125.378118] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  125.410061] (virq:irq_count)- GICv3:arch_timer(11):38520 GICv3:IPI(1):36919 GICv3:IPI(2):10735 GICv3:ufshcd(40):9114 GICv3:IPI(6):7265 GICv3:glink-native-rpm-glink(33):3267 GICv3:i2c_geni(193):944 GICv3:dwc3(283):642 GICv3:i2c_geni(192):573 GICv3:arch_mem_timer(13):501 
+[  125.410084] (cpu:irq_count)- 0:12996 1:1097 2:1171 3:982 4:22162 5:23427 6:21095 7:27106 
+[  125.410096] (ipi:irq_count)- 0:36919 1:10735 2:0 3:0 4:49 5:7265 6:0 
+[  125.477979] audio_prm_service_cb: Service opcode 0x0
+[  125.477993] audio_prm_probe: prm probe success
+[  125.479456] OSSTEST: <<< audio_prm_dlkm.ko rc=0 
+[  126.382780] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  126.434348] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  126.434496] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  126.434618] real_type=9
+[  126.434730] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  127.387864] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  127.504729] OSSTEST: >>> insmod audpkt_ion_dlkm.ko
+[  128.391999] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  128.584947] msm-audio-ion soc:spf_core_platform:qcom,msm-audio-ion: Adding to iommu group 27
+[  128.585433] msm-audio-ion soc:spf_core_platform:qcom,msm-audio-ion: msm_audio_ion_probe: msm_audio_ion_probe
+[  128.585829] msm-audio-ion soc:spf_core_platform:qcom,msm-audio-ion-cma: msm_audio_ion_probe: msm_audio_ion_probe
+[  128.587129] OSSTEST: <<< audpkt_ion_dlkm.ko rc=0 
+[  129.398930] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  129.506139] N7 call monitor_smart_chg
+[  129.506210] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  129.506719] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  129.506865] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  129.506991] real_type=9
+[  129.507104] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  130.101040] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.101088] smblib_get_prop_input_suspend:input_suspend is 0 
+[  130.101137] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.103850] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  130.105320] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.105950] smb5_batt_get_prop:charge_full_design is 5000000 
+[  130.106013] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  130.106044] QCOM-STEPCHG: handle_jeita: temp = 270, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  130.106061] VBAT_BASED_RECHG_BIT write 1
+[  130.106075] VBAT_BASED_RECHG_BIT read 2
+[  130.106114] FCC: effective voting is now 4850000 voted by STEP_CHG_VOTER,6
+[  130.106121] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  130.106127] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  130.106141] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4489886 Step-FCC = 4850000uA taper-fcc: 1
+[  130.106174] FCC_MAIN: effective voting is now 4850000 voted by FCC_STEPPER_VOTER,0
+[  130.106188] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  130.106417] smb5_batt_get_prop:charge_full_design is 5000000 
+[  130.110609] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.114559] healthd: battery l=100 v=4490 t=27.0 h=2 st=2 c=-195312 fc=4820000 cc=25 chg=a
+[  130.114807] smb5_batt_get_prop:charge_full_design is 5000000 
+[  130.116756] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.406275] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  130.612725] OSSTEST: >>> insmod bolero_cdc_dlkm.ko
+[  130.787102] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:219
+[  131.414108] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  131.699012] OSSTEST: <<< bolero_cdc_dlkm.ko rc=0 
+[  132.423967] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  132.578527] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  132.578671] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  132.578793] real_type=9
+[  132.578905] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  133.430864] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  133.725303] OSSTEST: >>> insmod cnss_nl.ko
+[  134.438200] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  134.626153] N7 call monitor_smart_chg
+[  134.626222] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  134.811386] CLD80211: Initializing
+[  134.813241] OSSTEST: <<< cnss_nl.ko rc=0 
+[  135.448308] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  135.650345] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  135.650503] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  135.650629] real_type=9
+[  135.650739] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  136.453189] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  136.839778] OSSTEST: >>> insmod cnss_prealloc.ko
+[  137.460658] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  137.926630] OSSTEST: <<< cnss_prealloc.ko rc=0 
+[  138.297424] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.297488] smblib_get_prop_input_suspend:input_suspend is 0 
+[  138.297537] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.304040] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  138.305507] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.306197] smb5_batt_get_prop:charge_full_design is 5000000 
+[  138.306624] smb5_batt_get_prop:charge_full_design is 5000000 
+[  138.308813] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  138.308987] QCOM-STEPCHG: handle_jeita: temp = 270, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  138.309079] VBAT_BASED_RECHG_BIT write 1
+[  138.309155] VBAT_BASED_RECHG_BIT read 2
+[  138.309301] FCC: effective voting is now 4800000 voted by STEP_CHG_VOTER,6
+[  138.309417] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  138.309482] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.309496] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  138.309587] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4488913 Step-FCC = 4800000uA taper-fcc: 1
+[  138.309936] FCC_MAIN: effective voting is now 4800000 voted by FCC_STEPPER_VOTER,0
+[  138.309969] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  138.318190] healthd: battery l=100 v=4489 t=27.0 h=2 st=2 c=-207824 fc=4820000 cc=25 chg=a
+[  138.318435] smb5_batt_get_prop:charge_full_design is 5000000 
+[  138.320212] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.344396] smb5_batt_get_prop:charge_full_design is 5000000 
+[  138.345413] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.349782] healthd: battery l=100 v=4489 t=27.0 h=2 st=2 c=-207824 fc=4820000 cc=25 chg=a
+[  138.350197] smb5_batt_get_prop:charge_full_design is 5000000 
+[  138.351442] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.465309] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  138.722298] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  138.722444] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  138.722567] real_type=9
+[  138.722680] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  138.979514] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:196
+[  139.471144] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  139.746116] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  139.746240] N7 call monitor_smart_chg
+[  139.746280] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  139.746338] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  139.952526] OSSTEST: >>> insmod cnss_utils.ko
+[  140.475093] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  140.514526] (virq:irq_count)- GICv3:arch_timer(11):42826 GICv3:IPI(1):39390 GICv3:IPI(2):10962 GICv3:ufshcd(40):9134 GICv3:IPI(6):8231 GICv3:glink-native-rpm-glink(33):3625 GICv3:i2c_geni(193):1079 GICv3:dwc3(283):781 GICv3:i2c_geni(192):591 GICv3:arch_mem_timer(13):501 
+[  140.514551] (cpu:irq_count)- 0:13881 1:1112 2:1186 3:997 4:24362 5:25058 6:22943 7:29175 
+[  140.514561] (ipi:irq_count)- 0:39390 1:10962 2:0 3:0 4:49 5:8231 6:0 
+[  141.036745] OSSTEST: <<< cnss_utils.ko rc=0 
+[  141.476625] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  141.794121] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  141.794222] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  141.794311] real_type=9
+[  141.794392] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  142.482832] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  143.061742] OSSTEST: >>> insmod gsim.ko
+[  143.487199] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  144.147428] (NULL device *): msm_gsi_probe:5903 No MSIs configured
+[  144.151139] OSSTEST: <<< gsim.ko rc=0 
+[  144.494875] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  144.866092] N7 call monitor_smart_chg
+[  144.866163] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  144.866591] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  144.866751] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  144.866871] real_type=9
+[  144.866985] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  145.502165] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.176794] OSSTEST: >>> insmod lct_audio_info_dlkm.ko
+[  146.494010] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.494073] smblib_get_prop_input_suspend:input_suspend is 0 
+[  146.494120] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.496890] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  146.498290] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.498474] smb5_batt_get_prop:charge_full_design is 5000000 
+[  146.499322] smb5_batt_get_prop:charge_full_design is 5000000 
+[  146.500825] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  146.500921] QCOM-STEPCHG: handle_jeita: temp = 269, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  146.500972] VBAT_BASED_RECHG_BIT write 1
+[  146.501014] VBAT_BASED_RECHG_BIT read 2
+[  146.501101] FCC: effective voting is now 4750000 voted by STEP_CHG_VOTER,6
+[  146.501160] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  146.501199] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  146.501260] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4488913 Step-FCC = 4750000uA taper-fcc: 1
+[  146.501299] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.501346] FCC_MAIN: effective voting is now 4750000 voted by FCC_STEPPER_VOTER,0
+[  146.501398] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  146.510150] healthd: battery l=100 v=4488 t=26.9 h=2 st=2 c=-198059 fc=4820000 cc=25 chg=a
+[  146.510403] smb5_batt_get_prop:charge_full_design is 5000000 
+[  146.512190] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  146.530091] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  147.171287] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:194
+[  147.259948] OSSTEST: <<< lct_audio_info_dlkm.ko rc=0 
+[  147.531344] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  147.938325] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  147.938477] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  147.938605] real_type=9
+[  147.938719] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  148.538196] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  149.287189] OSSTEST: >>> insmod mbhc_dlkm.ko
+[  149.545112] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  149.986317] N7 call monitor_smart_chg
+[  149.986388] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  150.373430] OSSTEST: <<< mbhc_dlkm.ko rc=0 
+[  150.549408] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  151.010314] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  151.010473] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  151.010600] real_type=9
+[  151.010715] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  151.556680] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  152.399650] OSSTEST: >>> insmod mmrm_test_module.ko
+[  152.558643] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  153.482793] OSSTEST: <<< mmrm_test_module.ko rc=0 
+[  153.559912] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.082131] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  154.082216] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  154.082293] real_type=9
+[  154.082362] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  154.566231] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.690783] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.690868] smblib_get_prop_input_suspend:input_suspend is 0 
+[  154.690917] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.697968] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  154.703445] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.703838] smb5_batt_get_prop:charge_full_design is 5000000 
+[  154.704234] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  154.704335] QCOM-STEPCHG: handle_jeita: temp = 269, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  154.704413] VBAT_BASED_RECHG_BIT write 1
+[  154.704474] VBAT_BASED_RECHG_BIT read 2
+[  154.704591] FCC: effective voting is now 4700000 voted by STEP_CHG_VOTER,6
+[  154.704679] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  154.704741] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  154.704826] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4488329 Step-FCC = 4700000uA taper-fcc: 1
+[  154.704950] FCC_MAIN: effective voting is now 4700000 voted by FCC_STEPPER_VOTER,0
+[  154.705033] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  154.706383] smb5_batt_get_prop:charge_full_design is 5000000 
+[  154.708719] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  154.714072] healthd: battery l=100 v=4488 t=26.9 h=2 st=2 c=-195312 fc=4820000 cc=25 chg=a
+[  154.714312] smb5_batt_get_prop:charge_full_design is 5000000 
+[  154.716263] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  155.106305] N7 call monitor_smart_chg
+[  155.106370] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  155.363950] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  155.507950] OSSTEST: >>> insmod msm_video.ko
+[  155.567978] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  155.617865] (virq:irq_count)- GICv3:arch_timer(11):47093 GICv3:IPI(1):41753 GICv3:IPI(2):11184 GICv3:IPI(6):9199 GICv3:ufshcd(40):9154 GICv3:glink-native-rpm-glink(33):3972 GICv3:i2c_geni(193):1214 GICv3:dwc3(283):909 GICv3:i2c_geni(192):603 GICv3:arch_mem_timer(13):501 
+[  155.617890] (cpu:irq_count)- 0:14720 1:1129 2:1200 3:1011 4:26424 5:26784 6:24842 7:31092 
+[  155.617901] (ipi:irq_count)- 0:41753 1:11184 2:0 3:0 4:49 5:9199 6:0 
+[  156.569193] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  156.598100] msm_vidc_v4l2 5a00000.qcom,vidc:non_secure_cb: Adding to iommu group 28
+[  156.599286] msm_vidc_v4l2 5a00000.qcom,vidc:secure_non_pixel_cb: Adding to iommu group 29
+[  156.600907] msm_vidc_v4l2 5a00000.qcom,vidc:secure_bitstream_cb: Adding to iommu group 30
+[  156.602695] msm_vidc_v4l2 5a00000.qcom,vidc:secure_pixel_cb: Adding to iommu group 31
+[  156.605892] OSSTEST: <<< msm_video.ko rc=0 
+[  157.154120] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  157.154211] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  157.154285] real_type=9
+[  157.154358] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  157.575638] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  158.582803] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  158.631607] OSSTEST: >>> insmod pinctrl_lpi_dlkm.ko
+[  159.587191] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  159.717415] OSSTEST: <<< pinctrl_lpi_dlkm.ko rc=0 
+[  160.226102] N7 call monitor_smart_chg
+[  160.226120] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  160.226231] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  160.226252] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  160.226393] real_type=9
+[  160.226505] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  160.594268] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  161.601398] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  161.743006] OSSTEST: >>> insmod q6_dlkm.ko
+[  162.606103] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  162.827907] OSSTEST: <<< q6_dlkm.ko rc=0 
+[  162.887246] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  162.887314] smblib_get_prop_input_suspend:input_suspend is 0 
+[  162.887362] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  162.889393] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  162.890481] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  162.890651] smb5_batt_get_prop:charge_full_design is 5000000 
+[  162.890771] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  162.890809] QCOM-STEPCHG: handle_jeita: temp = 269, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  162.890829] VBAT_BASED_RECHG_BIT write 1
+[  162.890848] VBAT_BASED_RECHG_BIT read 2
+[  162.890891] FCC: effective voting is now 4650000 voted by STEP_CHG_VOTER,6
+[  162.890910] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  162.890922] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  162.890947] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4487939 Step-FCC = 4650000uA taper-fcc: 1
+[  162.890987] FCC_MAIN: effective voting is now 4650000 voted by FCC_STEPPER_VOTER,0
+[  162.891008] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  162.891339] smb5_batt_get_prop:charge_full_design is 5000000 
+[  162.893980] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  162.897335] healthd: battery l=100 v=4485 t=26.9 h=2 st=2 c=-236206 fc=4820000 cc=25 chg=a
+[  162.897900] smb5_batt_get_prop:charge_full_design is 5000000 
+[  162.899073] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  163.297973] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  163.298053] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  163.298126] real_type=9
+[  163.298196] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  163.555302] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  163.612431] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  164.619361] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  164.854674] OSSTEST: >>> insmod qce50_dlkm.ko
+[  165.346146] N7 call monitor_smart_chg
+[  165.346224] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  165.626235] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  165.939609] OSSTEST: <<< qce50_dlkm.ko rc=0 
+[  166.370695] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  166.370854] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  166.370981] real_type=9
+[  166.371094] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  166.633151] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  167.640757] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  167.965089] OSSTEST: >>> insmod qcedev-mod_dlkm.ko
+[  168.647851] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  169.048356] qce 1b20000.qcedev: Adding to iommu group 32
+[  169.048883] qcedev_probe_device: No icc avg BW set, using default
+[  169.048895] qcedev_probe_device: No icc peak BW set, using default
+[  169.050969] qce 1b20000.qcedev: QTI Crypto 5.5.1 device found @0x1b20000
+[  169.051150] sps_register_bam_device: sps:BAM 0x0000000001b04000 is registered
+[  169.051230] sps_bam_enable: sps:BAM 0x0000000001b04000 (va:0x0000000000000000) enabled: ver:0x27, number of pipes:16
+[  169.051336] QCE50: qce_sps_init:  QTI MSM CE-BAM at 0x0000000001b04000 irq 27
+[  169.054385] qce 1b20000.qcedev:qcom_cedev_ns_cb: Adding to iommu group 33
+[  169.055720] qce 1b20000.qcedev:qcom_cedev_s_cb: Adding to iommu group 34
+[  169.059164] OSSTEST: <<< qcedev-mod_dlkm.ko rc=0 
+[  169.442072] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  169.442230] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  169.442366] real_type=9
+[  169.442479] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  169.654657] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  170.466184] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  170.466311] N7 call monitor_smart_chg
+[  170.466351] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  170.466404] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  170.661491] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  170.722130] (virq:irq_count)- GICv3:arch_timer(11):51301 GICv3:IPI(1):44049 GICv3:IPI(2):11408 GICv3:IPI(6):10172 GICv3:ufshcd(40):9170 GICv3:glink-native-rpm-glink(33):4313 GICv3:i2c_geni(193):1340 GICv3:dwc3(283):1031 GICv3:i2c_geni(192):609 GICv3:arch_mem_timer(13):501 
+[  170.722154] (cpu:irq_count)- 0:15529 1:1146 2:1215 3:1026 4:27919 5:28724 6:26462 7:33509 
+[  170.722164] (ipi:irq_count)- 0:44049 1:11408 2:0 3:0 4:49 5:10172 6:0 
+[  171.083829] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.083915] smblib_get_prop_input_suspend:input_suspend is 0 
+[  171.083979] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.085249] OSSTEST: >>> insmod qcrypto-msm_dlkm.ko
+[  171.087792] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  171.088777] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.088924] smb5_batt_get_prop:charge_full_design is 5000000 
+[  171.089354] smb5_batt_get_prop:charge_full_design is 5000000 
+[  171.091248] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  171.091291] QCOM-STEPCHG: handle_jeita: temp = 268, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  171.091306] VBAT_BASED_RECHG_BIT write 1
+[  171.091327] VBAT_BASED_RECHG_BIT read 2
+[  171.091381] FCC: effective voting is now 4600000 voted by STEP_CHG_VOTER,6
+[  171.091398] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  171.091407] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  171.091412] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.091426] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4487939 Step-FCC = 4600000uA taper-fcc: 1
+[  171.091469] FCC_MAIN: effective voting is now 4600000 voted by FCC_STEPPER_VOTER,0
+[  171.091484] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  171.095782] healthd: battery l=100 v=4479 t=26.9 h=2 st=2 c=-223083 fc=4820000 cc=25 chg=a
+[  171.096081] smb5_batt_get_prop:charge_full_design is 5000000 
+[  171.097133] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.669246] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  171.746914] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:213
+[  172.168638] qcrypto 1b20000.qcrypto: Adding to iommu group 35
+[  172.170530] QCE50: __qce_get_device_tree_data: CE operating frequency is not defined, setting to default 100MHZ
+[  172.171192] qcrypto 1b20000.qcrypto: QTI Crypto 5.5.1 device found @0x1b20000
+[  172.171347] QCE50: qce_sps_init:  QTI MSM CE-BAM at 0x0000000001b04000 irq 27
+[  172.173132] qcrypto 1b20000.qcrypto: qcrypto-ecb-aes
+[  172.173139] qcrypto 1b20000.qcrypto: qcrypto-cbc-aes
+[  172.173144] qcrypto 1b20000.qcrypto: qcrypto-ctr-aes
+[  172.173153] qcrypto 1b20000.qcrypto: qcrypto-ecb-des
+[  172.173158] qcrypto 1b20000.qcrypto: qcrypto-cbc-des
+[  172.173162] qcrypto 1b20000.qcrypto: qcrypto-ecb-3des
+[  172.173167] qcrypto 1b20000.qcrypto: qcrypto-cbc-3des
+[  172.173172] qcrypto 1b20000.qcrypto: qcrypto-xts-aes
+[  172.173177] qcrypto 1b20000.qcrypto: qcrypto-sha1
+[  172.173181] qcrypto 1b20000.qcrypto: qcrypto-sha256
+[  172.173186] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha1-cbc-aes
+[  172.173192] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha1-cbc-des
+[  172.173197] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha1-cbc-3des
+[  172.173202] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha256-cbc-aes
+[  172.173207] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha256-cbc-des
+[  172.173213] qcrypto 1b20000.qcrypto: qcrypto-aead-hmac-sha256-cbc-3des
+[  172.173218] qcrypto 1b20000.qcrypto: qcrypto-hmac-sha1
+[  172.173224] qcrypto 1b20000.qcrypto: qcrypto-hmac-sha256
+[  172.173228] qcrypto 1b20000.qcrypto: qcrypto-aes-ccm
+[  172.173237] qcrypto 1b20000.qcrypto: qcrypto-rfc4309-aes-ccm
+[  172.175839] OSSTEST: <<< qcrypto-msm_dlkm.ko rc=0 
+[  172.514304] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  172.514465] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  172.514590] real_type=9
+[  172.514701] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  172.676963] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  173.681861] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  174.201473] OSSTEST: >>> insmod radio-i2c-rtc6226-qca.ko
+[  174.689331] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  175.286633] OSSTEST: <<< radio-i2c-rtc6226-qca.ko rc=0 
+[  175.586112] N7 call monitor_smart_chg
+[  175.586191] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  175.586564] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  175.586710] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  175.586833] real_type=9
+[  175.586943] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  175.697269] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  176.704442] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  177.312149] OSSTEST: >>> insmod rmnet_ctl.ko
+[  177.709182] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  178.394693] OSSTEST: <<< rmnet_ctl.ko rc=0 
+[  178.657801] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  178.657830] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  178.657856] real_type=9
+[  178.657887] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  178.714190] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.280036] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.280088] smblib_get_prop_input_suspend:input_suspend is 0 
+[  179.280135] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.282786] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  179.284050] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.284458] smb5_batt_get_prop:charge_full_design is 5000000 
+[  179.286084] smb5_batt_get_prop:charge_full_design is 5000000 
+[  179.287557] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  179.287744] QCOM-STEPCHG: handle_jeita: temp = 268, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  179.287832] VBAT_BASED_RECHG_BIT write 1
+[  179.287908] VBAT_BASED_RECHG_BIT read 2
+[  179.288076] FCC: effective voting is now 4550000 voted by STEP_CHG_VOTER,6
+[  179.288186] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  179.288263] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  179.288372] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4487161 Step-FCC = 4550000uA taper-fcc: 1
+[  179.288517] FCC_MAIN: effective voting is now 4550000 voted by FCC_STEPPER_VOTER,0
+[  179.288531] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.288632] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  179.308289] healthd: battery l=100 v=4488 t=26.8 h=2 st=2 c=-195617 fc=4820000 cc=25 chg=a
+[  179.308534] smb5_batt_get_prop:charge_full_design is 5000000 
+[  179.310353] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.717488] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  179.939418] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  180.419765] OSSTEST: >>> insmod stub_dlkm.ko
+[  180.705825] N7 call monitor_smart_chg
+[  180.705846] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  180.719865] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  181.502471] OSSTEST: <<< stub_dlkm.ko rc=0 
+[  181.724296] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  181.730071] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  181.730091] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  181.730119] real_type=9
+[  181.730149] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  182.730948] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  183.527374] OSSTEST: >>> insmod swr_dlkm.ko
+[  183.738126] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  184.610021] OSSTEST: <<< swr_dlkm.ko rc=0 
+[  184.739964] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  184.802225] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  184.802375] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  184.802499] real_type=9
+[  184.802612] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  185.743739] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  185.826075] N7 call monitor_smart_chg
+[  185.826081] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  185.826125] (virq:irq_count)- GICv3:arch_timer(11):55538 GICv3:IPI(1):46435 GICv3:IPI(2):11623 GICv3:IPI(6):11140 GICv3:ufshcd(40):9190 GICv3:glink-native-rpm-glink(33):4680 GICv3:i2c_geni(193):1475 GICv3:dwc3(283):1160 GICv3:i2c_geni(192):621 GICv3:arch_mem_timer(13):501 
+[  185.826157] (cpu:irq_count)- 0:16381 1:1162 2:1230 3:1041 4:29673 5:30418 6:28690 7:35430 
+[  185.826168] (ipi:irq_count)- 0:46435 1:11623 2:0 3:0 4:49 5:11140 6:0 
+[  186.635361] OSSTEST: >>> insmod wcd937x_slave_dlkm.ko
+[  186.746818] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.476130] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.476185] smblib_get_prop_input_suspend:input_suspend is 0 
+[  187.476248] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.478741] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  187.480013] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.480140] smb5_batt_get_prop:charge_full_design is 5000000 
+[  187.480228] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  187.480316] QCOM-STEPCHG: handle_jeita: temp = 268, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  187.480395] VBAT_BASED_RECHG_BIT write 1
+[  187.480469] VBAT_BASED_RECHG_BIT read 2
+[  187.480604] FCC: effective voting is now 4500000 voted by STEP_CHG_VOTER,6
+[  187.480708] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  187.480783] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  187.480919] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4486577 Step-FCC = 4500000uA taper-fcc: 1
+[  187.481041] FCC_MAIN: effective voting is now 4500000 voted by FCC_STEPPER_VOTER,0
+[  187.481127] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  187.482518] smb5_batt_get_prop:charge_full_design is 5000000 
+[  187.484504] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.490056] healthd: battery l=100 v=4487 t=26.8 h=2 st=2 c=-198364 fc=4820000 cc=25 chg=a
+[  187.490291] smb5_batt_get_prop:charge_full_design is 5000000 
+[  187.492069] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.720951] OSSTEST: <<< wcd937x_slave_dlkm.ko rc=0 
+[  187.748220] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  187.874370] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  187.874528] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  187.874655] real_type=9
+[  187.874768] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  188.134487] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:193
+[  188.755136] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  189.747766] OSSTEST: >>> insmod wcd9xxx_dlkm.ko
+[  189.756967] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  190.763302] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  190.834357] OSSTEST: <<< wcd9xxx_dlkm.ko rc=0 
+[  190.945678] N7 call monitor_smart_chg
+[  190.945692] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  190.945932] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  190.945998] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  190.946056] real_type=9
+[  190.946115] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  191.767528] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  192.774679] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  192.859285] OSSTEST: >>> insmod wcd_core_dlkm.ko
+[  193.781866] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  193.950975] OSSTEST: <<< wcd_core_dlkm.ko rc=0 
+[  194.017875] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  194.017917] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  194.017952] real_type=9
+[  194.017992] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  194.787164] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.672529] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.672620] smblib_get_prop_input_suspend:input_suspend is 0 
+[  195.672667] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.675794] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  195.677369] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.678385] smb5_batt_get_prop:charge_full_design is 5000000 
+[  195.678760] smb5_batt_get_prop:charge_full_design is 5000000 
+[  195.680880] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  195.681052] QCOM-STEPCHG: handle_jeita: temp = 267, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  195.681156] VBAT_BASED_RECHG_BIT write 1
+[  195.681233] VBAT_BASED_RECHG_BIT read 2
+[  195.681377] FCC: effective voting is now 4450000 voted by STEP_CHG_VOTER,6
+[  195.681489] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  195.681569] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  195.681580] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.682089] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4486577 Step-FCC = 4450000uA taper-fcc: 1
+[  195.682157] FCC_MAIN: effective voting is now 4450000 voted by FCC_STEPPER_VOTER,0
+[  195.682180] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  195.689895] healthd: battery l=100 v=4486 t=26.7 h=2 st=2 c=-196533 fc=4820000 cc=25 chg=a
+[  195.690175] smb5_batt_get_prop:charge_full_design is 5000000 
+[  195.691194] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.795730] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  195.976552] OSSTEST: >>> insmod wlan_firmware_service.ko
+[  196.065660] N7 call monitor_smart_chg
+[  196.065674] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  196.323009] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:197
+[  196.802803] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  197.062309] OSSTEST: <<< wlan_firmware_service.ko rc=0 
+[  197.089743] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  197.089772] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  197.089797] real_type=9
+[  197.089827] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  197.808568] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  198.344712] smb5_batt_get_prop:charge_full_design is 5000000 
+[  198.355766] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  198.361450] healthd: battery l=100 v=4487 t=26.7 h=2 st=2 c=-195312 fc=4820000 cc=25 chg=a
+[  198.362106] smb5_batt_get_prop:charge_full_design is 5000000 
+[  198.363640] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  198.815183] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  199.087902] OSSTEST: >>> insmod wsa881x_analog_dlkm.ko
+[  199.819452] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  200.161749] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  200.161780] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  200.161806] real_type=9
+[  200.161837] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  200.173284] OSSTEST: <<< wsa881x_analog_dlkm.ko rc=0 
+[  200.823476] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  200.930087] (virq:irq_count)- GICv3:arch_timer(11):59744 GICv3:IPI(1):48794 GICv3:IPI(6):12108 GICv3:IPI(2):11846 GICv3:ufshcd(40):9210 GICv3:glink-native-rpm-glink(33):5044 GICv3:i2c_geni(193):1610 GICv3:dwc3(283):1290 GICv3:i2c_geni(192):639 GICv3:arch_mem_timer(13):501 
+[  200.930114] (cpu:irq_count)- 0:17255 1:1180 2:1245 3:1056 4:31798 5:32242 6:30145 7:37564 
+[  200.930124] (ipi:irq_count)- 0:48794 1:11846 2:0 3:0 4:49 5:12108 6:0 
+[  201.186010] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  201.186090] N7 call monitor_smart_chg
+[  201.186116] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  201.186150] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  201.830483] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  202.198832] OSSTEST: >>> insmod audio_pkt_dlkm.ko
+[  202.836708] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.234229] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  203.234377] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  203.234503] real_type=9
+[  203.234619] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  203.283233] OSSTEST: <<< audio_pkt_dlkm.ko rc=0 
+[  203.843938] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.867916] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.867965] smblib_get_prop_input_suspend:input_suspend is 0 
+[  203.868015] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.871207] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  203.872557] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.873106] smb5_batt_get_prop:charge_full_design is 5000000 
+[  203.873485] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  203.873528] QCOM-STEPCHG: handle_jeita: temp = 267, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  203.873553] VBAT_BASED_RECHG_BIT write 1
+[  203.873575] VBAT_BASED_RECHG_BIT read 2
+[  203.873677] FCC: effective voting is now 4400000 voted by STEP_CHG_VOTER,6
+[  203.873703] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  203.873752] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  203.873783] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4486188 Step-FCC = 4400000uA taper-fcc: 1
+[  203.873827] FCC_MAIN: effective voting is now 4400000 voted by FCC_STEPPER_VOTER,0
+[  203.873852] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  203.876370] smb5_batt_get_prop:charge_full_design is 5000000 
+[  203.877954] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  203.883413] healthd: battery l=100 v=4486 t=26.7 h=2 st=2 c=-217590 fc=4820000 cc=25 chg=a
+[  203.885099] smb5_batt_get_prop:charge_full_design is 5000000 
+[  203.886358] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  204.515255] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:193
+[  204.851187] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  205.308862] OSSTEST: >>> insmod btpower.ko
+[  205.858843] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  206.306047] N7 call monitor_smart_chg
+[  206.306115] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  206.306230] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  206.306382] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  206.306508] real_type=9
+[  206.306623] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  206.391860] bt_dt_parse_vreg_info: qcom,bt-vdd-smps is not provided in device tree
+[  206.393935] bt-reset-gpio not provided in devicetree
+[  206.393950] bt_power_populate_dt_pinfo: wl-reset-gpio not provided in device tree
+[  206.393965] bt-debug-gpio not provided in devicetree
+[  206.393970] xo-clk-gpio not provided in devicetree
+[  206.393974] bt_dt_parse_clk_info: clocks is not provided in device tree
+[  206.393978] bt_power_populate_dt_pinfo: clock not provided in device tree
+[  206.393982] bt_power_populate_dt_pinfo: temperature sensor is not provided in dts
+[  206.394103] btpower_aop_mbox_init: failed to get mbox channel
+[  206.395977] OSSTEST: <<< btpower.ko rc=0 
+[  206.864024] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  207.871030] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  208.421983] OSSTEST: >>> insmod fs1815_dlkm.ko
+[  208.878569] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  209.378086] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  209.378234] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  209.378360] real_type=9
+[  209.378472] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  209.505318] fs16xx 0-0034: probe start!
+[  209.505771] fs16xx 0-0034: read chipid success: 0x12
+[  209.533148] fsm_probe: 34: Found DEVID: 0012
+[  209.533153] fsm_i2c_probe: 34: index:0
+[  209.533290] fsm_request_irq: 34: skip to request irq
+[  209.533709] fsm_firmware_init: loading fs1815.fsm in nowait mode
+[  209.533812] fs16xx 0-0034: Direct firmware load for fs1815.fsm failed with error -2
+[  209.533826] fs16xx 0-0034: Falling back to sysfs fallback for: fs1815.fsm
+[  209.533726] fs16xx 0-0034: i2c probe completed
+[  209.534095] fs16xx 0-0035: probe start!
+[  209.535001] fs16xx 0-0035: read chipid success: 0x12
+[  209.536262] ueventd: firmware: loading 'fs1815.fsm' for '/devices/platform/soc/4ac0000.qcom,qupv3_0_geni_se/4a84000.i2c/i2c-0/0-0034/firmware/fs1815.fsm'
+[  209.536680] type=1400 audit(1794698241.355:4251): avc: denied { search } for comm="ueventd" name="/" dev="sde29" ino=1 scontext=u:r:ueventd:s0 tcontext=u:object_r:vfat:s0 tclass=dir permissive=1
+[  209.536805] ueventd: firmware: could not find firmware for fs1815.fsm
+[  209.536822] ueventd: firmware: attempted /etc/firmware/fs1815.fsm, open failed: No such file or directory
+[  209.536831] ueventd: firmware: attempted /odm/firmware/fs1815.fsm, open failed: No such file or directory
+[  209.536839] ueventd: firmware: attempted /vendor/firmware/fs1815.fsm, open failed: No such file or directory
+[  209.536847] ueventd: firmware: attempted /firmware/image/fs1815.fsm, open failed: No such file or directory
+[  209.536860] ueventd: firmware: attempted /vendor/firmware_mnt/image/fs1815.fsm, open failed: No such file or directory
+[  209.536910] ueventd: loading /devices/platform/soc/4ac0000.qcom,qupv3_0_geni_se/4a84000.i2c/i2c-0/0-0034/firmware/fs1815.fsm took 0ms
+[  209.536966] fsm_firmware_inited: bad parameter
+[  209.562518] fsm_probe: 35: Found DEVID: 0012
+[  209.562527] fsm_i2c_probe: 35: index:1
+[  209.562685] fsm_request_irq: 35: skip to request irq
+[  209.562705] fs16xx 0-0035: i2c probe completed
+[  209.565796] OSSTEST: <<< fs1815_dlkm.ko rc=0 
+[  209.885530] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  210.892542] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  211.426307] N7 call monitor_smart_chg
+[  211.426377] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  211.589117] OSSTEST: >>> insmod icnss2.ko
+[  211.896613] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.063850] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.063943] smblib_get_prop_input_suspend:input_suspend is 0 
+[  212.063991] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.067962] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  212.069478] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.070005] smb5_batt_get_prop:charge_full_design is 5000000 
+[  212.070413] smb5_batt_get_prop:charge_full_design is 5000000 
+[  212.072826] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  212.072998] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  212.073091] VBAT_BASED_RECHG_BIT write 1
+[  212.073168] VBAT_BASED_RECHG_BIT read 2
+[  212.073316] FCC: effective voting is now 4350000 voted by STEP_CHG_VOTER,6
+[  212.073428] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  212.073505] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  212.073589] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.073916] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4486188 Step-FCC = 4350000uA taper-fcc: 1
+[  212.073973] FCC_MAIN: effective voting is now 4350000 voted by FCC_STEPPER_VOTER,0
+[  212.073991] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  212.090431] healthd: battery l=100 v=4485 t=26.6 h=2 st=2 c=-196533 fc=4820000 cc=25 chg=a
+[  212.090679] smb5_batt_get_prop:charge_full_design is 5000000 
+[  212.092442] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  212.450095] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  212.450171] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  212.450243] real_type=9
+[  212.450313] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  212.675285] icnss2 c800000.qcom,icnss: Adding to iommu group 36
+[  212.675872] icnss2: Recursive recovery allowed for WLAN
+[  212.675877] cnss_prealloc: assign cnss pool for device id 0xabcd
+[  212.675916] cnss_prealloc: created mempool cnss-pool-8k of min size 2 * 8192
+[  212.675965] cnss_prealloc: created mempool cnss-pool-16k of min size 10 * 16384
+[  212.676029] cnss_prealloc: created mempool cnss-pool-32k of min size 8 * 32768
+[  212.676089] cnss_prealloc: created mempool cnss-pool-64k of min size 4 * 65536
+[  212.676151] cnss_prealloc: created mempool cnss-pool-128k of min size 2 * 131072
+[  212.678305] icnss2: PDR registration happened
+[  212.678449] icnss2: Platform driver probed successfully
+[  212.680161] OSSTEST: <<< icnss2.ko rc=0 
+[  212.706635] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:324
+[  212.900879] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  213.904871] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  214.708973] OSSTEST: >>> insmod rmnet_core.ko
+[  214.907073] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  215.522179] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  215.522321] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  215.522438] real_type=9
+[  215.522550] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  215.800952] OSSTEST: <<< rmnet_core.ko rc=0 
+[  215.909243] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  216.033992] (virq:irq_count)- GICv3:arch_timer(11):64060 GICv3:IPI(1):51353 GICv3:IPI(6):13076 GICv3:IPI(2):12070 GICv3:ufshcd(40):9230 GICv3:glink-native-rpm-glink(33):5397 GICv3:i2c_geni(193):1745 GICv3:dwc3(283):1440 GICv3:i2c_geni(192):679 GICv3:arch_mem_timer(13):501 
+[  216.034020] (cpu:irq_count)- 0:18153 1:1198 2:1260 3:1071 4:33926 5:34118 6:31885 7:39670 
+[  216.034030] (ipi:irq_count)- 0:51353 1:12070 2:0 3:0 4:49 5:13076 6:0 
+[  216.546224] N7 call monitor_smart_chg
+[  216.546294] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  216.916228] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  217.826909] OSSTEST: >>> insmod rmnet_wlan.ko
+[  217.918372] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  218.594239] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  218.594371] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  218.594484] real_type=9
+[  218.594586] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  218.908672] DATARMNET7eb0fa5c8f(): rmnet_wlan initializing
+[  218.908712] DATARMNET7eb0fa5c8f(): rmnet_wlan_set_hooks set
+[  218.910607] OSSTEST: <<< rmnet_wlan.ko rc=0 
+[  218.919689] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  219.923413] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.259702] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.259755] smblib_get_prop_input_suspend:input_suspend is 0 
+[  220.259804] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.262688] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  220.263977] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.264106] smb5_batt_get_prop:charge_full_design is 5000000 
+[  220.266094] smb5_batt_get_prop:charge_full_design is 5000000 
+[  220.268102] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  220.268286] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  220.268379] VBAT_BASED_RECHG_BIT write 1
+[  220.268454] VBAT_BASED_RECHG_BIT read 2
+[  220.268613] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.268637] FCC: effective voting is now 4300000 voted by STEP_CHG_VOTER,6
+[  220.268726] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  220.268808] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  220.268919] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4485215 Step-FCC = 4300000uA taper-fcc: 1
+[  220.269041] FCC_MAIN: effective voting is now 4300000 voted by FCC_STEPPER_VOTER,0
+[  220.269132] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  220.274365] healthd: battery l=100 v=4485 t=26.6 h=2 st=2 c=-195007 fc=4820000 cc=25 chg=a
+[  220.274611] smb5_batt_get_prop:charge_full_design is 5000000 
+[  220.276377] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.910357] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  220.930646] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  220.936185] OSSTEST: >>> insmod swr_ctrl_dlkm.ko
+[  221.666335] N7 call monitor_smart_chg
+[  221.666412] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  221.666489] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  221.666640] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  221.666770] real_type=9
+[  221.666881] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  221.938094] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  222.022286] OSSTEST: <<< swr_ctrl_dlkm.ko rc=0 
+[  222.946202] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  223.953821] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  224.048045] OSSTEST: >>> insmod tx_macro_dlkm.ko
+[  224.737771] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  224.737802] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  224.737827] real_type=9
+[  224.737858] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  224.961200] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  225.132440] tx_macro tx-macro: tx_macro_probe: va-macro not registered yet, defer
+[  225.135050] OSSTEST: <<< tx_macro_dlkm.ko rc=0 
+[  225.968833] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  226.786078] N7 call monitor_smart_chg
+[  226.786149] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  226.976114] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  227.161294] OSSTEST: >>> insmod va_macro_dlkm.ko
+[  227.810458] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  227.810621] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  227.810749] real_type=9
+[  227.810862] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  227.983175] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.244483] va_macro va-macro: bolero_register_macro: register macro successful:3
+[  228.244637] prm_gpr_send_pkt: apm ready check not done
+[  228.245966] msm_cdc_pinctrl_get_gpiodata: device node is null
+[  228.245987] tx_macro tx-macro: bolero_register_macro: register macro successful:0
+[  228.247263] OSSTEST: <<< va_macro_dlkm.ko rc=0 
+[  228.345644] spf-core-platform soc:spf_core_platform: __spf_core_is_apm_ready: send_command ret
+[  228.345883] qcom-spf_core gprsvc:spf_core:2:3: spf_core_callback: Payload 2001007
+[  228.345940] qcom-spf_core gprsvc:spf_core:2:3: spf_core_callback: sucess response received
+[  228.346023] prm_gpr_send_pkt: apm ready check done
+[  228.454833] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.454891] smblib_get_prop_input_suspend:input_suspend is 0 
+[  228.454938] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.457419] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  228.458922] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.459390] smb5_batt_get_prop:charge_full_design is 5000000 
+[  228.459487] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  228.459513] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  228.459527] VBAT_BASED_RECHG_BIT write 1
+[  228.459539] VBAT_BASED_RECHG_BIT read 2
+[  228.459580] FCC: effective voting is now 4250000 voted by STEP_CHG_VOTER,6
+[  228.459591] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  228.459597] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  228.459612] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4484825 Step-FCC = 4250000uA taper-fcc: 1
+[  228.459643] FCC_MAIN: effective voting is now 4250000 voted by FCC_STEPPER_VOTER,0
+[  228.459664] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  228.459868] smb5_batt_get_prop:charge_full_design is 5000000 
+[  228.462631] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.469177] healthd: battery l=100 v=4484 t=26.6 h=2 st=2 c=-196533 fc=4820000 cc=25 chg=a
+[  228.470081] smb5_batt_get_prop:charge_full_design is 5000000 
+[  228.471273] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  228.988469] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  229.091265] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  229.995723] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  230.272621] OSSTEST: >>> insmod aw87xxx_dlkm.ko
+[  230.882648] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  230.882814] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  230.882942] real_type=9
+[  230.883056] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  231.002870] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  231.138280] (virq:irq_count)- GICv3:arch_timer(11):68293 GICv3:IPI(1):53671 GICv3:IPI(6):14044 GICv3:IPI(2):12281 GICv3:ufshcd(40):9250 GICv3:glink-native-rpm-glink(33):5744 GICv3:i2c_geni(193):1871 GICv3:dwc3(283):1575 GICv3:i2c_geni(192):691 GICv3:arch_mem_timer(13):501 
+[  231.138306] (cpu:irq_count)- 0:19006 1:1211 2:1272 3:1083 4:36315 5:36045 6:33313 7:41448 
+[  231.138316] (ipi:irq_count)- 0:53671 1:12281 2:0 3:0 4:49 5:14044 6:0 
+[  231.355505] [Awinic] aw87xxx_pa_init:driver version: v2.10.0
+[  231.355603] [Awinic] [0-0058]aw87xxx_i2c_probe: aw87xxx_i2c_probe_cnt = 1
+[  231.355607] [Awinic] [0-0058]aw87xxx_i2c_probe: fs1815 probe success, aw87xxx always fail
+[  231.355637] [Awinic] [0-005b]aw87xxx_i2c_probe: aw87xxx_i2c_probe_cnt = 2
+[  231.355639] [Awinic] [0-005b]aw87xxx_i2c_probe: fs1815 probe success, aw87xxx always fail
+[  231.358082] OSSTEST: <<< aw87xxx_dlkm.ko rc=0 
+[  231.906380] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  231.906525] N7 call monitor_smart_chg
+[  231.906568] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  231.906625] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  232.010294] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  233.016918] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  233.384391] OSSTEST: >>> insmod bt_fm_slim.ko
+[  233.954013] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  233.954105] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  233.954178] real_type=9
+[  233.954248] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  234.023562] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  234.470222] btfm_slim_probe: name = 217:221:1:0   
+[  234.470234] btfm_slim_probe: name = btfmslim_slave
+[  234.470236] btfm_slim_probe: is_laddr_valid is true
+[  234.470845] btfmslim-driver btfmslim_slave: 
+[  234.472649] OSSTEST: <<< bt_fm_slim.ko rc=0 
+[  235.027946] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.034896] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.497943] OSSTEST: >>> insmod rx_macro_dlkm.ko
+[  236.649625] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.649689] smblib_get_prop_input_suspend:input_suspend is 0 
+[  236.649745] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.652075] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  236.653519] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.654606] smb5_batt_get_prop:charge_full_design is 5000000 
+[  236.656893] smb5_batt_get_prop:charge_full_design is 5000000 
+[  236.658403] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  236.658456] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  236.658481] VBAT_BASED_RECHG_BIT write 1
+[  236.658503] VBAT_BASED_RECHG_BIT read 2
+[  236.658573] FCC: effective voting is now 4200000 voted by STEP_CHG_VOTER,6
+[  236.658600] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  236.658601] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  236.658621] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  236.658650] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4484825 Step-FCC = 4200000uA taper-fcc: 1
+[  236.658695] FCC_MAIN: effective voting is now 4200000 voted by FCC_STEPPER_VOTER,0
+[  236.658720] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  236.662591] healthd: battery l=100 v=4483 t=26.6 h=2 st=2 c=-202942 fc=4820000 cc=25 chg=a
+[  236.662830] smb5_batt_get_prop:charge_full_design is 5000000 
+[  236.664204] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  237.025971] N7 call monitor_smart_chg
+[  237.026039] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  237.026332] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  237.026469] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  237.026596] real_type=9
+[  237.026707] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  237.038455] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  237.283051] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:190
+[  237.581355] rx_macro rx-macro: bolero_register_macro: register macro successful:1
+[  237.583217] OSSTEST: <<< rx_macro_dlkm.ko rc=0 
+[  238.041931] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  239.049074] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  239.608777] OSSTEST: >>> insmod wcd937x_dlkm.ko
+[  240.051609] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  240.098943] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  240.099094] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  240.099222] real_type=9
+[  240.099335] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  240.692826] wcd937x_codec wcd937x-codec: msm_cdc_dt_parse_vreg_info: cdc-vdd-rxtx: vol=[1800000 1800000]uV, curr=[10000]uA, ond 0 lpm 0
+[  240.692843] wcd937x_codec wcd937x-codec: msm_cdc_dt_parse_vreg_info: cdc-vddpx: vol=[1800000 1800000]uV, curr=[20000]uA, ond 0 lpm 0
+[  240.692859] wcd937x_codec wcd937x-codec: msm_cdc_dt_parse_vreg_info: cdc-vdd-buck: vol=[1800000 1800000]uV, curr=[650000]uA, ond 1 lpm 0
+[  240.700848] swr-wcd rx_swr_ctrl: swrm_get_logical_dev_num: devnum 1 assigned for dev a01170224
+[  240.700861] wcd937x_codec wcd937x-codec: bound wcd937x-slave.a01170224 (ops wcd937x_slave_comp_ops [wcd937x_slave_dlkm])
+[  240.701138] swr-wcd va_swr_ctrl: swrm_get_logical_dev_num: device 0xa01170223 is not ready
+[  240.701153] wcd937x_codec wcd937x-codec: failed to bind wcd937x-slave.a01170223 (ops wcd937x_slave_comp_ops [wcd937x_slave_dlkm]): -22
+[  240.701187] wcd937x_codec wcd937x-codec: wcd937x_bind: Slave bind failed, ret = -22
+[  240.701216] ------------[ cut here ]------------
+[  240.701220] WARNING: CPU: 4 PID: 1053 at drivers/regulator/core.c:2364 _regulator_put+0x20c/0x22c
+[  240.701232] Modules linked in: wcd937x_dlkm(OE+) rx_macro_dlkm(OE) bt_fm_slim(OE) aw87xxx_dlkm(OE) va_macro_dlkm(OE) tx_macro_dlkm(OE) swr_ctrl_dlkm(OE) rmnet_wlan(OE) rmnet_core(OE) icnss2(OE) fs1815_dlkm(OE) btpower(OE) audio_pkt_dlkm(OE) wsa881x_analog_dlkm(OE) wlan_firmware_service(OE) wcd_core_dlkm(OE) wcd9xxx_dlkm(OE) wcd937x_slave_dlkm(OE) swr_dlkm(OE) stub_dlkm(OE) rmnet_ctl(OE) radio_i2c_rtc6226_qca(OE) qcrypto_msm_dlkm(OE) qcedev_mod_dlkm(OE) qce50_dlkm(OE) q6_dlkm(OE) pinctrl_lpi_dlkm(OE) msm_video(OE) mmrm_test_module(OE) mbhc_dlkm(OE) lct_audio_info_dlkm(OE) gsim(OE) cnss_utils(OE) cnss_prealloc(OE) cnss_nl(OE) bolero_cdc_dlkm(OE) audpkt_ion_dlkm(OE) audio_prm_dlkm(OE) sm5602_fg(E) bq2589x_charger(E) tcpc_class(E) class_dual_role(E) xm_adapter_class(E) adsp_loader_dlkm(OE) spf_core_dlkm(OE) gpr_dlkm(OE) snd_event_dlkm(OE) q6_notifier_dlkm(OE) q6_pdr_dlkm(OE) camera(OE) focaltech_ts_i2c(OE) xiaomi_touch_game(OE) lct_tp(OE) swinfo(OE) smcinvoke_dlkm(OE)
+[  240.701308] hdcp_qseecom_dlkm(OE) qseecom_dlkm(OE) msm_mmrm(OE) msm_drm(OE) bootinfo(OE) qrtr_smd(E) cfg80211(E) snd_usb_audio_qmi(E) stm_ftrace(E) stm_console(E) stm_p_ost(E) stm_p_basic(E) coresight_hwevent(E) coresight_tgu(E) coresight_remote_etm(E) coresight_dummy(E) coresight_tpdm(E) coresight_tpda(E) coresight_cti(E) coresight_stm(E) stm_core(E) coresight_replicator(E) coresight_funnel(E) coresight_tmc(E) coresight_csr(E) coresight(E) icc_test(E) qcom_spmi_adc5(E) qcom_spss(E) qcom_q6v5_pas(E) qcom_q6v5(E) qcom_sysmon(E) qcom_pil_info(E) msm_qmp(E) binder_prio(CE) mi_wmark(CE) leds_qpnp_vibrator_ldo(E) leds_qti_tri_led(E) leds_qti_flash(E) leds_gpio(E) leds_aw2016(E) qcom_lpm(E) cpumaxfreq(E) qcom_cpufreq_hw_debug(E) cpufreq_ondemand(E) cpufreq_userspace(E) rpm_smd_cooling_device(E) qti_qmi_sensor(E) regulator_cdev(E) cx_ipeak_cdev(E) lmh_cpu_vdd_cdev(E) msm_tsens_driver(E) qti_userspace_cdev(E) qti_devfreq_cdev(E) qti_cpufreq_cdev(E) qti_qmi_cdev(E)
+[  240.701381] msm_lmh_dcvs(E) cpu_hotplug(E) bcl_soc(E) bcl_pmic5(E) thermal_pause(E) qcom_spmi_temp_alarm(E) qcom_spmi_adc_tm5(E) qcom_vadc_common(E) qcom_tsens(E) qti_battery_charger(E) auth_battery(E) stick_verify(E) slg_verify(E) ds28e30_verify(E) battery_auth_class(E) xm_smart_chg(E) mi_thermal_interface(E) bq25960_charger(E) sc8541_charger(E) qcom_qpnp_qg(E) cp_qc30(E) pd_policy_manager(E) qpnp_smb5_main(E) qcom_pmic_voter(E) qcom_pon(E) reboot_mode(E) qcom_dload_mode(E) i2c_msm_geni(E) rtc_pm8xxx(E) xiaomi_fp(E) pm8941_pwrkey(E) usb_f_diag(E) usb_f_gsi(E) ipa_fmwk(E) usb_f_qdss(E) usb_f_ccid(E) usb_f_cdev(E) f_fs_ipc_log(E) ehset(E) dwc3_msm(E) qpnp_pdphy(E) phy_msm_snps_hs(E) phy_msm_ssusb_qmp(E) phy_qcom_emu(E) phy_generic(E) msm_sharedmem(E) spi_msm_geni(E) spidev(E) sg(E) qcom_i2c_pmic(E) qcom_iommu_debug(E) rdbg(E) frpc_adsprpc(E) msm_geni_serial(E) refgen(E) qcom_pm8008_regulator(E) serial_num(E) qfprom_sys(E) cx_ipeak(E) hung_task_enh(E) qcom_va_minidump(E)
+[  240.701459] msm_performance(E) fsa4480_i2c(E) ucsi_glink(E) rpm_smd_debug(E) guestvm_loader(E) panel_event_notifier(E) bwmon(E) memlat(E) qcom_dcvs(E) usb_bam(E) sps_drv(E) core_hang_detect(E) rq_stats(E) boot_stats(E) cdsp_loader(E) microdump_collector(E) qcom_ramdump(E) eud(E) cdsprm(E) rpm_master_stat(E) soc_sleep_stats(E) pmic_glink_debug(E) altmode_glink(E) charger_ulog_glink(E) qti_battery_debug(E) pmic_glink(E) glink_pkt(E) smp2p_sleepstate(E) msm_memshare(E) heap_mem_ext_v01(E) mdt_loader(E) qcom_aoss(E) msm_gpi(E) gpucc_khaje(E) debugcc_khaje(E) dispcc_khaje(E) pwm_qti_lpg(E) pinctrl_spmi_mpp(E) pinctrl_spmi_gpio(E) phy_xgene(E) phy_qcom_ufs_qmp_v4_crow(E) phy_qcom_ufs_qmp_v4_kona(E) phy_qcom_ufs_qmp_v4_lahaina(E) phy_qcom_ufs_qmp_v4(E) phy_qcom_ufs_qmp_v4_waipio(E) phy_qcom_ufs_qmp_v4_kalama(E) msm_sysstats(E) perf_helper(E) zram(E) zsmalloc(E) qcom_pmu_lib(E) mi_memory(E) ant_check_div(E) ant_check(E) simtray(E) bam_dma(E) slim_qcom_ngd_ctrl(E) slimbus(E)
+[  240.701534] pdr_interface(E) qmi_helpers(E) usbpd(E) sdhci_msm(E) mem_offline(E) arm_smmu(E) ufs_qcom(E) ufshcd_crypto_qti(E) stub_regulator(E) socinfo(E) sched_walt(E) qrtr(E) spmi_pmic_arb(E) qcom_spmi_pmic(E) regmap_spmi(E) qti_regmap_debugfs(E) qcom_iommu_util(E) qcom_dma_heaps(E) msm_poweroff(E) qpnp_power_on(E) phy_qcom_ufs_qrbtc_sdm845(E) phy_qcom_ufs_qmp_v4_khaje(E) phy_qcom_ufs(E) nvmem_qcom_spmi_sdam(E) nvmem_qfprom(E) ns(E) qnoc_bengal(E) qnoc_qos_rpm(E) pinctrl_bengal(E) pinctrl_khaje(E) pinctrl_msm(E) msm_dma_iommu_mapping(E) mem_buf(E) mem_buf_dev(E) secure_buffer(E) memory_dump_v2(E) iommu_logger(E) icc_debug(E) icc_rpm(E) dcc_v2(E) cqhci(E) sdhci_msm_scaling(E) crypto_qti_common(E) crypto_qti_tz(E) clk_dummy(E) qcom_cpufreq_hw(E) gcc_khaje(E) clk_smd_rpm(E) clk_qcom(E) gdsc_regulator(E) qcom_cpu_vendor_hooks(E) qcom_logbuf_vh(E) miev(CE) qcom_soc_wdt(E) qcom_wdt_core(E) qcom_scm(E) rpm_smd_regulator(E) rpm_smd(E) proxy_consumer(E) debug_regulator(E)
+[  240.701610] qcom_glink_rpm(E) glink_probe(E) qcom_glink_spss(E) rproc_qcom_common(E) qcom_smd(E) qcom_glink_smem(E) qcom_glink(E) qcom_mpm(E) qcom_apcs_ipc_mailbox(E) smp2p(E) qcom_ipc_logging(E) minidump(E) smem(E) qcom_hwspinlock(E)
+[  240.701634] CPU: 4 PID: 1053 Comm: insmod Tainted: G         C OE     5.15.178-android13-8-00021-g6f2f96be86b9-ab13729987 #1
+[  240.701640] Hardware name: Qualcomm Technologies, Inc. Khaje IDP sapphiren (DT)
+[  240.701645] pstate: 80400005 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[  240.701651] pc : _regulator_put+0x20c/0x22c
+[  240.701658] lr : devm_regulator_bulk_release+0x48/0x74
+[  240.701664] sp : ffffffc00e7eb5d0
+[  240.701668] x29: ffffffc00e7eb5d0 x28: ffffffd2490db0e8 x27: ffffff8064299200
+[  240.701676] x26: ffffffd248efcd40 x25: ffffffd248eb8040 x24: ffffffd247b43978
+[  240.701684] x23: ffffffd248279e2c x22: ffffff804a1f6788 x21: 0000000000000003
+[  240.701691] x20: ffffff804a1f6100 x19: ffffff804a1f6100 x18: ffffffc00bf2e0d0
+[  240.701698] x17: ffffffffffffffff x16: 0000000000000000 x15: 0000000000000004
+[  240.701704] x14: ffffff8178810000 x13: 000000000000ffff x12: 0000000080200000
+[  240.701711] x11: 0000000000000000 x10: 0000000000000000 x9 : 0000000000000000
+[  240.701718] x8 : 0000000000000001 x7 : 205b5d3738313130 x6 : 372e30343220205b
+[  240.701724] x5 : 000000008020001d x4 : ffffff806385e800 x3 : 000000008020001e
+[  240.701731] x2 : ffffff8064299200 x1 : ffffff804a1f7480 x0 : ffffff804a1f6100
+[  240.701738] Call trace:
+[  240.701741] _regulator_put+0x20c/0x22c
+[  240.701748] devm_regulator_bulk_release+0x48/0x74
+[  240.701753] release_nodes+0x94/0x1b0
+[  240.701759] devres_release_group+0x144/0x234
+[  240.701765] try_to_bring_up_master+0x228/0x26c
+[  240.701775] component_master_add_with_match+0x134/0x1c8
+[  240.701780] wcd937x_probe+0xb4/0x110 [wcd937x_dlkm]
+[  240.701815] platform_probe+0x70/0x194
+[  240.701821] really_probe+0x14c/0x500
+[  240.701825] __driver_probe_device+0xa8/0x130
+[  240.701830] driver_probe_device+0x48/0x1e8
+[  240.701835] __driver_attach+0x1cc/0x2c0
+[  240.701840] driver_attach+0x5c/0xc0
+[  240.701845] bus_add_driver+0x114/0x26c
+[  240.701850] driver_register+0x84/0x17c
+[  240.701855] __platform_driver_register+0x28/0x38
+[  240.701860] init_module+0x24/0xfe8 [wcd937x_dlkm]
+[  240.701882] do_one_initcall+0xe0/0x358
+[  240.701888] do_init_module+0x60/0x64c
+[  240.701894] load_module+0x155c/0x1830
+[  240.701899] __arm64_sys_finit_module+0x18c/0x1a0
+[  240.701905] invoke_syscall+0x60/0x150
+[  240.701910] el0_svc_common+0xb8/0xf8
+[  240.701914] do_el0_svc+0x28/0x98
+[  240.701919] el0_svc+0x24/0x84
+[  240.701925] el0t_64_sync_handler+0x88/0xec
+[  240.701930] el0t_64_sync+0x1b8/0x1bc
+[  240.701935] ---[ end trace c207bb9c4af33e29 ]---
+[  240.702007] ------------[ cut here ]------------
+[  240.702011] WARNING: CPU: 4 PID: 1053 at drivers/regulator/core.c:2364 _regulator_put+0x20c/0x22c
+[  240.702018] Modules linked in: wcd937x_dlkm(OE+) rx_macro_dlkm(OE) bt_fm_slim(OE) aw87xxx_dlkm(OE) va_macro_dlkm(OE) tx_macro_dlkm(OE) swr_ctrl_dlkm(OE) rmnet_wlan(OE) rmnet_core(OE) icnss2(OE) fs1815_dlkm(OE) btpower(OE) audio_pkt_dlkm(OE) wsa881x_analog_dlkm(OE) wlan_firmware_service(OE) wcd_core_dlkm(OE) wcd9xxx_dlkm(OE) wcd937x_slave_dlkm(OE) swr_dlkm(OE) stub_dlkm(OE) rmnet_ctl(OE) radio_i2c_rtc6226_qca(OE) qcrypto_msm_dlkm(OE) qcedev_mod_dlkm(OE) qce50_dlkm(OE) q6_dlkm(OE) pinctrl_lpi_dlkm(OE) msm_video(OE) mmrm_test_module(OE) mbhc_dlkm(OE) lct_audio_info_dlkm(OE) gsim(OE) cnss_utils(OE) cnss_prealloc(OE) cnss_nl(OE) bolero_cdc_dlkm(OE) audpkt_ion_dlkm(OE) audio_prm_dlkm(OE) sm5602_fg(E) bq2589x_charger(E) tcpc_class(E) class_dual_role(E) xm_adapter_class(E) adsp_loader_dlkm(OE) spf_core_dlkm(OE) gpr_dlkm(OE) snd_event_dlkm(OE) q6_notifier_dlkm(OE) q6_pdr_dlkm(OE) camera(OE) focaltech_ts_i2c(OE) xiaomi_touch_game(OE) lct_tp(OE) swinfo(OE) smcinvoke_dlkm(OE)
+[  240.702071] hdcp_qseecom_dlkm(OE) qseecom_dlkm(OE) msm_mmrm(OE) msm_drm(OE) bootinfo(OE) qrtr_smd(E) cfg80211(E) snd_usb_audio_qmi(E) stm_ftrace(E) stm_console(E) stm_p_ost(E) stm_p_basic(E) coresight_hwevent(E) coresight_tgu(E) coresight_remote_etm(E) coresight_dummy(E) coresight_tpdm(E) coresight_tpda(E) coresight_cti(E) coresight_stm(E) stm_core(E) coresight_replicator(E) coresight_funnel(E) coresight_tmc(E) coresight_csr(E) coresight(E) icc_test(E) qcom_spmi_adc5(E) qcom_spss(E) qcom_q6v5_pas(E) qcom_q6v5(E) qcom_sysmon(E) qcom_pil_info(E) msm_qmp(E) binder_prio(CE) mi_wmark(CE) leds_qpnp_vibrator_ldo(E) leds_qti_tri_led(E) leds_qti_flash(E) leds_gpio(E) leds_aw2016(E) qcom_lpm(E) cpumaxfreq(E) qcom_cpufreq_hw_debug(E) cpufreq_ondemand(E) cpufreq_userspace(E) rpm_smd_cooling_device(E) qti_qmi_sensor(E) regulator_cdev(E) cx_ipeak_cdev(E) lmh_cpu_vdd_cdev(E) msm_tsens_driver(E) qti_userspace_cdev(E) qti_devfreq_cdev(E) qti_cpufreq_cdev(E) qti_qmi_cdev(E)
+[  240.702125] msm_lmh_dcvs(E) cpu_hotplug(E) bcl_soc(E) bcl_pmic5(E) thermal_pause(E) qcom_spmi_temp_alarm(E) qcom_spmi_adc_tm5(E) qcom_vadc_common(E) qcom_tsens(E) qti_battery_charger(E) auth_battery(E) stick_verify(E) slg_verify(E) ds28e30_verify(E) battery_auth_class(E) xm_smart_chg(E) mi_thermal_interface(E) bq25960_charger(E) sc8541_charger(E) qcom_qpnp_qg(E) cp_qc30(E) pd_policy_manager(E) qpnp_smb5_main(E) qcom_pmic_voter(E) qcom_pon(E) reboot_mode(E) qcom_dload_mode(E) i2c_msm_geni(E) rtc_pm8xxx(E) xiaomi_fp(E) pm8941_pwrkey(E) usb_f_diag(E) usb_f_gsi(E) ipa_fmwk(E) usb_f_qdss(E) usb_f_ccid(E) usb_f_cdev(E) f_fs_ipc_log(E) ehset(E) dwc3_msm(E) qpnp_pdphy(E) phy_msm_snps_hs(E) phy_msm_ssusb_qmp(E) phy_qcom_emu(E) phy_generic(E) msm_sharedmem(E) spi_msm_geni(E) spidev(E) sg(E) qcom_i2c_pmic(E) qcom_iommu_debug(E) rdbg(E) frpc_adsprpc(E) msm_geni_serial(E) refgen(E) qcom_pm8008_regulator(E) serial_num(E) qfprom_sys(E) cx_ipeak(E) hung_task_enh(E) qcom_va_minidump(E)
+[  240.702183] msm_performance(E) fsa4480_i2c(E) ucsi_glink(E) rpm_smd_debug(E) guestvm_loader(E) panel_event_notifier(E) bwmon(E) memlat(E) qcom_dcvs(E) usb_bam(E) sps_drv(E) core_hang_detect(E) rq_stats(E) boot_stats(E) cdsp_loader(E) microdump_collector(E) qcom_ramdump(E) eud(E) cdsprm(E) rpm_master_stat(E) soc_sleep_stats(E) pmic_glink_debug(E) altmode_glink(E) charger_ulog_glink(E) qti_battery_debug(E) pmic_glink(E) glink_pkt(E) smp2p_sleepstate(E) msm_memshare(E) heap_mem_ext_v01(E) mdt_loader(E) qcom_aoss(E) msm_gpi(E) gpucc_khaje(E) debugcc_khaje(E) dispcc_khaje(E) pwm_qti_lpg(E) pinctrl_spmi_mpp(E) pinctrl_spmi_gpio(E) phy_xgene(E) phy_qcom_ufs_qmp_v4_crow(E) phy_qcom_ufs_qmp_v4_kona(E) phy_qcom_ufs_qmp_v4_lahaina(E) phy_qcom_ufs_qmp_v4(E) phy_qcom_ufs_qmp_v4_waipio(E) phy_qcom_ufs_qmp_v4_kalama(E) msm_sysstats(E) perf_helper(E) zram(E) zsmalloc(E) qcom_pmu_lib(E) mi_memory(E) ant_check_div(E) ant_check(E) simtray(E) bam_dma(E) slim_qcom_ngd_ctrl(E) slimbus(E)
+[  240.702239] pdr_interface(E) qmi_helpers(E) usbpd(E) sdhci_msm(E) mem_offline(E) arm_smmu(E) ufs_qcom(E) ufshcd_crypto_qti(E) stub_regulator(E) socinfo(E) sched_walt(E) qrtr(E) spmi_pmic_arb(E) qcom_spmi_pmic(E) regmap_spmi(E) qti_regmap_debugfs(E) qcom_iommu_util(E) qcom_dma_heaps(E) msm_poweroff(E) qpnp_power_on(E) phy_qcom_ufs_qrbtc_sdm845(E) phy_qcom_ufs_qmp_v4_khaje(E) phy_qcom_ufs(E) nvmem_qcom_spmi_sdam(E) nvmem_qfprom(E) ns(E) qnoc_bengal(E) qnoc_qos_rpm(E) pinctrl_bengal(E) pinctrl_khaje(E) pinctrl_msm(E) msm_dma_iommu_mapping(E) mem_buf(E) mem_buf_dev(E) secure_buffer(E) memory_dump_v2(E) iommu_logger(E) icc_debug(E) icc_rpm(E) dcc_v2(E) cqhci(E) sdhci_msm_scaling(E) crypto_qti_common(E) crypto_qti_tz(E) clk_dummy(E) qcom_cpufreq_hw(E) gcc_khaje(E) clk_smd_rpm(E) clk_qcom(E) gdsc_regulator(E) qcom_cpu_vendor_hooks(E) qcom_logbuf_vh(E) miev(CE) qcom_soc_wdt(E) qcom_wdt_core(E) qcom_scm(E) rpm_smd_regulator(E) rpm_smd(E) proxy_consumer(E) debug_regulator(E)
+[  240.702297] qcom_glink_rpm(E) glink_probe(E) qcom_glink_spss(E) rproc_qcom_common(E) qcom_smd(E) qcom_glink_smem(E) qcom_glink(E) qcom_mpm(E) qcom_apcs_ipc_mailbox(E) smp2p(E) qcom_ipc_logging(E) minidump(E) smem(E) qcom_hwspinlock(E)
+[  240.702314] CPU: 4 PID: 1053 Comm: insmod Tainted: G        WC OE     5.15.178-android13-8-00021-g6f2f96be86b9-ab13729987 #1
+[  240.702319] Hardware name: Qualcomm Technologies, Inc. Khaje IDP sapphiren (DT)
+[  240.702323] pstate: 80400005 (Nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[  240.702328] pc : _regulator_put+0x20c/0x22c
+[  240.702334] lr : devm_regulator_bulk_release+0x48/0x74
+[  240.702339] sp : ffffffc00e7eb5d0
+[  240.702343] x29: ffffffc00e7eb5d0 x28: ffffffd2490db0e8 x27: ffffff8064299200
+[  240.702349] x26: ffffffd248efcd40 x25: ffffffd248eb8040 x24: ffffffd247b43978
+[  240.702356] x23: ffffffd248279e2c x22: ffffff804a1f67a0 x21: 0000000000000002
+[  240.702361] x20: ffffff80564ba900 x19: ffffff80564ba900 x18: ffffffc00bf2e0d0
+[  240.702367] x17: ffffffffffffffff x16: ffffffaf3032a000 x15: 000000000000051c
+[  240.702373] x14: ffffff8049e05b60 x13: 0000000000000001 x12: 0000000000000000
+[  240.702378] x11: 000000000000000b x10: 0000000000000000 x9 : 0000000000000000
+[  240.702384] x8 : 0000000000000001 x7 : 7f7f7f7f7f7f7f7f x6 : fefefefefeff7773
+[  240.702389] x5 : 000000008020001d x4 : ffffff804a1f6100 x3 : 000000008020001e
+[  240.702395] x2 : ffffff8064299200 x1 : 000000000000002c x0 : ffffff80564ba900
+[  240.702400] Call trace:
+[  240.702403] _regulator_put+0x20c/0x22c
+[  240.702408] devm_regulator_bulk_release+0x48/0x74
+[  240.702413] release_nodes+0x94/0x1b0
+[  240.702418] devres_release_group+0x144/0x234
+[  240.702422] try_to_bring_up_master+0x228/0x26c
+[  240.702427] component_master_add_with_match+0x134/0x1c8
+[  240.702432] wcd937x_probe+0xb4/0x110 [wcd937x_dlkm]
+[  240.702456] platform_probe+0x70/0x194
+[  240.702461] really_probe+0x14c/0x500
+[  240.702466] __driver_probe_device+0xa8/0x130
+[  240.702471] driver_probe_device+0x48/0x1e8
+[  240.702476] __driver_attach+0x1cc/0x2c0
+[  240.702481] driver_attach+0x5c/0xc0
+[  240.702485] bus_add_driver+0x114/0x26c
+[  240.702490] driver_register+0x84/0x17c
+[  240.702494] __platform_driver_register+0x28/0x38
+[  240.702499] init_module+0x24/0xfe8 [wcd937x_dlkm]
+[  240.702520] do_one_initcall+0xe0/0x358
+[  240.702526] do_init_module+0x60/0x64c
+[  240.702532] load_module+0x155c/0x1830
+[  240.702536] __arm64_sys_finit_module+0x18c/0x1a0
+[  240.702541] invoke_syscall+0x60/0x150
+[  240.702546] el0_svc_common+0xb8/0xf8
+[  240.702550] do_el0_svc+0x28/0x98
+[  240.702555] el0_svc+0x24/0x84
+[  240.702560] el0t_64_sync_handler+0x88/0xec
+[  240.702565] el0t_64_sync+0x1b8/0x1bc
+[  240.702570] ---[ end trace c207bb9c4af33e2a ]---
+[  240.702950] wcd937x_codec wcd937x-codec: master bind failed: -22
+[  240.702963] wcd937x_codec: probe of wcd937x-codec failed with error -22
+[  240.704350] OSSTEST: <<< wcd937x_dlkm.ko rc=0 
+[  240.719416] swr-wcd va_swr_ctrl: swrm_wait_for_fifo_avail err read underflow
+[  240.721183] swr-wcd va_swr_ctrl: swrm_cmd_fifo_rd_cmd: reg: 0x40, cmd_id: 0x0, \x09\x09\x09\x09rcmd_id: 0x1, dev_num: 0x1, cmd_data: 0x0
+[  240.721197] swr-wcd va_swr_ctrl: swrm_cmd_fifo_rd_cmd: failed to read fifo
+[  240.739191] swr-wcd va_swr_ctrl: swrm_wait_for_fifo_avail err read underflow
+[  240.740916] swr-wcd va_swr_ctrl: swrm_cmd_fifo_rd_cmd: reg: 0x40, cmd_id: 0x3, \x09\x09\x09\x09rcmd_id: 0x2, dev_num: 0x1, cmd_data: 0x0
+[  240.740929] swr-wcd va_swr_ctrl: swrm_cmd_fifo_rd_cmd: failed to read fifo
+[  240.741494] swr-wcd va_swr_ctrl: swr_mstr_interrupt: SWR read FIFO underflow fifo status 80f
+[  241.059355] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  242.067135] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  242.146179] N7 call monitor_smart_chg
+[  242.146249] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  242.729822] OSSTEST: >>> insmod machine_dlkm.ko
+[  243.074625] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  243.170070] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  243.170219] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  243.170343] real_type=9
+[  243.170455] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  243.817859] OSSTEST: <<< machine_dlkm.ko rc=0 
+[  244.082151] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  244.845320] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  244.845372] smblib_get_prop_input_suspend:input_suspend is 0 
+[  244.845422] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  244.848677] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  244.849979] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  244.850117] smb5_batt_get_prop:charge_full_design is 5000000 
+[  244.850789] smb5_batt_get_prop:charge_full_design is 5000000 
+[  244.852918] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  244.853091] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  244.853188] VBAT_BASED_RECHG_BIT write 1
+[  244.853263] VBAT_BASED_RECHG_BIT read 2
+[  244.853410] FCC: effective voting is now 4150000 voted by STEP_CHG_VOTER,6
+[  244.853520] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  244.853596] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  244.853599] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  244.853974] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4484047 Step-FCC = 4150000uA taper-fcc: 1
+[  244.854107] FCC_MAIN: effective voting is now 4150000 voted by FCC_STEPPER_VOTER,0
+[  244.854168] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  244.873928] healthd: battery l=100 v=4484 t=26.6 h=2 st=2 c=-193786 fc=4820000 cc=25 chg=a
+[  244.874177] smb5_batt_get_prop:charge_full_design is 5000000 
+[  244.875954] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  245.089307] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  245.475262] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  245.844600] OSSTEST: ALL DONE
+[  246.096667] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  246.242053] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  246.242074] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  246.242103] real_type=9
+[  246.242135] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  246.242219] (virq:irq_count)- GICv3:arch_timer(11):72682 GICv3:IPI(1):56098 GICv3:IPI(6):15014 GICv3:IPI(2):12512 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):6094 GICv3:i2c_geni(193):2006 GICv3:dwc3(283):1716 GICv3:i2c_geni(192):703 pmic_arb:pm-adc5(185):512 
+[  246.242240] (cpu:irq_count)- 0:19986 1:1233 2:1291 3:1102 4:38176 5:38060 6:35320 7:43258 
+[  246.242251] (ipi:irq_count)- 0:56098 1:12512 2:0 3:0 4:49 5:15014 6:0 
+[  247.101247] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  247.266007] N7 call monitor_smart_chg
+[  247.266044] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  248.108094] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  249.113293] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  249.314289] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  249.314438] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  249.314563] real_type=9
+[  249.314677] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  250.119986] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  251.124398] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  252.131252] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  252.386096] N7 call monitor_smart_chg
+[  252.386163] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  252.386550] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  252.386698] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  252.386818] real_type=9
+[  252.386929] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  253.041270] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.041317] smblib_get_prop_input_suspend:input_suspend is 0 
+[  253.041367] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.044175] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  253.045846] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.046033] smb5_batt_get_prop:charge_full_design is 5000000 
+[  253.046429] smb5_batt_get_prop:charge_full_design is 5000000 
+[  253.048992] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  253.049163] QCOM-STEPCHG: handle_jeita: temp = 266, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  253.049256] VBAT_BASED_RECHG_BIT write 1
+[  253.049346] VBAT_BASED_RECHG_BIT read 2
+[  253.049494] FCC: effective voting is now 4100000 voted by STEP_CHG_VOTER,6
+[  253.049600] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  253.049927] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  253.049951] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.050026] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4483852 Step-FCC = 4100000uA taper-fcc: 1
+[  253.050099] FCC_MAIN: effective voting is now 4100000 voted by FCC_STEPPER_VOTER,0
+[  253.050118] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  253.058056] healthd: battery l=100 v=4484 t=26.6 h=2 st=2 c=-196533 fc=4820000 cc=25 chg=a
+[  253.058316] smb5_batt_get_prop:charge_full_design is 5000000 
+[  253.060077] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.138238] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  253.667497] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  254.145159] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  255.151919] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  255.458504] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  255.458649] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  255.458770] real_type=9
+[  255.458883] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  256.158972] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  257.166139] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  257.506362] N7 call monitor_smart_chg
+[  257.506427] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  258.176226] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  258.344493] smb5_batt_get_prop:charge_full_design is 5000000 
+[  258.346823] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  258.354099] healthd: battery l=100 v=4483 t=26.6 h=2 st=2 c=-194397 fc=4820000 cc=25 chg=a
+[  258.354333] smb5_batt_get_prop:charge_full_design is 5000000 
+[  258.356107] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  258.530257] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  258.530397] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  258.530522] real_type=9
+[  258.530634] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  259.183530] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  260.190919] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.195566] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.237526] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.237580] smblib_get_prop_input_suspend:input_suspend is 0 
+[  261.237655] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.240857] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  261.242343] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.242475] smb5_batt_get_prop:charge_full_design is 5000000 
+[  261.243051] smb5_batt_get_prop:charge_full_design is 5000000 
+[  261.245182] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  261.245356] QCOM-STEPCHG: handle_jeita: temp = 265, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  261.245451] VBAT_BASED_RECHG_BIT write 1
+[  261.245529] VBAT_BASED_RECHG_BIT read 2
+[  261.246066] FCC: effective voting is now 4050000 voted by STEP_CHG_VOTER,6
+[  261.246183] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  261.246261] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  261.246345] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.246374] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4483852 Step-FCC = 4050000uA taper-fcc: 1
+[  261.246523] FCC_MAIN: effective voting is now 4050000 voted by FCC_STEPPER_VOTER,0
+[  261.246616] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  261.254465] healthd: battery l=100 v=4483 t=26.5 h=2 st=2 c=-220031 fc=4820000 cc=25 chg=a
+[  261.254718] smb5_batt_get_prop:charge_full_design is 5000000 
+[  261.256520] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  261.346431] (virq:irq_count)- GICv3:arch_timer(11):76539 GICv3:IPI(1):57696 GICv3:IPI(6):15978 GICv3:IPI(2):12646 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):6368 GICv3:i2c_geni(193):2141 GICv3:dwc3(283):1807 GICv3:i2c_geni(192):721 pmic_arb:pm-adc5(185):541 
+[  261.346452] (cpu:irq_count)- 0:20685 1:1242 2:1296 3:1107 4:39767 5:39335 6:37094 7:45002 
+[  261.346463] (ipi:irq_count)- 0:57696 1:12646 2:0 3:0 4:49 5:15978 6:0 
+[  261.602273] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  261.602411] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  261.602532] real_type=9
+[  261.602642] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  261.859249] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  262.202499] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  262.626263] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  262.626392] N7 call monitor_smart_chg
+[  262.626432] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  262.626488] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  263.209401] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  264.216798] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  264.674033] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  264.674116] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  264.674190] real_type=9
+[  264.674258] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  265.223996] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  266.231309] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  267.238407] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  267.746078] N7 call monitor_smart_chg
+[  267.746096] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  267.746147] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  267.746238] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  267.746368] real_type=9
+[  267.746481] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  268.245940] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.252946] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.432995] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.433048] smblib_get_prop_input_suspend:input_suspend is 0 
+[  269.433098] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.436098] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  269.437564] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.438281] smb5_batt_get_prop:charge_full_design is 5000000 
+[  269.438731] smb5_batt_get_prop:charge_full_design is 5000000 
+[  269.440865] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  269.440994] QCOM-STEPCHG: handle_jeita: temp = 265, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  269.441066] VBAT_BASED_RECHG_BIT write 1
+[  269.441121] VBAT_BASED_RECHG_BIT read 2
+[  269.441238] FCC: effective voting is now 4000000 voted by STEP_CHG_VOTER,6
+[  269.441313] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  269.441365] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  269.441449] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4483852 Step-FCC = 4000000uA taper-fcc: 1
+[  269.441556] FCC_MAIN: effective voting is now 4000000 voted by FCC_STEPPER_VOTER,0
+[  269.441703] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  269.441846] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  269.449942] healthd: battery l=100 v=4483 t=26.5 h=2 st=2 c=-195312 fc=4820000 cc=25 chg=a
+[  269.450192] smb5_batt_get_prop:charge_full_design is 5000000 
+[  269.451939] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  270.051104] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  270.260070] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  270.818094] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  270.818192] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  270.818274] real_type=9
+[  270.818354] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  271.267185] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  272.274412] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  272.866042] N7 call monitor_smart_chg
+[  272.866111] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  273.278688] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  273.889995] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  273.890076] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  273.890148] real_type=9
+[  273.890216] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  274.285273] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  275.292215] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  276.298940] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  276.450447] (virq:irq_count)- GICv3:arch_timer(11):80390 GICv3:IPI(1):59205 GICv3:IPI(6):16942 GICv3:IPI(2):12777 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):6637 GICv3:i2c_geni(193):2276 GICv3:dwc3(283):1882 GICv3:i2c_geni(192):727 pmic_arb:pm-adc5(185):555 
+[  276.450473] (cpu:irq_count)- 0:21336 1:1250 2:1301 3:1112 4:41265 5:41388 6:38245 7:46588 
+[  276.450484] (ipi:irq_count)- 0:59205 1:12777 2:0 3:0 4:49 5:16942 6:0 
+[  276.962263] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  276.962407] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  276.962533] real_type=9
+[  276.962647] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  277.306065] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.629061] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.629116] smblib_get_prop_input_suspend:input_suspend is 0 
+[  277.629165] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.630653] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  277.632095] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.632546] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  277.632663] QCOM-STEPCHG: handle_jeita: temp = 265, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  277.632739] VBAT_BASED_RECHG_BIT write 1
+[  277.632803] VBAT_BASED_RECHG_BIT read 2
+[  277.632926] FCC: effective voting is now 3950000 voted by STEP_CHG_VOTER,6
+[  277.633009] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  277.633077] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  277.633166] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4483268 Step-FCC = 3950000uA taper-fcc: 1
+[  277.633884] FCC_MAIN: effective voting is now 3950000 voted by FCC_STEPPER_VOTER,0
+[  277.633943] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  277.635605] smb5_batt_get_prop:charge_full_design is 5000000 
+[  277.638248] smb5_batt_get_prop:charge_full_design is 5000000 
+[  277.649349] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.657909] healthd: battery l=100 v=4482 t=26.5 h=2 st=2 c=-193786 fc=4820000 cc=25 chg=a
+[  277.658187] smb5_batt_get_prop:charge_full_design is 5000000 
+[  277.659981] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  277.986224] N7 call monitor_smart_chg
+[  277.986273] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  278.250123] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:189
+[  278.312876] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  279.318873] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  280.034226] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  280.034365] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  280.034481] real_type=9
+[  280.034586] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  280.326032] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  281.332727] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  282.339968] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  283.106107] N7 call monitor_smart_chg
+[  283.106150] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  283.106175] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  283.106298] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  283.106423] real_type=9
+[  283.106537] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  283.347101] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  284.354116] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.361125] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.824338] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.824424] smblib_get_prop_input_suspend:input_suspend is 0 
+[  285.824472] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.827801] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  285.829316] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.830084] smb5_batt_get_prop:charge_full_design is 5000000 
+[  285.830519] smb5_batt_get_prop:charge_full_design is 5000000 
+[  285.832567] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  285.832746] QCOM-STEPCHG: handle_jeita: temp = 264, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  285.832840] VBAT_BASED_RECHG_BIT write 1
+[  285.832915] VBAT_BASED_RECHG_BIT read 2
+[  285.833066] FCC: effective voting is now 3920000 voted by STEP_CHG_VOTER,6
+[  285.833179] PL_AWAKE: effective voting is now 1 voted by FCC_STEPPER_VOTER,0
+[  285.833233] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  285.833258] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  285.833349] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4483268 Step-FCC = 3920000uA taper-fcc: 1
+[  285.833474] FCC_MAIN: effective voting is now 3920000 voted by FCC_STEPPER_VOTER,0
+[  285.833565] PL_AWAKE: effective voting is now 0 voted by FCC_STEPPER_VOTER,0
+[  285.842163] healthd: battery l=100 v=4483 t=26.4 h=2 st=2 c=-194091 fc=4820000 cc=25 chg=a
+[  285.842410] smb5_batt_get_prop:charge_full_design is 5000000 
+[  285.844183] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  286.178128] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  286.178269] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  286.178392] real_type=9
+[  286.178503] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  286.368388] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  286.435318] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:200
+[  287.375468] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  288.226362] N7 call monitor_smart_chg
+[  288.226432] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  288.382683] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  289.250227] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  289.250326] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  289.250408] real_type=9
+[  289.250485] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  289.388536] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  290.394992] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  291.400885] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  291.554192] (virq:irq_count)- GICv3:arch_timer(11):84234 GICv3:IPI(1):60803 GICv3:IPI(6):17908 GICv3:IPI(2):12897 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):6906 GICv3:i2c_geni(193):2402 GICv3:dwc3(283):1980 GICv3:i2c_geni(192):739 pmic_arb:pm-adc5(185):579 
+[  291.554217] (cpu:irq_count)- 0:22004 1:1259 2:1305 3:1116 4:42509 5:42839 6:40224 7:48288 
+[  291.554228] (ipi:irq_count)- 0:60803 1:12897 2:0 3:0 4:49 5:17908 6:0 
+[  292.322530] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  292.322681] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  292.322810] real_type=9
+[  292.322924] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  292.407670] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  293.346291] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  293.346420] N7 call monitor_smart_chg
+[  293.346462] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  293.346519] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  293.414742] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.019065] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.019120] smblib_get_prop_input_suspend:input_suspend is 0 
+[  294.019170] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.021526] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  294.023118] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.023249] smb5_batt_get_prop:charge_full_design is 5000000 
+[  294.024556] smb5_batt_get_prop:charge_full_design is 5000000 
+[  294.027464] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  294.027590] QCOM-STEPCHG: handle_jeita: temp = 264, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  294.027651] VBAT_BASED_RECHG_BIT write 1
+[  294.027701] VBAT_BASED_RECHG_BIT read 2
+[  294.027793] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4482684 Step-FCC = 3920000uA taper-fcc: 1
+[  294.027887] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.034318] healthd: battery l=100 v=4482 t=26.4 h=2 st=2 c=-196533 fc=4820000 cc=25 chg=a
+[  294.034561] smb5_batt_get_prop:charge_full_design is 5000000 
+[  294.036324] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.421761] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  294.627919] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  295.394219] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  295.394365] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  295.394490] real_type=9
+[  295.394603] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  295.428706] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  296.435700] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  297.442563] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  298.449492] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  298.466039] N7 call monitor_smart_chg
+[  298.466107] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  298.466161] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  298.466312] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  298.466435] real_type=9
+[  298.466547] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  299.456611] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  300.464178] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  301.471130] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  301.538293] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  301.538443] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  301.538563] real_type=9
+[  301.538674] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  302.214865] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.214917] smblib_get_prop_input_suspend:input_suspend is 0 
+[  302.214967] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.218013] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  302.219083] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.219221] smb5_batt_get_prop:charge_full_design is 5000000 
+[  302.219595] smb5_batt_get_prop:charge_full_design is 5000000 
+[  302.222113] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  302.222209] QCOM-STEPCHG: handle_jeita: temp = 264, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  302.222235] VBAT_BASED_RECHG_BIT write 1
+[  302.222248] VBAT_BASED_RECHG_BIT read 2
+[  302.222288] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4482100 Step-FCC = 3920000uA taper-fcc: 1
+[  302.223709] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.228072] healthd: battery l=100 v=4481 t=26.4 h=2 st=2 c=-195617 fc=4820000 cc=25 chg=a
+[  302.230141] smb5_batt_get_prop:charge_full_design is 5000000 
+[  302.232034] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.478449] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  302.819318] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:192
+[  303.485533] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  303.586143] N7 call monitor_smart_chg
+[  303.586213] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  304.492873] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  304.610163] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  304.610275] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  304.610368] real_type=9
+[  304.610454] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  305.473686] loop0: detected capacity change from 0 to 34336
+[  305.494713] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  305.520016] erofs: (device loop0): EXPERIMENTAL big pcluster feature in use. Use at your own risk!
+[  305.520057] erofs: (device loop0): mounted with root inode @ nid 39.
+[  306.501737] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  306.658453] (virq:irq_count)- GICv3:arch_timer(11):88556 GICv3:IPI(1):65530 GICv3:IPI(6):18874 GICv3:IPI(2):13044 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):7210 GICv3:dwc3(283):3065 GICv3:i2c_geni(193):2537 GICv3:i2c_geni(192):751 pmic_arb:pm-adc5(185):603 
+[  306.658478] (cpu:irq_count)- 0:23815 1:1276 2:1310 3:1121 4:44723 5:45088 6:42565 7:51375 
+[  306.658489] (ipi:irq_count)- 0:65530 1:13044 2:0 3:0 4:49 5:18874 6:0 
+[  307.508294] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  307.682746] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  307.682892] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  307.683017] real_type=9
+[  307.683129] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  308.512680] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  308.706118] N7 call monitor_smart_chg
+[  308.706182] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  309.519275] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.410415] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.410466] smblib_get_prop_input_suspend:input_suspend is 0 
+[  310.410518] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.413153] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  310.414862] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.414994] smb5_batt_get_prop:charge_full_design is 5000000 
+[  310.415337] smb5_batt_get_prop:charge_full_design is 5000000 
+[  310.428956] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  310.429128] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  310.429218] VBAT_BASED_RECHG_BIT write 1
+[  310.429311] VBAT_BASED_RECHG_BIT read 2
+[  310.429457] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4482100 Step-FCC = 3920000uA taper-fcc: 1
+[  310.431053] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.437558] healthd: battery l=100 v=4481 t=26.3 h=2 st=2 c=-195922 fc=4820000 cc=25 chg=a
+[  310.438140] smb5_batt_get_prop:charge_full_design is 5000000 
+[  310.439923] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.526420] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  310.753921] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  310.754009] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  310.754082] real_type=9
+[  310.754139] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  311.011193] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:194
+[  311.533021] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  312.537178] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  313.543687] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  313.825790] N7 call monitor_smart_chg
+[  313.825826] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  313.825968] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  313.826047] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  313.826120] real_type=9
+[  313.826189] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  314.550572] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  315.557891] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  316.564959] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  316.898335] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  316.898485] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  316.898611] real_type=9
+[  316.898722] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  317.572879] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.344117] smb5_batt_get_prop:charge_full_design is 5000000 
+[  318.346357] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.354060] healthd: battery l=100 v=4479 t=26.3 h=2 st=2 c=-195617 fc=4820000 cc=25 chg=a
+[  318.354303] smb5_batt_get_prop:charge_full_design is 5000000 
+[  318.356066] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.579792] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.605801] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.605850] smblib_get_prop_input_suspend:input_suspend is 0 
+[  318.605898] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.608531] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  318.610187] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.610761] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  318.610806] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  318.610819] VBAT_BASED_RECHG_BIT write 1
+[  318.610832] VBAT_BASED_RECHG_BIT read 2
+[  318.610867] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4480543 Step-FCC = 3920000uA taper-fcc: 1
+[  318.610905] smb5_batt_get_prop:charge_full_design is 5000000 
+[  318.611273] smb5_batt_get_prop:charge_full_design is 5000000 
+[  318.614346] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.619662] healthd: battery l=100 v=4480 t=26.3 h=2 st=2 c=-196228 fc=4820000 cc=25 chg=a
+[  318.621158] smb5_batt_get_prop:charge_full_design is 5000000 
+[  318.622391] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  318.946087] N7 call monitor_smart_chg
+[  318.946150] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  319.203830] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:193
+[  319.587017] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  319.970227] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  319.970372] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  319.970494] real_type=9
+[  319.970606] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  320.591551] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  321.598228] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  321.762332] (virq:irq_count)- GICv3:arch_timer(11):92432 GICv3:IPI(1):67252 GICv3:IPI(6):19839 GICv3:IPI(2):13156 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):7484 GICv3:dwc3(283):3160 GICv3:i2c_geni(193):2672 GICv3:i2c_geni(192):769 pmic_arb:pm-adc5(185):633 
+[  321.762357] (cpu:irq_count)- 0:24500 1:1284 2:1315 3:1126 4:46125 5:46602 6:44580 7:52970 
+[  321.762367] (ipi:irq_count)- 0:67252 1:13156 2:0 3:0 4:49 5:19839 6:0 
+[  322.605154] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  323.042247] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  323.042398] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  323.042523] real_type=9
+[  323.042635] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  323.612518] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  324.066118] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  324.066240] N7 call monitor_smart_chg
+[  324.066280] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  324.066336] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  324.619533] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  325.626740] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.114245] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  326.114354] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  326.114446] real_type=9
+[  326.114527] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  326.634004] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.800449] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.800503] smblib_get_prop_input_suspend:input_suspend is 0 
+[  326.800552] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.803312] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  326.804663] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.805203] smb5_batt_get_prop:charge_full_design is 5000000 
+[  326.806576] smb5_batt_get_prop:charge_full_design is 5000000 
+[  326.808898] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  326.809073] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  326.809163] VBAT_BASED_RECHG_BIT write 1
+[  326.809240] VBAT_BASED_RECHG_BIT read 2
+[  326.809393] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4480543 Step-FCC = 3920000uA taper-fcc: 1
+[  326.812183] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  326.817996] healthd: battery l=100 v=4480 t=26.3 h=2 st=2 c=-195007 fc=4820000 cc=25 chg=a
+[  326.818244] smb5_batt_get_prop:charge_full_design is 5000000 
+[  326.820022] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  327.395564] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  327.640575] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  328.647605] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  329.185927] N7 call monitor_smart_chg
+[  329.185969] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  329.186132] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  329.186212] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  329.186284] real_type=9
+[  329.186355] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  329.654556] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  330.661597] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  331.668491] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  332.258126] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  332.258233] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  332.258317] real_type=9
+[  332.258400] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  332.675518] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  333.683006] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  334.306004] N7 call monitor_smart_chg
+[  334.306070] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  334.690515] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  334.995646] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  334.995701] smblib_get_prop_input_suspend:input_suspend is 0 
+[  334.995751] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  334.998442] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  335.000025] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  335.000615] smb5_batt_get_prop:charge_full_design is 5000000 
+[  335.001107] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  335.001256] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  335.001349] VBAT_BASED_RECHG_BIT write 1
+[  335.001425] VBAT_BASED_RECHG_BIT read 2
+[  335.001561] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4480738 Step-FCC = 3920000uA taper-fcc: 1
+[  335.005971] smb5_batt_get_prop:charge_full_design is 5000000 
+[  335.007991] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  335.014535] healthd: battery l=100 v=4480 t=26.3 h=2 st=2 c=-198364 fc=4820000 cc=25 chg=a
+[  335.014775] smb5_batt_get_prop:charge_full_design is 5000000 
+[  335.016566] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  335.330563] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  335.330723] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  335.330845] real_type=9
+[  335.330961] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  335.587656] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:196
+[  335.697934] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  336.704948] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  336.866409] (virq:irq_count)- GICv3:arch_timer(11):96395 GICv3:IPI(1):69060 GICv3:IPI(6):20806 GICv3:IPI(2):13292 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):7757 GICv3:dwc3(283):3262 GICv3:i2c_geni(193):2807 GICv3:i2c_geni(192):781 pmic_arb:pm-adc5(185):658 
+[  336.866434] (cpu:irq_count)- 0:25206 1:1294 2:1321 3:1131 4:47462 5:48189 6:46225 7:55099 
+[  336.866445] (ipi:irq_count)- 0:69060 1:13292 2:0 3:0 4:49 5:20806 6:0 
+[  337.712543] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  338.402170] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  338.402319] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  338.402442] real_type=9
+[  338.402556] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  338.719631] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  339.426255] N7 call monitor_smart_chg
+[  339.426321] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  339.726692] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  340.734174] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  341.474297] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  341.474443] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  341.474569] real_type=9
+[  341.474682] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  341.741092] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  342.748073] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.191633] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.191684] smblib_get_prop_input_suspend:input_suspend is 0 
+[  343.191734] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.206230] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  343.207698] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.208236] smb5_batt_get_prop:charge_full_design is 5000000 
+[  343.210038] smb5_batt_get_prop:charge_full_design is 5000000 
+[  343.211143] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  343.211269] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  343.211351] VBAT_BASED_RECHG_BIT write 1
+[  343.211411] VBAT_BASED_RECHG_BIT read 2
+[  343.211543] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4480154 Step-FCC = 3920000uA taper-fcc: 1
+[  343.212952] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.218270] healthd: battery l=100 v=4479 t=26.3 h=2 st=2 c=-218811 fc=4820000 cc=25 chg=a
+[  343.218517] smb5_batt_get_prop:charge_full_design is 5000000 
+[  343.220431] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.755036] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  343.779619] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:192
+[  344.546318] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  344.546370] N7 call monitor_smart_chg
+[  344.546429] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  344.546471] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  344.546602] real_type=9
+[  344.546716] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  344.762068] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  345.766970] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  346.774283] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  347.618522] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  347.618673] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  347.618799] real_type=9
+[  347.618913] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  347.781091] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  348.786247] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  349.666323] N7 call monitor_smart_chg
+[  349.666394] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  349.793191] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  350.690238] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  350.690387] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  350.690516] real_type=9
+[  350.690630] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  350.797256] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.387466] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.387519] smblib_get_prop_input_suspend:input_suspend is 0 
+[  351.387568] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.390361] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  351.391530] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.391651] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  351.391676] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  351.391690] VBAT_BASED_RECHG_BIT write 1
+[  351.391702] VBAT_BASED_RECHG_BIT read 2
+[  351.391736] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4480154 Step-FCC = 3920000uA taper-fcc: 1
+[  351.391768] smb5_batt_get_prop:charge_full_design is 5000000 
+[  351.394105] smb5_batt_get_prop:charge_full_design is 5000000 
+[  351.397530] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.406067] healthd: battery l=100 v=4479 t=26.3 h=2 st=2 c=-194702 fc=4820000 cc=25 chg=a
+[  351.406315] smb5_batt_get_prop:charge_full_design is 5000000 
+[  351.408070] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.803799] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  351.970054] (virq:irq_count)- GICv3:arch_timer(11):100269 GICv3:IPI(1):70674 GICv3:IPI(6):21772 GICv3:IPI(2):13418 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):8026 GICv3:dwc3(283):3347 GICv3:i2c_geni(193):2933 GICv3:i2c_geni(192):793 pmic_arb:pm-adc5(185):681 
+[  351.970078] (cpu:irq_count)- 0:25862 1:1301 2:1325 3:1135 4:48798 5:49486 6:48143 7:56977 
+[  351.970089] (ipi:irq_count)- 0:70675 1:13418 2:0 3:0 4:49 5:21773 6:0 
+[  351.970995] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  352.810873] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  353.762466] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  353.762609] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  353.762731] real_type=9
+[  353.762844] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  353.817905] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  354.786090] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  354.786216] N7 call monitor_smart_chg
+[  354.786259] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  354.786315] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  354.824571] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  355.831330] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  356.833906] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  356.833990] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  356.834063] real_type=9
+[  356.834132] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  356.835574] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  357.842277] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  358.849978] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.583277] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.583333] smblib_get_prop_input_suspend:input_suspend is 0 
+[  359.583380] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.586459] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  359.587642] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.587769] smb5_batt_get_prop:charge_full_design is 5000000 
+[  359.590124] smb5_batt_get_prop:charge_full_design is 5000000 
+[  359.591499] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  359.591673] QCOM-STEPCHG: handle_jeita: temp = 263, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  359.591761] VBAT_BASED_RECHG_BIT write 1
+[  359.591844] VBAT_BASED_RECHG_BIT read 2
+[  359.591990] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4479570 Step-FCC = 3920000uA taper-fcc: 1
+[  359.593548] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.601937] healthd: battery l=100 v=4479 t=26.3 h=2 st=2 c=-195007 fc=4820000 cc=25 chg=a
+[  359.602192] smb5_batt_get_prop:charge_full_design is 5000000 
+[  359.603968] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.857189] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  359.906151] N7 call monitor_smart_chg
+[  359.906219] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  359.906399] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  359.906535] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  359.906659] real_type=9
+[  359.906774] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  360.163210] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:196
+[  360.864797] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  361.871997] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  362.879238] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  362.978207] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  362.978353] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  362.978481] real_type=9
+[  362.978594] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  363.886762] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  364.894292] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  365.026120] N7 call monitor_smart_chg
+[  365.026189] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  365.901054] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  366.050302] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  366.050453] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  366.050582] real_type=9
+[  366.050697] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  366.907148] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.074129] (virq:irq_count)- GICv3:arch_timer(11):104110 GICv3:IPI(1):72175 GICv3:IPI(6):22739 GICv3:IPI(2):13550 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):8300 GICv3:dwc3(283):3419 GICv3:i2c_geni(193):3068 GICv3:i2c_geni(192):799 pmic_arb:pm-adc5(185):694 
+[  367.074154] (cpu:irq_count)- 0:26515 1:1309 2:1330 3:1140 4:50257 5:51333 6:49364 7:58719 
+[  367.074164] (ipi:irq_count)- 0:72175 1:13550 2:0 3:0 4:49 5:22739 6:0 
+[  367.778539] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.778593] smblib_get_prop_input_suspend:input_suspend is 0 
+[  367.778643] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.781279] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  367.782869] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.783007] smb5_batt_get_prop:charge_full_design is 5000000 
+[  367.784338] smb5_batt_get_prop:charge_full_design is 5000000 
+[  367.787750] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  367.787929] QCOM-STEPCHG: handle_jeita: temp = 262, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  367.788028] VBAT_BASED_RECHG_BIT write 1
+[  367.788102] VBAT_BASED_RECHG_BIT read 2
+[  367.788246] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4479181 Step-FCC = 3920000uA taper-fcc: 1
+[  367.788434] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.796134] healthd: battery l=100 v=4479 t=26.2 h=2 st=2 c=-195922 fc=4820000 cc=25 chg=a
+[  367.798101] smb5_batt_get_prop:charge_full_design is 5000000 
+[  367.799904] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  367.914164] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  368.367463] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:195
+[  368.921770] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  369.122324] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  369.122477] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  369.122599] real_type=9
+[  369.122714] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  369.924299] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  370.146444] N7 call monitor_smart_chg
+[  370.146511] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  370.930811] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  371.937460] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  372.194049] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  372.194135] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  372.194210] real_type=9
+[  372.194282] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  372.944812] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  373.951935] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  374.958717] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.266050] N7 call monitor_smart_chg
+[  375.266115] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  375.266243] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  375.266390] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  375.266511] real_type=9
+[  375.266624] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  375.966150] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.973386] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.973435] smblib_get_prop_input_suspend:input_suspend is 0 
+[  375.973484] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.985300] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  375.986423] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.986534] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  375.986560] QCOM-STEPCHG: handle_jeita: temp = 262, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  375.986574] VBAT_BASED_RECHG_BIT write 1
+[  375.986587] VBAT_BASED_RECHG_BIT read 2
+[  375.986621] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4479181 Step-FCC = 3920000uA taper-fcc: 1
+[  375.990147] smb5_batt_get_prop:charge_full_design is 5000000 
+[  375.990535] smb5_batt_get_prop:charge_full_design is 5000000 
+[  375.992518] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  375.997934] healthd: battery l=100 v=4477 t=26.2 h=2 st=2 c=-216369 fc=4820000 cc=25 chg=a
+[  375.998330] smb5_batt_get_prop:charge_full_design is 5000000 
+[  376.000092] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  376.547248] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:193
+[  376.972949] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  377.980840] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  378.338602] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  378.338746] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  378.338870] real_type=9
+[  378.338982] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  378.343461] smb5_batt_get_prop:charge_full_design is 5000000 
+[  378.345497] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  378.353954] healthd: battery l=100 v=4478 t=26.2 h=2 st=2 c=-193786 fc=4820000 cc=25 chg=a
+[  378.354193] smb5_batt_get_prop:charge_full_design is 5000000 
+[  378.355965] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  378.988109] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  379.994703] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  380.386083] N7 call monitor_smart_chg
+[  380.386151] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  381.002075] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  381.410077] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  381.410178] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  381.410266] real_type=9
+[  381.410348] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  382.008862] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  382.178050] (virq:irq_count)- GICv3:arch_timer(11):107992 GICv3:IPI(1):73812 GICv3:IPI(6):23705 GICv3:IPI(2):13685 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):8570 GICv3:dwc3(283):3514 GICv3:i2c_geni(193):3203 GICv3:i2c_geni(192):817 pmic_arb:pm-adc5(185):724 
+[  382.178073] (cpu:irq_count)- 0:27221 1:1315 2:1335 3:1145 4:51469 5:52970 6:50964 7:60718 
+[  382.178083] (ipi:irq_count)- 0:73812 1:13685 2:0 3:0 4:49 5:23705 6:0 
+[  383.015451] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.022482] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.168517] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.168570] smblib_get_prop_input_suspend:input_suspend is 0 
+[  384.168619] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.171350] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  384.172821] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.173367] smb5_batt_get_prop:charge_full_design is 5000000 
+[  384.174737] smb5_batt_get_prop:charge_full_design is 5000000 
+[  384.176467] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  384.176647] QCOM-STEPCHG: handle_jeita: temp = 262, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  384.176741] VBAT_BASED_RECHG_BIT write 1
+[  384.176819] VBAT_BASED_RECHG_BIT read 2
+[  384.176963] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4478597 Step-FCC = 3920000uA taper-fcc: 1
+[  384.177151] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.182998] healthd: battery l=100 v=4478 t=26.2 h=2 st=2 c=-194397 fc=4820000 cc=25 chg=a
+[  384.183238] smb5_batt_get_prop:charge_full_design is 5000000 
+[  384.185015] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  384.482500] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  384.482642] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  384.482768] real_type=9
+[  384.482880] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  384.739355] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:194
+[  385.029812] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  385.505907] xm_charge_update_date raw_soc = 100, soc = 100, pd_active = 1, fv_ageing = 0
+[  385.505996] N7 call monitor_smart_chg
+[  385.506021] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  385.506052] monitor_low_fast_strategy soc = 100, thermal_level = 0, thermal_board_temp = 250, pd_active = 1, low_fast_plugin_flag = 0, low_fast_enable = 0, screen_state = 0, b_flag = 0
+[  386.037083] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  387.044291] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  387.554271] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  387.554418] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  387.554544] real_type=9
+[  387.554655] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  388.051474] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  389.058967] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  390.066309] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  390.626128] N7 call monitor_smart_chg
+[  390.626196] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  390.626324] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  390.626457] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  390.626570] real_type=9
+[  390.626675] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  391.073553] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.080652] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.362987] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.363066] smblib_get_prop_input_suspend:input_suspend is 0 
+[  392.363113] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.366044] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  392.367386] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.367920] smb5_batt_get_prop:charge_full_design is 5000000 
+[  392.370428] smb5_batt_get_prop:charge_full_design is 5000000 
+[  392.372043] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  392.372216] QCOM-STEPCHG: handle_jeita: temp = 262, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  392.372305] VBAT_BASED_RECHG_BIT write 1
+[  392.372381] VBAT_BASED_RECHG_BIT read 2
+[  392.372528] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4478013 Step-FCC = 3920000uA taper-fcc: 1
+[  392.372729] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.382279] healthd: battery l=100 v=4478 t=26.2 h=2 st=2 c=-194091 fc=4820000 cc=25 chg=a
+[  392.382523] smb5_batt_get_prop:charge_full_design is 5000000 
+[  392.384528] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  392.931709] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:193
+[  393.087922] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  393.698147] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  393.698277] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  393.698387] real_type=9
+[  393.698493] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  394.095007] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  395.102054] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  395.746087] N7 call monitor_smart_chg
+[  395.746158] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  396.108797] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  396.770079] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  396.770226] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  396.770353] real_type=9
+[  396.770466] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  397.115889] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  397.282470] (virq:irq_count)- GICv3:arch_timer(11):111855 GICv3:IPI(1):75404 GICv3:IPI(6):24671 GICv3:IPI(2):13814 GICv3:ufshcd(40):9266 GICv3:glink-native-rpm-glink(33):8839 GICv3:dwc3(283):3601 GICv3:i2c_geni(193):3338 GICv3:i2c_geni(192):829 pmic_arb:pm-adc5(185):749 
+[  397.282496] (cpu:irq_count)- 0:27897 1:1325 2:1340 3:1150 4:52962 5:54453 6:52537 7:62554 
+[  397.282507] (ipi:irq_count)- 0:75404 1:13814 2:0 3:0 4:49 5:24671 6:0 
+[  398.123101] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  399.130198] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  399.842265] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  399.842417] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  399.842542] real_type=9
+[  399.842654] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  400.137144] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.557854] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.557911] smblib_get_prop_input_suspend:input_suspend is 0 
+[  400.557959] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.560599] QCOM-STEPCHG: handle_step_chg_cycle_count: step: cycle_count is 25
+[  400.562604] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.562990] smb5_batt_get_prop:charge_full_design is 5000000 
+[  400.563390] smb5_batt_get_prop:charge_full_design is 5000000 
+[  400.565598] QCOM-STEPCHG: handle_jeita: soc:100 is more than 95, do not set fastcharge mode
+[  400.565984] QCOM-STEPCHG: handle_jeita: temp = 261, FCM = 0, fcc_ua(4) = 5400000, fv_uv(4) = 4450000, iterm = -250
+[  400.566014] VBAT_BASED_RECHG_BIT write 1
+[  400.566033] VBAT_BASED_RECHG_BIT read 2
+[  400.566086] QCOM-STEPCHG: handle_step_chg_config: VBAT_AVG = 4478013 Step-FCC = 3920000uA taper-fcc: 1
+[  400.566119] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.574211] healthd: battery l=100 v=4478 t=26.1 h=2 st=2 c=-192871 fc=4820000 cc=25 chg=a
+[  400.574457] smb5_batt_get_prop:charge_full_design is 5000000 
+[  400.576215] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  400.865949] N7 call monitor_smart_chg
+[  400.866001] N7 enter monitor_smart_chg, en_ret = 0, fun_val = 0, active_status = 0, smart_soc = 50, ui_soc =100, smart_ctrl_en = 0
+[  401.123543] QG-K: battery_soc_smooth_tracking_new: smooth_new:soc:100, last_soc:100, raw_soc:100, soc_changed:1, update_now:0, charge_status:1, batt_ma:194
+[  401.144335] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  402.151727] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  402.914486] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  402.914635] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  402.914766] real_type=9
+[  402.914881] QCOM-BATT: pl_fv_vote_callback: pl_fv_vote_callback, fv_uv = 4450000, smart_batt = 0, fv_ageing = 0, val = 4450000
+[  403.158546] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
+[  404.162955] pm7250b_charger: smblib_get_prop_batt_status: usb_online=1, dc_online=1, stat=4
