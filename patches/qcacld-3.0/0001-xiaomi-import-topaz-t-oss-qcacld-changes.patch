@@ -1,0 +1,597 @@
+From 694cefcc4477b5366172f548275f0f303816e686 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH] xiaomi: import topaz-t-oss qcacld changes
+
+Diff of MiCode topaz-t-oss against its CLO base, re-applied with 3-way merge.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../policy_mgr/inc/wlan_policy_mgr_api.h      |  11 ++
+ .../policy_mgr/inc/wlan_policy_mgr_cfg.h      |  35 ++++
+ .../src/wlan_policy_mgr_get_set_utils.c       |  18 ++
+ .../policy_mgr/src/wlan_policy_mgr_i.h        |   1 +
+ .../policy_mgr/src/wlan_policy_mgr_pcl.c      | 159 +++++++++++++++---
+ .../src/wlan_policy_mgr_tables_2x2_dbs_i.h    |   6 +-
+ .../src/wlan_policy_mgr_tables_no_dbs_i.h     |   8 +-
+ .../policy_mgr/src/wlan_policy_mgr_ucfg.c     |   3 +
+ core/hdd/src/wlan_hdd_cfg80211.c              |   7 +
+ core/hdd/src/wlan_hdd_ioctl.h                 |  43 +++--
+ core/hdd/src/wlan_hdd_nud_tracking.c          |   4 +-
+ core/sap/src/sap_fsm.c                        |  25 +++
+ 12 files changed, 266 insertions(+), 54 deletions(-)
+
+diff --git a/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_api.h b/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_api.h
+index 286168d..75d876a 100644
+--- a/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_api.h
++++ b/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_api.h
+@@ -3645,6 +3645,17 @@ bool policy_mgr_is_sap_allowed_on_dfs_freq(struct wlan_objmgr_pdev *pdev,
+ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+ 		struct wlan_objmgr_psoc *psoc);
+ 
++/**
++ * policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan() - check if disallow
++ * sap to work on dfs/indoor chan outside mac working freq
++ * @psoc: pointer to soc
++ * check if disallow sap to work on dfs/indoor chan outside mac working freq
++ *
++ * Return: true if disallowsap to work on dfs/indoor chan outside mac working freq
++ */
++bool policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan(
++		struct wlan_objmgr_psoc *psoc);
++
+ /**
+  * policy_mgr_is_special_mode_active_5g() - check if given mode active in 5g
+  * @psoc: pointer to soc
+diff --git a/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_cfg.h b/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_cfg.h
+index 0b23303..6ecf1ba 100644
+--- a/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_cfg.h
++++ b/components/cmn_services/policy_mgr/inc/wlan_policy_mgr_cfg.h
+@@ -452,6 +452,40 @@ CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 2, CFG_VALUE_OR_DEFAULT, \
+ 			true, \
+ 			"Allow STA+SAP SCC on indoor channel")
+ 
++/*
++ * <ini>
++ * mi_sap_only_allow_sta_dfs_indoor_chan - Only when mac is already working
++ * in the dfs/indoor channel, sap are allowed to work in the same channel.
++ * @Min: 0
++ * @Max: 1
++ * @Default: 1
++ *
++ * One of wlan interface work on dfs channel or indoor channel,
++ * then, sap can work on this channel.
++ * If not, dfs and indoor channels cannot be used by sap.
++ *
++ * 0 - No restrictions on dfs/indoor channels.
++ * 1 - Only when mac is already working in the dfs/indoor channel,
++ * sap are allowed to work in the same channel. Note that
++ * need to enable three related configurations
++ *
++ * Related:
++ * gEnableDFSMasterCap=1
++ * g_sta_sap_scc_on_dfs_chan=2
++ * gindoor_channel_support=1
++
++ *
++ * Supported Feature: Non-DBS, DBS
++ *
++ * Usage: External
++ *
++ * </ini>
++ */
++
++#define CFG_SAP_ONLY_ALLOW_STA_DFS_INDOOR_CHAN \
++CFG_INI_UINT("mi_sap_only_allow_sta_dfs_indoor_chan", 0, 1, 1, CFG_VALUE_OR_DEFAULT, \
++	     "Do not allow go/p2p to work on dfs/indoor chan outside mac working freq")
++
+ /*
+  * <ini>
+  * gForce1x1Exception - force 1x1 when connecting to certain peer
+@@ -645,6 +679,7 @@ CFG_INI_UINT("g_pcl_band_priority", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+ 		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
+ 		CFG(CFG_ENABLE_SBS)\
+ 		CFG(CFG_STA_SAP_SCC_ON_DFS_CHAN)\
++        CFG(CFG_SAP_ONLY_ALLOW_STA_DFS_INDOOR_CHAN)\
+ 		CFG(CFG_STA_SAP_SCC_ON_INDOOR_CHAN)\
+ 		CFG(CFG_FORCE_1X1_FEATURE)\
+ 		CFG(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST)\
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_get_set_utils.c b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_get_set_utils.c
+index 6a393d1..de61a65 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_get_set_utils.c
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_get_set_utils.c
+@@ -6131,6 +6131,24 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+ 	return status;
+ }
+ 
++bool policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan(
++		struct wlan_objmgr_psoc *psoc)
++{
++	struct policy_mgr_psoc_priv_obj *pm_ctx;
++	bool status = true;
++
++	pm_ctx = policy_mgr_get_context(psoc);
++	if (!pm_ctx) {
++		policy_mgr_err("Invalid Context");
++		return status;
++	}
++
++	if (!pm_ctx->cfg.sap_only_allow_sta_dfs_indoor_chan)
++		status = false;
++
++	return status;
++}
++
+ bool policy_mgr_is_special_mode_active_5g(struct wlan_objmgr_psoc *psoc,
+ 					  enum policy_mgr_con_mode mode)
+ {
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_i.h b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_i.h
+index a1710b4..d8a4d73 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_i.h
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_i.h
+@@ -276,6 +276,7 @@ struct policy_mgr_cfg {
+ 	uint32_t vdev_priority_list;
+ 	uint32_t chnl_select_plcy;
+ 	uint8_t go_force_scc;
++	uint8_t sap_only_allow_sta_dfs_indoor_chan;
+ 	enum policy_mgr_pcl_band_priority pcl_band_priority;
+ 	bool sbs_enable;
+ };
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_pcl.c b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_pcl.c
+index bca4245..df76b7e 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_pcl.c
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_pcl.c
+@@ -590,17 +590,99 @@ void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
+ 	return;
+ }
+ 
++/**
++ * policy_mgr_modify_go_pcl_based_on_indoor() - filter out go available indoor channel
++ * @psoc: pointer to soc
++ * @pcl_list_org: channel list to filter out
++ * @weight_list_org: weight of channel list
++ * @pcl_len_org: length of channel list
++ *
++ * Return: QDF_STATUS
++ */
++static QDF_STATUS
++policy_mgr_modify_go_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
++				      uint32_t *pcl_list_org,
++				      uint8_t *weight_list_org,
++				      uint32_t *pcl_len_org)
++{
++	uint32_t i, pcl_len = 0;
++	uint32_t pcl_list[NUM_CHANNELS];
++	uint8_t weight_list[NUM_CHANNELS];
++	struct policy_mgr_psoc_priv_obj *pm_ctx;
++	bool include_indoor_channel;
++	QDF_STATUS status;
++	uint32_t freq = 0;
++
++	pm_ctx = policy_mgr_get_context(psoc);
++	if (!pm_ctx) {
++		policy_mgr_err("Invalid Context");
++		return QDF_STATUS_E_FAILURE;
++	}
++
++	if (*pcl_len_org > NUM_CHANNELS) {
++		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
++		return QDF_STATUS_E_FAILURE;
++	}
++
++	status = ucfg_mlme_get_indoor_channel_support(psoc,
++						      &include_indoor_channel);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		policy_mgr_err("failed to get indoor channel skip info");
++		return status;
++	}
++
++	if (include_indoor_channel && policy_mgr_get_connection_count(psoc) == 1 &&
++		wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev, pm_conc_connection_list[0].freq)) {
++
++		freq = pm_conc_connection_list[0].freq;
++		policy_mgr_debug("allow p2p go create on indoor freq %u", freq);
++
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
++								pcl_list_org[i]) &&
++							  freq != pcl_list_org[i])
++				continue;
++			pcl_list[pcl_len] = pcl_list_org[i];
++			weight_list[pcl_len++] = weight_list_org[i];
++		}
++	} else {
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
++								pcl_list_org[i]))
++				continue;
++			pcl_list[pcl_len] = pcl_list_org[i];
++			weight_list[pcl_len++] = weight_list_org[i];
++		}
++	}
++
++	qdf_mem_zero(pcl_list_org, *pcl_len_org * sizeof(*pcl_list_org));
++	qdf_mem_zero(weight_list_org, *pcl_len_org);
++	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len * sizeof(*pcl_list_org));
++	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
++	*pcl_len_org = pcl_len;
++
++	return QDF_STATUS_SUCCESS;
++}
++
+ static QDF_STATUS policy_mgr_modify_pcl_based_on_enabled_channels(
+ 					struct policy_mgr_psoc_priv_obj *pm_ctx,
+ 					uint32_t *pcl_list_org,
+ 					uint8_t *weight_list_org,
+-					uint32_t *pcl_len_org)
++					uint32_t *pcl_len_org,
++					struct wlan_objmgr_psoc *psoc)
+ {
+-	uint32_t i, pcl_len = 0;
++	uint32_t i, pcl_len = 0, freq = 0;
++	if (policy_mgr_get_connection_count(psoc) == 1 && 
++		pm_conc_connection_list[0].ch_flagext &
++		(IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) {
++		freq = pm_conc_connection_list[0].freq;
++		policy_mgr_debug("allow p2p go create on dfs freq=%u", freq);
++	}
+ 
+ 	for (i = 0; i < *pcl_len_org; i++) {
+ 		if (!wlan_reg_is_passive_or_disable_for_freq(
+-			pm_ctx->pdev, pcl_list_org[i])) {
++			pm_ctx->pdev, pcl_list_org[i]) ||
++			freq == pcl_list_org[i]) {
+ 			pcl_list_org[pcl_len] = pcl_list_org[i];
+ 			weight_list_org[pcl_len++] = weight_list_org[i];
+ 		}
+@@ -747,6 +829,7 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_dfs(
+ 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+ 	bool skip_dfs_channel = false;
+ 	QDF_STATUS status;
++    uint32_t freq = 0;
+ 
+ 	pm_ctx = policy_mgr_get_context(psoc);
+ 	if (!pm_ctx) {
+@@ -765,16 +848,27 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_dfs(
+ 	}
+ 
+ 	if (!skip_dfs_channel) {
+-		policy_mgr_debug("No more operation on DFS channel");
+-		return QDF_STATUS_SUCCESS;
+-	}
++		if (policy_mgr_get_connection_count(psoc) == 1) {
++			freq = pm_conc_connection_list[0].freq;
++			policy_mgr_debug("allow sap create on dfs freq=%u", freq);
++		}
+ 
+-	for (i = 0; i < *pcl_len_org; i++) {
+-		if (!wlan_reg_is_dfs_in_secondary_list_for_freq(
+-							pm_ctx->pdev,
+-							pcl_list_org[i])) {
+-			pcl_list_org[pcl_len] = pcl_list_org[i];
+-			weight_list_org[pcl_len++] = weight_list_org[i];
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (!wlan_reg_is_dfs_in_secondary_list_for_freq(
++					pm_ctx->pdev, pcl_list_org[i]) ||
++					freq == pcl_list_org[i]) {
++				pcl_list_org[pcl_len] = pcl_list_org[i];
++				weight_list_org[pcl_len++] = weight_list_org[i];
++			}
++		}
++	} else {
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (!wlan_reg_is_dfs_in_secondary_list_for_freq(
++								pm_ctx->pdev,
++								pcl_list_org[i])) {
++				pcl_list_org[pcl_len] = pcl_list_org[i];
++				weight_list_org[pcl_len++] = weight_list_org[i];
++			}
+ 		}
+ 	}
+ 
+@@ -880,6 +974,7 @@ policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
+ 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+ 	bool include_indoor_channel, sta_sap_scc_on_indoor_channel_allowed;
+ 	QDF_STATUS status;
++	uint32_t freq = 0;
+ 
+ 	pm_ctx = policy_mgr_get_context(psoc);
+ 	if (!pm_ctx) {
+@@ -911,16 +1006,27 @@ policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
+ 		include_indoor_channel = true;
+ 
+ 	if (include_indoor_channel) {
+-		policy_mgr_debug("Indoor channels allowed. PCL not modifed for indoor channels");
+-		return QDF_STATUS_SUCCESS;
+-	}
++		if (policy_mgr_get_connection_count(psoc) == 1) {
++			freq = pm_conc_connection_list[0].freq;
++			policy_mgr_debug("allow sap create on indoor freq %u", freq);
++		}
+ 
+-	for (i = 0; i < *pcl_len_org; i++) {
+-		if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
+-							      pcl_list_org[i]))
+-			continue;
+-		pcl_list[pcl_len] = pcl_list_org[i];
+-		weight_list[pcl_len++] = weight_list_org[i];
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
++								pcl_list_org[i]) &&
++							  freq != pcl_list_org[i])
++				continue;
++			pcl_list[pcl_len] = pcl_list_org[i];
++			weight_list[pcl_len++] = weight_list_org[i];
++		}
++	} else {
++		for (i = 0; i < *pcl_len_org; i++) {
++			if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
++								pcl_list_org[i]))
++				continue;
++			pcl_list[pcl_len] = pcl_list_org[i];
++			weight_list[pcl_len++] = weight_list_org[i];
++		}        
+ 	}
+ 
+ 	qdf_mem_zero(pcl_list_org, *pcl_len_org * sizeof(*pcl_list_org));
+@@ -1142,12 +1248,19 @@ static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
+ 	}
+ 
+ 	status = policy_mgr_modify_pcl_based_on_enabled_channels(
+-			pm_ctx, pcl_channels, pcl_weight, len);
++			pm_ctx, pcl_channels, pcl_weight, len, psoc);
+ 	if (QDF_IS_STATUS_ERROR(status)) {
+ 		policy_mgr_err("failed to get modified pcl for GO");
+ 		return status;
+ 	}
+ 
++	status = policy_mgr_modify_go_pcl_based_on_indoor(psoc, pcl_channels,
++						       pcl_weight, len);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		policy_mgr_err("failed to get indoor modified pcl for P2P GO");
++		return status;
++	}
++
+ 	wlan_mlme_get_srd_master_mode_for_vdev(psoc, QDF_P2P_GO_MODE,
+ 					       &srd_chan_enabled);
+ 
+@@ -1357,6 +1470,8 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
+ 	status = policy_mgr_modify_pcl_based_on_dnbs(psoc, pcl_channels,
+ 						pcl_weight, len);
+ 
++	policy_mgr_dump_channel_list(*len, pcl_channels, pcl_weight);
++
+ 	if (QDF_IS_STATUS_ERROR(status)) {
+ 		policy_mgr_err("failed to get modified pcl based on DNBS");
+ 		return status;
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_2x2_dbs_i.h b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_2x2_dbs_i.h
+index cbb5dec..aae9c1f 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_2x2_dbs_i.h
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_2x2_dbs_i.h
+@@ -52,8 +52,7 @@ pm_second_connection_pcl_dbs_2x2_table = {
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+ 	[PM_SAP_MODE] = {PM_24G_SCC_CH_SBS_CH,
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+-	[PM_P2P_CLIENT_MODE] =	{ PM_24G_SCC_CH_SBS_CH,
+-		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
++	[PM_P2P_CLIENT_MODE] = {PM_SCC_CH_24G, PM_SCC_CH_24G, PM_SCC_CH_24G},
+ 	[PM_P2P_GO_MODE] = {PM_SCC_CH_24G,
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+ 	[PM_NAN_DISC_MODE] = {PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH,
+@@ -65,8 +64,7 @@ pm_second_connection_pcl_dbs_2x2_table = {
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+ 	[PM_SAP_MODE] = {PM_24G_SCC_CH_SBS_CH,
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+-	[PM_P2P_CLIENT_MODE] =	{ PM_24G_SCC_CH_SBS_CH,
+-		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
++	[PM_P2P_CLIENT_MODE] =	{PM_SCC_CH_24G, PM_SCC_CH_24G, PM_SCC_CH_24G},
+ 	[PM_P2P_GO_MODE] = {PM_SCC_CH_24G,
+ 		PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH},
+ 	[PM_NAN_DISC_MODE] = {PM_24G_SCC_CH_SBS_CH, PM_24G_SCC_CH_SBS_CH,
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_no_dbs_i.h b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_no_dbs_i.h
+index 50dacf8..ed5923c 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_no_dbs_i.h
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_tables_no_dbs_i.h
+@@ -33,7 +33,7 @@ second_connection_pcl_nodbs_table[PM_MAX_ONE_CONNECTION_MODE]
+ 	[PM_STA_MODE] = {PM_5G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_SAP_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_P2P_CLIENT_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH_5G},
+-	[PM_P2P_GO_MODE] = {PM_5G, PM_SCC_CH, PM_SCC_CH_5G},
++	[PM_P2P_GO_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_NAN_DISC_MODE] = {PM_NONE, PM_NONE, PM_NONE},
+ 	[PM_NDI_MODE] = {PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE} },
+ 
+@@ -41,7 +41,7 @@ second_connection_pcl_nodbs_table[PM_MAX_ONE_CONNECTION_MODE]
+ 	[PM_STA_MODE] = {PM_5G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_SAP_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_P2P_CLIENT_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH_5G},
+-	[PM_P2P_GO_MODE] = {PM_5G, PM_SCC_CH, PM_SCC_CH_5G},
++	[PM_P2P_GO_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_NAN_DISC_MODE] = {PM_NONE, PM_NONE, PM_NONE},
+ 	[PM_NDI_MODE] = {PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE} },
+ 
+@@ -49,7 +49,7 @@ second_connection_pcl_nodbs_table[PM_MAX_ONE_CONNECTION_MODE]
+ 	[PM_STA_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_SAP_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_P2P_CLIENT_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH},
+-	[PM_P2P_GO_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH},
++	[PM_P2P_GO_MODE] = {PM_SCC_CH_24G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_NAN_DISC_MODE] = {PM_NONE, PM_NONE, PM_NONE},
+ 	[PM_NDI_MODE] = {PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE} },
+ 
+@@ -57,7 +57,7 @@ second_connection_pcl_nodbs_table[PM_MAX_ONE_CONNECTION_MODE]
+ 	[PM_STA_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH_5G},
+ 	[PM_SAP_MODE] = {PM_SCC_CH_5G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_P2P_CLIENT_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH},
+-	[PM_P2P_GO_MODE] = {PM_SCC_CH, PM_SCC_CH, PM_SCC_CH},
++	[PM_P2P_GO_MODE] = {PM_SCC_CH_24G, PM_SCC_CH, PM_SCC_CH},
+ 	[PM_NAN_DISC_MODE] = {PM_NONE, PM_NONE, PM_NONE},
+ 	[PM_NDI_MODE] = {PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE} },
+ 
+diff --git a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_ucfg.c b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_ucfg.c
+index 75fe035..1a64826 100644
+--- a/components/cmn_services/policy_mgr/src/wlan_policy_mgr_ucfg.c
++++ b/components/cmn_services/policy_mgr/src/wlan_policy_mgr_ucfg.c
+@@ -62,6 +62,9 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
+ 		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
+ 	cfg->sta_sap_scc_on_dfs_chnl =
+ 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
++	cfg->sap_only_allow_sta_dfs_indoor_chan =
++		cfg_get(psoc, CFG_SAP_ONLY_ALLOW_STA_DFS_INDOOR_CHAN);
++
+ 
+ 	/*
+ 	 * Override concurrency sta+sap indoor flag to true if global indoor
+diff --git a/core/hdd/src/wlan_hdd_cfg80211.c b/core/hdd/src/wlan_hdd_cfg80211.c
+index 2f44b47..501ee4d 100644
+--- a/core/hdd/src/wlan_hdd_cfg80211.c
++++ b/core/hdd/src/wlan_hdd_cfg80211.c
+@@ -12780,6 +12780,13 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
+ 		else
+ 			w_pcl[i].flag = PCL_CHANNEL_SUPPORT_CLI;
+ 	}
++
++        /* Do not add MCC or unsupported ch in p2p prefer list */
++        if (intf_mode == PM_P2P_GO_MODE || intf_mode == PM_P2P_CLIENT_MODE){
++	    hdd_debug("Do not add MCC or unsupported ch in p2p prefer list");
++	    return pcl_len;
++	} 
++
+ 	chan_idx = pcl_len;
+ 	if (!conn_count || policy_mgr_is_hw_dbs_capable(psoc) ||
+ 	    policy_mgr_is_interband_mcc_supported(psoc)) {
+diff --git a/core/hdd/src/wlan_hdd_ioctl.h b/core/hdd/src/wlan_hdd_ioctl.h
+index 8beea29..6aea913 100644
+--- a/core/hdd/src/wlan_hdd_ioctl.h
++++ b/core/hdd/src/wlan_hdd_ioctl.h
+@@ -27,34 +27,33 @@
+ extern struct sock *cesium_nl_srv_sock;
+ 
+ /**
+- * hdd_ioctl() - ioctl handler (wrapper) for wlan network interfaces
+- * @net_dev: device upon which the ioctl was received
+- * @ifr: ioctl request information
+- * @cmd: ioctl command
+- *
+- * This function acts as an SSR-protecting wrapper to __hdd_ioctl()
+- * which is where the ioctls are really handled.
+- *
+- * Return: 0 on success, non-zero on error
+- */
++* hdd_ioctl() - ioctl handler (wrapper) for wlan network interfaces
++* @net_dev: device upon which the ioctl was received
++* @ifr: ioctl request information
++* @cmd: ioctl command
++*
++* This function acts as an SSR-protecting wrapper to __hdd_ioctl()
++* which is where the ioctls are really handled.
++*
++* Return: 0 on success, non-zero on error
++*/
+ int hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
+ 
+ /**
+- * hdd_dev_private_ioctl() - private ioctl handler for wlan network interfaces
+- * @net_dev: device upon which the ioctl was received
+- * @ifr: ioctl request information
+- * @data: pointer to the raw command data in the ioctl request
+- * @cmd: ioctl command
+- *
+- * For Kernel 5.15+, this function acts as an SSR-protecting wrapper
+- * to __hdd_ioctl(), which is where the ioctls are really handled.
+- *
+- * Return: 0 on success, non-zero on error
+- */
++* hdd_dev_private_ioctl() - private ioctl handler for wlan network interfaces
++* @net_dev: device upon which the ioctl was received
++* @ifr: ioctl request information
++* @data: pointer to the raw command data in the ioctl request
++* @cmd: ioctl command
++*
++* For Kernel 5.15+, this function acts as an SSR-protecting wrapper
++* to __hdd_ioctl(), which is where the ioctls are really handled.
++*
++* Return: 0 on success, non-zero on error
++*/
+ int hdd_dev_private_ioctl(struct net_device *dev, struct ifreq *ifr,
+ 			  void __user *data, int cmd);
+ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate);
+-
+ /**
+  * hdd_update_smps_antenna_mode() - set smps and antenna mode
+  * @hdd_ctx: Pointer to hdd context
+diff --git a/core/hdd/src/wlan_hdd_nud_tracking.c b/core/hdd/src/wlan_hdd_nud_tracking.c
+index 19411c5..562797e 100644
+--- a/core/hdd/src/wlan_hdd_nud_tracking.c
++++ b/core/hdd/src/wlan_hdd_nud_tracking.c
+@@ -267,6 +267,8 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
+ static void
+ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
+ {
++	hdd_debug("Do not disconnect after NUD Failure");
++	return;
+ 	wlan_hdd_cm_issue_disconnect(adapter,
+ 				     REASON_GATEWAY_REACHABILITY_FAILURE,
+ 				     false);
+@@ -406,8 +408,6 @@ static void hdd_nud_process_failure_event(struct hdd_adapter *adapter)
+ 		hdd_nud_capture_stats(adapter, NUD_FAILED);
+ 		if (hdd_nud_honour_failure(adapter)) {
+ 			adapter->nud_tracking.curr_state = NUD_FAILED;
+-			qdf_sched_work(0, &adapter
+-					->nud_tracking.nud_event_work);
+ 		} else {
+ 			hdd_debug("NUD_START [0x%x]", NUD_INCOMPLETE);
+ 			hdd_nud_capture_stats(adapter, NUD_INCOMPLETE);
+diff --git a/core/sap/src/sap_fsm.c b/core/sap/src/sap_fsm.c
+index e020876..9cfe335 100644
+--- a/core/sap/src/sap_fsm.c
++++ b/core/sap/src/sap_fsm.c
+@@ -4020,6 +4020,10 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
+ 	uint8_t i;
+ 	bool srd_chan_enabled;
+ 	enum QDF_OPMODE vdev_opmode;
++	bool is_sap_only_allow_sta_dfs_indoor_chan = true;
++	uint32_t work_freq = 0;
++	uint32_t max_num_of_conc_connections = 0;
++	struct policy_mgr_conc_connection_info *pm_conc_connection_list = NULL;
+ 
+ 	mac_ctx = sap_get_mac_context();
+ 	if (!mac_ctx) {
+@@ -4029,6 +4033,16 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
+ 		return QDF_STATUS_E_FAULT;
+ 	}
+ 
++	pm_conc_connection_list = policy_mgr_get_conn_info(&max_num_of_conc_connections);
++	if (mac_ctx->psoc) {
++		if (policy_mgr_get_connection_count(mac_ctx->psoc) == 1) {
++			work_freq = pm_conc_connection_list[0].freq;
++			sap_debug("allow sap to use freq %u", work_freq);
++		}
++		is_sap_only_allow_sta_dfs_indoor_chan =
++			policy_mgr_is_sap_only_allow_sta_dfs_indoor_chan(mac_ctx->psoc);
++	}
++
+ 	weight_list = mac_ctx->mlme_cfg->acs.normalize_weight_chan;
+ 	range_list = mac_ctx->mlme_cfg->acs.normalize_weight_range;
+ 
+@@ -4118,6 +4132,17 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
+ 					sap_ctx->acs_cfg->freq_list,
+ 					sap_ctx->acs_cfg->ch_list_count))
+ 			continue;
++
++		/* Only allow sap to use indoor/dfs channel when sta using same channel.
++		 * Currently, sap can work on the same channel only when a connection
++		 * is working on indoor/dfs channel
++		 */
++		if (mac_ctx->pdev && work_freq != chan_freq &&
++				is_sap_only_allow_sta_dfs_indoor_chan &&
++				(wlan_reg_is_freq_indoor(mac_ctx->pdev, chan_freq) ||
++				wlan_reg_is_dfs_for_freq(mac_ctx->pdev, chan_freq)))
++			continue;
++
+ 		/* Dont scan DFS channels in case of MCC disallowed
+ 		 * As it can result in SAP starting on DFS channel
+ 		 * resulting  MCC on DFS channel
+-- 
+2.53.0
+

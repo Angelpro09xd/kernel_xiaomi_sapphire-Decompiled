@@ -1,0 +1,1373 @@
+From d36ab38314f982f239fc832bcccf37e72979ace9 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH] xiaomi: import topaz-t-oss camera changes
+
+Diff of MiCode topaz-t-oss against its CLO base, re-applied with 3-way merge.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ Kbuild                                        |   9 +-
+ drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.h   |   4 +-
+ drivers/cam_req_mgr/cam_req_mgr_core.h        |   2 +-
+ drivers/cam_req_mgr/cam_req_mgr_dev.c         |   2 +-
+ .../cam_flash/cam_flash_dev.c                 | 165 +++-
+ .../cam_flash/cam_flash_dev.h                 |   3 +
+ .../cam_sensor/cam_sensor_dev.c               |   3 +
+ .../cam_sensor_utils/cam_sensor_cmn_header.h  |   4 +
+ .../cam_sensor_utils/cam_sensor_util.c        |  96 ++-
+ drivers/cam_sync/cam_sync_private.h           |   2 +-
+ drivers/camera_main.c                         |   2 +
+ drivers/wl2866d/wl2866d.c                     | 767 ++++++++++++++++++
+ drivers/wl2866d/wl2866d.h                     |  25 +
+ 13 files changed, 1073 insertions(+), 11 deletions(-)
+ create mode 100644 drivers/wl2866d/wl2866d.c
+ create mode 100644 drivers/wl2866d/wl2866d.h
+
+diff --git a/Kbuild b/Kbuild
+index d854dec..9f68dc9 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -181,7 +181,10 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
+ 	drivers/cam_sensor_module/cam_sensor_io/cam_sensor_qup_i2c.o \
+ 	drivers/cam_sensor_module/cam_sensor_io/cam_sensor_spi.o \
+ 	drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.o \
+-	drivers/cam_sensor_module/cam_res_mgr/cam_res_mgr.o
++	drivers/cam_sensor_module/cam_res_mgr/cam_res_mgr.o \
++	drivers/cam_sensor_module/cam_flash/cam_flash_dev.o \
++	drivers/cam_sensor_module/cam_flash/cam_flash_core.o \
++	drivers/cam_sensor_module/cam_flash/cam_flash_soc.o
+ 
+ camera-$(CONFIG_LEDS_QPNP_FLASH_V2) += \
+ 	drivers/cam_sensor_module/cam_flash/cam_flash_dev.o \
+@@ -228,7 +231,9 @@ camera-$(CONFIG_SPECTRA_TFE) += \
+ 	drivers/cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid530.o \
+ 	drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.o
+ 
+-camera-y += drivers/camera_main.o
++
++camera-y += drivers/camera_main.o \
++	drivers/wl2866d/wl2866d.o
+ 
+ obj-m += camera.o
+ BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/camera.ko
+diff --git a/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.h b/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.h
+index 244c2d7..31193aa 100644
+--- a/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.h
++++ b/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.h
+@@ -61,8 +61,8 @@
+ #define CLK_HW_MAX                 0x1
+ 
+ #define OPE_DEVICE_IDLE_TIMEOUT    400
+-#define OPE_REQUEST_RT_TIMEOUT        200
+-#define OPE_REQUEST_NRT_TIMEOUT        400
++#define OPE_REQUEST_RT_TIMEOUT        300
++#define OPE_REQUEST_NRT_TIMEOUT        500
+ 
+ /**
+  * struct cam_ope_clk_bw_request_v2
+diff --git a/drivers/cam_req_mgr/cam_req_mgr_core.h b/drivers/cam_req_mgr/cam_req_mgr_core.h
+index 21b3c8f..3edecda 100644
+--- a/drivers/cam_req_mgr/cam_req_mgr_core.h
++++ b/drivers/cam_req_mgr/cam_req_mgr_core.h
+@@ -14,7 +14,7 @@
+ #define CAM_REQ_MGR_MAX_LINKED_DEV     16
+ #define MAX_REQ_SLOTS                  48
+ 
+-#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          1000
++#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          5000
+ #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_DEFAULT  5000
+ #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_MAX      50000
+ #define CAM_REQ_MGR_SCHED_REQ_TIMEOUT         1000
+diff --git a/drivers/cam_req_mgr/cam_req_mgr_dev.c b/drivers/cam_req_mgr/cam_req_mgr_dev.c
+index b433962..2ecb536 100644
+--- a/drivers/cam_req_mgr/cam_req_mgr_dev.c
++++ b/drivers/cam_req_mgr/cam_req_mgr_dev.c
+@@ -28,7 +28,7 @@
+ #include "cam_debug_util.h"
+ #include "cam_common_util.h"
+ 
+-#define CAM_REQ_MGR_EVENT_MAX 30
++#define CAM_REQ_MGR_EVENT_MAX 120
+ 
+ static struct cam_req_mgr_device g_dev;
+ struct kmem_cache *g_cam_req_mgr_timer_cachep;
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
+index d749fbf..a8ebf89 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
+@@ -9,6 +9,94 @@
+ #include "cam_flash_core.h"
+ #include "cam_common_util.h"
+ 
++
++//------add flash node-liyongyi-2022/9/28 start
++struct cam_flash_ctrl *flash_fctrl = NULL;
++int led_flash_state = 0;
++struct cam_sensor_i2c_reg_array flash_init_array[3] = {{0x01, 0x00, 0, 0},
++							{0x03, 0x56, 0, 0},
++							{0x04, 0x2C, 0, 0}};
++struct cam_sensor_i2c_reg_array flash_open_array[2] = {{0x04, 0x2C, 0, 0},
++							{0x01, 0x02, 0, 0}};
++struct cam_sensor_i2c_reg_array flash_close_array = {0x01, 0x00, 0, 0};
++struct cam_sensor_i2c_reg_setting flash_init_setting= {flash_init_array,
++						3,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						0,
++						NULL,
++						0};
++struct cam_sensor_i2c_reg_setting flash_open_setting= {flash_open_array,
++						2,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						0,
++						NULL,
++						0};
++struct cam_sensor_i2c_reg_setting flash_close_setting= {&flash_close_array,
++						1,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						CAMERA_SENSOR_I2C_TYPE_BYTE,
++						0,
++						NULL,
++						0};
++static enum led_brightness torch_brightness_get(struct led_classdev *cdev)
++{
++	return led_flash_state;
++}
++static void torch_brightness_set(struct led_classdev *cdev, enum led_brightness level)
++{
++	int rc = 0;
++	uint32_t read_fault_flag = 0;
++	CAM_ERR(CAM_FLASH,"set torch brightness level:%d", level);
++
++	if ((level > 0 && led_flash_state > 0) || (level == 0 && led_flash_state == 0))
++	{
++		led_flash_state = level;
++		CAM_INFO(CAM_FLASH, "same state! no need to set");
++		return;
++	}
++
++	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "regulator power up for flash failed %d",  rc);
++		return;
++	}
++	rc = camera_io_dev_read(&flash_fctrl->io_master_info,0x05,&read_fault_flag,1,1);
++	if (rc != 0)
++	{
++		CAM_ERR(CAM_FLASH, "Clear fault flag for ktd2691 flash failed %d",  rc);
++	}
++	if (level > 0) {
++		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_init_setting);
++		if (rc < 0) {
++			CAM_ERR(CAM_FLASH, "init flash failed %d",  rc);
++			return;
++		}
++		//flash_open_setting
++		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_open_setting);
++		if (rc < 0) {
++			CAM_ERR(CAM_FLASH, "open flash failed %d",  rc);
++			return;
++		}
++          	led_flash_state = level;
++	} else {
++		//flash_close_setting
++		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
++		if (rc < 0) {
++			CAM_ERR(CAM_FLASH, "close flash failed");
++			return;
++		}
++          	led_flash_state = 0;
++	}
++	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "regulator power down for flash failed %d",  rc);
++		return;
++	}
++}
++//------add flash node-liyongyi-2022/9/28 start
++
+ static int32_t cam_flash_driver_cmd(struct cam_flash_ctrl *fctrl,
+ 		void *arg, struct cam_flash_private_soc *soc_private)
+ {
+@@ -248,6 +336,7 @@ static long cam_flash_subdev_ioctl(struct v4l2_subdev *sd,
+ 	unsigned int cmd, void *arg)
+ {
+ 	int rc = 0;
++	uint32_t read_fault_flag = 0;
+ 	struct cam_flash_ctrl *fctrl = NULL;
+ 	struct cam_flash_private_soc *soc_private = NULL;
+ 
+@@ -255,6 +344,13 @@ static long cam_flash_subdev_ioctl(struct v4l2_subdev *sd,
+ 
+ 	fctrl = v4l2_get_subdevdata(sd);
+ 	soc_private = fctrl->soc_info.soc_private;
++	//------Clear fault flag start
++	rc = camera_io_dev_read(&fctrl->io_master_info,0x05,&read_fault_flag,1,1);
++	if (rc == 0)
++	{
++		CAM_DBG(CAM_FLASH, "read_fault_flag %#x for ktd2691 flash",  read_fault_flag);
++	}
++	//------Clear fault  end
+ 
+ 	switch (cmd) {
+ 	case VIDIOC_CAM_CONTROL: {
+@@ -412,6 +508,7 @@ static int cam_flash_init_subdev(struct cam_flash_ctrl *fctrl)
+ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
+ {
+ 	int32_t rc = 0, i = 0;
++	uint32_t FlashDeviceId = 0;
+ 	struct cam_flash_ctrl *fctrl     = NULL;
+ 	struct device_node *of_parent    = NULL;
+ 	struct cam_hw_soc_info *soc_info = NULL;
+@@ -525,6 +622,45 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
+ 		else
+ 			goto free_resource;
+ 	}
++//------add flash node-liyongyi-2022/9/28 start
++	flash_fctrl = fctrl;
++	flash_fctrl->io_master_info.cci_client->cci_i2c_master = fctrl->cci_i2c_master;
++	flash_fctrl->io_master_info.cci_client->i2c_freq_mode = I2C_FAST_MODE;
++	flash_fctrl->io_master_info.cci_client->sid = (0xc8 >> 1);
++	// register led_classdeev
++	fctrl->cdev.name = "led:torch";
++	fctrl->cdev.brightness_get = torch_brightness_get;
++	fctrl->cdev.brightness_set = torch_brightness_set;
++	fctrl->cdev.max_brightness = 255;
++	rc = devm_led_classdev_register(&pdev->dev, &fctrl->cdev);
++	if (rc < 0) {
++		CAM_ERR(CAM_FLASH, "devm_led_classdev_register failed with %d", rc);
++	}
++
++	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "hzk regulator power up for flash failed %d",  rc);
++		return -EINVAL;
++	}
++	rc = camera_io_dev_read(&flash_fctrl->io_master_info,0x06,&FlashDeviceId,1,1);
++	if (rc != 0)
++	{
++		CAM_ERR(CAM_FLASH, "read id for ktd2691 flash failed %d",  rc);
++	}
++
++	rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
++	if (rc < 0) {
++		CAM_ERR(CAM_FLASH, "hzk : init flash closed state failed %d",  rc);
++		return -EINVAL;
++	}
++
++	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "hzk regulator power down for flash failed %d",  rc);
++		return -EINVAL;
++	}
++
++//------add flash node-liyongyi-2022/9/28 start
+ 
+ 	fctrl->bridge_intf.device_hdl = -1;
+ 	fctrl->bridge_intf.link_hdl = -1;
+@@ -537,7 +673,7 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
+ 	mutex_init(&(fctrl->flash_mutex));
+ 
+ 	fctrl->flash_state = CAM_FLASH_STATE_INIT;
+-	CAM_DBG(CAM_FLASH, "Probe success");
++	CAM_INFO(CAM_FLASH, "FlashDeviceId = %#x Probe success", FlashDeviceId);
+ 	return rc;
+ 
+ free_cci_resource:
+@@ -712,6 +848,33 @@ int32_t cam_flash_init_module(void)
+ 
+ void cam_flash_exit_module(void)
+ {
++	int rc = -1;
++
++	if(!flash_fctrl) {
++		CAM_ERR(CAM_FLASH, "flash_fctrl is NUll and skip close flash");
++		goto exit;
++	}
++
++	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "hzk regulator power up for flash failed %d",  rc);
++		goto exit;
++	}
++
++	rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
++	if (rc < 0) {
++		CAM_ERR(CAM_FLASH, "hzk : init flash closed state failed %d",  rc);
++		goto exit;
++	}
++
++	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
++	if (rc != 0) {
++		CAM_ERR(CAM_FLASH, "hzk regulator power down for flash failed %d",  rc);
++		goto exit;
++	}
++	CAM_ERR(CAM_FLASH, "hzk : close i2c flash when camera driver exit");
++
++exit:
+ 	platform_driver_unregister(&cam_flash_platform_driver);
+ 	i2c_del_driver(&cam_flash_i2c_driver);
+ }
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
+index fa9cd7a..d4cd47d 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
+@@ -222,6 +222,9 @@ struct cam_flash_ctrl {
+ 	uint32_t                            last_flush_req;
+ 	uint32_t                            streamoff_count;
+ 	int32_t                             apply_streamoff;
++  	//------add flash node-liyongyi-2022/9/28 start
++	struct led_classdev                 cdev;
++  	//------add flash node-liyongyi-2022/9/28 start
+ };
+ 
+ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg);
+diff --git a/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c b/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
+index 8482341..e0a0548 100644
+--- a/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
++++ b/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
+@@ -369,6 +369,7 @@ static struct i2c_driver cam_sensor_driver_i2c = {
+ int cam_sensor_driver_init(void)
+ {
+ 	int32_t rc = 0;
++	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]cam_sensor_driver_init E");
+ 
+ 	rc = platform_driver_register(&cam_sensor_platform_driver);
+ 	if (rc < 0) {
+@@ -381,6 +382,7 @@ int cam_sensor_driver_init(void)
+ 	if (rc)
+ 		CAM_ERR(CAM_SENSOR, "i2c_add_driver failed rc = %d", rc);
+ 
++	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]sensor i2c_add_driver successful");
+ 	return rc;
+ }
+ 
+@@ -388,6 +390,7 @@ void cam_sensor_driver_exit(void)
+ {
+ 	platform_driver_unregister(&cam_sensor_platform_driver);
+ 	i2c_del_driver(&cam_sensor_driver_i2c);
++	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]sensor i2c_del_driver successful");
+ }
+ 
+ MODULE_DESCRIPTION("cam_sensor_driver");
+diff --git a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
+index 563414e..c28b8b0 100644
+--- a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
++++ b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
+@@ -142,6 +142,10 @@ enum msm_camera_power_seq_type {
+ 	SENSOR_STANDBY,
+ 	SENSOR_CUSTOM_GPIO1,
+ 	SENSOR_CUSTOM_GPIO2,
++	SENSOR_WL2866D_DVDD1,
++	SENSOR_WL2866D_DVDD2,
++	SENSOR_WL2866D_AVDD1,
++	SENSOR_WL2866D_AVDD2,
+ 	SENSOR_SEQ_TYPE_MAX,
+ };
+ 
+diff --git a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
+index f50d658..b44d991 100644
+--- a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
++++ b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
+@@ -8,10 +8,20 @@
+ #include "cam_sensor_util.h"
+ #include "cam_mem_mgr.h"
+ #include "cam_res_mgr_api.h"
++/* hzk add for camera power up bengin*/
++#include "wl2866d.h"
++#define MAX_DELAY_TIME 65420
++#define DELAY_SETP 1000
++/* hzk add for camera power up end*/
+ 
+ #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
+ #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
+ 
++/* hzk add for distinguish front i&&ii bengin */
++#define CAM_SENSOR_FRONT_MIN_VOLTAGE 1050000
++#define CAM_SENSOR_FRONT_MAX_VOLTAGE 1200000
++/* hzk add for distinguish front i&&ii end */
++
+ #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
+ 	(config_val >= min) && (config_val <= max))
+ 
+@@ -934,6 +944,16 @@ int32_t msm_camera_fill_vreg_params(
+ 						soc_info->rgltr_max_volt[j] =
+ 						power_setting[i].config_val;
+ 					}
++					/* hzk add for modify dvdd voltage range bengin */
++					else if (VALIDATE_VOLTAGE(
++						CAM_SENSOR_FRONT_MIN_VOLTAGE,
++						CAM_SENSOR_FRONT_MAX_VOLTAGE,
++						power_setting[i].config_val)) {
++						soc_info->rgltr_min_volt[j] =
++						soc_info->rgltr_max_volt[j] =
++						power_setting[i].config_val;
++					}
++					/* hzk add for modify dvdd voltage range end */
+ 					break;
+ 				}
+ 			}
+@@ -1832,6 +1852,11 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 	int32_t vreg_idx = -1;
+ 	struct cam_sensor_power_setting *power_setting = NULL;
+ 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
++	/* hzk add for camera power up bengin*/
++	uint16_t wl2866_time_delay = 0;
++	int wl2866_iotype = -1;
++	int retry = 0;
++	/* hzk add for camera power up end*/
+ 
+ 	CAM_DBG(CAM_SENSOR, "Enter");
+ 	if (!ctrl) {
+@@ -1895,7 +1920,6 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 		}
+ 
+ 		CAM_DBG(CAM_SENSOR, "seq_type %d", power_setting->seq_type);
+-
+ 		switch (power_setting->seq_type) {
+ 		case SENSOR_MCLK:
+ 			if (power_setting->seq_val >= soc_info->num_clk) {
+@@ -1974,8 +1998,8 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 				goto power_up_failed;
+ 			}
+ 			CAM_DBG(CAM_SENSOR, "gpio set val %d",
+-				gpio_num_info->gpio_num
+-				[power_setting->seq_type]);
++					gpio_num_info->gpio_num
++					[power_setting->seq_type]);
+ 
+ 			rc = msm_cam_sensor_handle_reg_gpio(
+ 				power_setting->seq_type,
+@@ -2052,6 +2076,37 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 				goto power_up_failed;
+ 			}
+ 			break;
++		/* hzk add for camera power up bengin*/
++		case SENSOR_WL2866D_DVDD1:
++		case SENSOR_WL2866D_DVDD2:
++		case SENSOR_WL2866D_AVDD1:
++		case SENSOR_WL2866D_AVDD2:
++			//wl2866 out port num :
++			//		OUT_DVDD1 = 0
++			//		OUT_DVDD2 = 1
++			//		OUT_AVDD1 = 2
++			//		OUT_AVDD2 = 3
++			//but we pre set SENSOR_WL2866D_DVDD1.
++			wl2866_iotype = ((int)power_setting->seq_type) - SENSOR_WL2866D_DVDD1;
++			for(retry = 0; retry < 3; retry++) {
++				rc = wl2866d_camera_power_control(wl2866_iotype, power_setting->config_val);
++				if(rc >= 0)
++					break;
++			}
++			if (rc < 0) {
++				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_up_io_type [%d]  failed seq-val[%d] config[%d] retry time: %d",power_setting->seq_type, power_setting->seq_val, power_setting->config_val, retry);
++				goto power_up_failed;
++			}
++
++			//if wl2866 exit, xml powerUpSequence delayMs now mean delay time
++			wl2866_time_delay = DELAY_SETP * (power_setting->delay);
++			if(MAX_DELAY_TIME < wl2866_time_delay) {
++				wl2866_time_delay = MAX_DELAY_TIME;
++			}
++			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
++			CAM_INFO(CAM_SENSOR,"power_setting->seq_type = [%d], wl2866_time_delay is [%d]", power_setting->seq_type, wl2866_time_delay);
++			break;
++			/* hzk add for camera power up end*/
+ 		default:
+ 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
+ 				power_setting->seq_type);
+@@ -2210,6 +2265,11 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
+ 	struct cam_sensor_power_setting *pd = NULL;
+ 	struct cam_sensor_power_setting *ps = NULL;
+ 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
++	/* hzk add for camera power down bengin*/
++	uint16_t wl2866_time_delay = 0;
++	int wl2866_iotype = -1;
++	int retry = 0;
++	/* hzk add for camera power down end*/
+ 
+ 	CAM_DBG(CAM_SENSOR, "Enter");
+ 	if (!ctrl || !soc_info) {
+@@ -2330,10 +2390,40 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
+ 				CAM_ERR(CAM_SENSOR,
+ 					"Error disabling VREG GPIO");
+ 			break;
++		/* hzk add for camera power down bengin*/
++		case SENSOR_WL2866D_DVDD1:
++		case SENSOR_WL2866D_DVDD2:
++		case SENSOR_WL2866D_AVDD1:
++		case SENSOR_WL2866D_AVDD2:
++			//wl2866 out port num :
++			//		OUT_DVDD1 = 0
++			//		OUT_DVDD2 = 1
++			//		OUT_AVDD1 = 2
++			//		OUT_AVDD2 = 3
++			//but we pre set SENSOR_WL2866D_DVDD1.
++			wl2866_iotype = ((int)pd->seq_type) - SENSOR_WL2866D_DVDD1;
++			for(retry = 0; retry < 3; retry++) {
++				ret = wl2866d_camera_power_control(wl2866_iotype, pd->config_val);
++				if(ret >= 0)
++					break;
++			}
++			if (ret < 0) {
++				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_down iotype [%d] seq-val[%d]config-val[%d] failed retry time: %d", pd->seq_type, pd->seq_val, pd->config_val, retry);
++				break;
++			}
++			//if wl2866 exit, xml powerDownSequence delayMs now mean delay time
++			wl2866_time_delay = DELAY_SETP * (pd->delay);
++			if(MAX_DELAY_TIME < wl2866_time_delay) {
++				wl2866_time_delay = MAX_DELAY_TIME;
++			}
++			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
++			CAM_INFO(CAM_SENSOR,"wl2866d_iotype = [%d], wl2866_time_delay is [%d]", pd->seq_type, wl2866_time_delay);
++			break;
+ 		default:
+ 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
+ 				pd->seq_type);
+ 			break;
++			/* hzk add for camera power down end*/
+ 		}
+ 		if (pd->delay > 20)
+ 			msleep(pd->delay);
+diff --git a/drivers/cam_sync/cam_sync_private.h b/drivers/cam_sync/cam_sync_private.h
+index a77dc5f..518673c 100644
+--- a/drivers/cam_sync/cam_sync_private.h
++++ b/drivers/cam_sync/cam_sync_private.h
+@@ -25,7 +25,7 @@
+ 
+ #define CAM_SYNC_OBJ_NAME_LEN           64
+ #define CAM_SYNC_MAX_OBJS               1024
+-#define CAM_SYNC_MAX_V4L2_EVENTS        100
++#define CAM_SYNC_MAX_V4L2_EVENTS        200
+ #define CAM_SYNC_DEBUG_FILENAME         "cam_debug"
+ #define CAM_SYNC_DEBUG_BASEDIR          "cam"
+ #define CAM_SYNC_DEBUG_BUF_SIZE         32
+diff --git a/drivers/camera_main.c b/drivers/camera_main.c
+index 6add633..8ad4eca 100644
+--- a/drivers/camera_main.c
++++ b/drivers/camera_main.c
+@@ -49,6 +49,7 @@
+ #include "cam_tfe_dev.h"
+ #include "cam_tfe_csid530.h"
+ #include "cam_top_tpg_v1.h"
++#include "wl2866d.h"
+ 
+ struct camera_submodule_component {
+ 	int (*init)(void);
+@@ -90,6 +91,7 @@ static const struct camera_submodule_component camera_sensor[] = {
+ 	{&cam_res_mgr_init, &cam_res_mgr_exit},
+ 	{&cam_cci_init_module, &cam_cci_exit_module},
+ 	{&cam_csiphy_init_module, &cam_csiphy_exit_module},
++	{&cam_wl2866_init_module, &cam_wl2866_exit_module},
+ 	{&cam_actuator_driver_init, &cam_actuator_driver_exit},
+ 	{&cam_sensor_driver_init, &cam_sensor_driver_exit},
+ 	{&cam_eeprom_driver_init, &cam_eeprom_driver_exit},
+diff --git a/drivers/wl2866d/wl2866d.c b/drivers/wl2866d/wl2866d.c
+new file mode 100644
+index 0000000..802800a
+--- /dev/null
++++ b/drivers/wl2866d/wl2866d.c
+@@ -0,0 +1,767 @@
++/*
++ * Copyright (C) 2022 XiaoMi, Inc.
++ */
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/slab.h>
++#include <linux/ctype.h>
++#include <linux/types.h>
++#include <linux/delay.h>
++#include <linux/of_device.h>
++#include <linux/i2c.h>
++#include <linux/of_gpio.h>
++#include <linux/regulator/consumer.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/uaccess.h>
++#include "wl2866d.h"
++
++#define WL2866D_MAX_CONFIG_NUM 16
++#define WL2866D_IO_REG_LIMIT 20
++#define WL2866D_IO_BUFFER_LIMIT 128
++#define WL2866D_MISC_MAJOR 250
++
++#define CONTROL_GPIO54_ENABLE 0
++
++#define WL2866D_PWR_NUMBER 4
++static const char* wl2866d_pwr_name[WL2866D_PWR_NUMBER]={
++	"WL2866D_DVDD1",
++	"WL2866D_DVDD2",
++	"WL2866D_AVDD1",
++	"WL2866D_AVDD2",
++};
++static int wl2866d_pwr_value[WL2866D_PWR_NUMBER]={
++	1200, 1050, 2800, 2800
++};
++struct wl2866d_map {
++	u8 reg;
++	int value;
++};
++static const struct  wl2866d_map  wl2866d_on_config[] = {
++	{0x03, 0x64},    //DVDD1    1.2 V
++	{0x04, 0x4B},    //DVDD2    1.05 V
++	{0x05, 0x80},    //AVDD1    2.8 V
++	{0x06, 0x80},    //AVDD2    2.8 v
++	{0x0E, 0x0F},
++	{0x0E, 0x00},
++	{0x02, 0x8F},
++	{0x02, 0x00},
++};
++
++/*!
++ * reg_value struct
++ */
++struct reg_value {
++    u8 u8Add;
++    u8 u8Val;
++};
++
++/*!
++ * wl2866d_data_t struct
++ */
++struct wl2866d_data_t {
++    struct i2c_client *i2c_client;
++    struct regulator *vin1_regulator;
++    u32 vin1_vol;
++    struct regulator *vin2_regulator;
++    u32 vin2_vol;
++    int en_gpio;
++    u8 chip_id;
++    u8 id_reg;
++    u8 id_val;
++    u8 id_val1;
++    u8 init_num;
++    struct reg_value inits[WL2866D_MAX_CONFIG_NUM];
++    u32 offset;
++    bool on;
++};
++
++/*!
++ * wl2866d_data
++ */
++static struct wl2866d_data_t wl2866d_data;
++struct mutex wl2866d_mutex;
++#if CONTROL_GPIO54_ENABLE
++static int iov_gpio; //gpio54, i2c pull control
++#endif
++
++/*!
++ * wl2866d write reg function
++ *
++ * @param reg u8
++ * @param val u8
++ * @return  Error code indicating success or failure
++ */
++static s32 wl2866d_write_reg(u8 reg, u8 val)
++{
++    u8 au8Buf[2] = {0};
++    au8Buf[0] = reg;
++    au8Buf[1] = val;
++    if (i2c_master_send(wl2866d_data.i2c_client, au8Buf, 2) < 0)
++    {
++        pr_err("%s:write reg error:reg=%x,val=%x\n",
++            __func__, reg, val);
++        return -1;
++    }
++
++    return 0;
++}
++
++/*!
++ * wl2866d read reg function
++ *
++ * @param reg u8
++ * @param val u8 *
++ * @return  Error code indicating success or failure
++ */
++static int wl2866d_read_reg(u8 reg, u8 *val)
++{
++    u8 au8RegBuf[1] = {0};
++    u8 u8RdVal = 0;
++    au8RegBuf[0] = reg;
++    if (1 != i2c_master_send(wl2866d_data.i2c_client, au8RegBuf, 1))
++    {
++        pr_err("%s:write reg error:reg=%x\n", __func__, reg);
++        return -1;
++    }
++    if (1 != i2c_master_recv(wl2866d_data.i2c_client, &u8RdVal, 1))
++    {
++        pr_err("%s:read reg error:reg=%x,val=%x\n",
++                __func__, reg, u8RdVal);
++        return -1;
++    }
++    *val = u8RdVal;
++    printk("wl2866d_read_reg %02x@%02x\n", u8RdVal, reg);
++    return 0;
++}
++
++#if CONTROL_GPIO54_ENABLE
++static void enable_i2c_pullup()
++{
++    int ret = 0;
++    printk("try control gpio 54\n");
++    if (!gpio_is_valid(iov_gpio))
++    {
++        pr_err("no iov pin available--no return");
++        //return -EINVAL;
++    }
++    else{
++        ret = devm_gpio_request_one(&wl2866d_data.i2c_client->dev, iov_gpio,
++            GPIOF_OUT_INIT_HIGH, "wl2866d_iov");
++        if (ret < 0)
++        {
++            pr_err("wl2866d_iov request failed %d\n", ret);
++            //return ret;
++        }
++        else
++        {
++            pr_debug("%s: iov request ok\n", __func__);
++            gpio_direction_output(iov_gpio, 1);
++            printk("wl2866d:iov_gpio set high, free it.\n");
++            devm_gpio_free(&wl2866d_data.i2c_client->dev, iov_gpio);
++        }
++    }
++}
++#endif
++
++/*!
++ * wl2866d power on function
++ *
++ * @param dev struct device *
++ * @return  Error code indicating success or failure
++ */
++static int wl2866d_power_on(struct device *dev)
++{
++    int ret = 0;
++    wl2866d_data.on = false;
++
++    mutex_init(&wl2866d_mutex);
++    wl2866d_data.en_gpio = of_get_named_gpio(dev->of_node, "en-gpio", 0);
++    if (!gpio_is_valid(wl2866d_data.en_gpio))
++    {
++        pr_err("no en pin available");
++        return -EINVAL;
++    }
++
++    ret = devm_gpio_request_one(dev, wl2866d_data.en_gpio,
++        GPIOF_OUT_INIT_LOW, "wl2866d_en");
++    if (ret < 0)
++    {
++        pr_err("wl2866d_en request failed %d\n", ret);
++        return ret;
++    } else {
++		gpio_direction_output(wl2866d_data.en_gpio, 0);
++		printk("wl2866d:en_gpio set low\n");
++    }
++
++#if CONTROL_GPIO54_ENABLE
++    iov_gpio = of_get_named_gpio(dev->of_node, "iov-gpio", 0);
++    enable_i2c_pullup();
++#endif
++    return 0;
++}
++static int wl2866d_init_register(void)
++{
++    int i = 0;
++    int rc = -1;
++    u8 reg[16] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
++    u8 val[16] = {0x00,0x00,0x8f,0x64,0x4b,0x80,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
++
++    for(i = 0; i < 16; i++){
++        rc = wl2866d_write_reg(reg[i],val[i]);
++		if(rc) {
++			pr_err("%s write 0x%x 0x%x failed\n", __func__, reg[i], val[i]);
++			return -1;
++		}
++    }
++
++    return 0;
++}
++
++/*!
++ * wl2866d match id function
++ *
++ * @param dev struct device *
++ * @return  Error code indicating success or failure
++ */
++static int wl2866d_match_id(struct device *dev)
++{
++    int ret = 0;
++
++    ret = of_property_read_u32(dev->of_node, "id_reg",
++        (u32 *) &(wl2866d_data.id_reg));
++    if (ret)
++    {
++        pr_err("id_reg missing or invalid\n");
++        return ret;
++    }
++
++    ret = of_property_read_u32(dev->of_node, "id_val",
++                (u32 *) &(wl2866d_data.id_val));
++    if (ret)
++    {
++        pr_err("id_val missing or invalid\n");
++        return ret;
++    }
++
++    ret = of_property_read_u32(dev->of_node, "id_val1",
++                (u32 *) &(wl2866d_data.id_val1));
++    if (ret)
++    {
++        pr_err("id_val1 missing or invalid\n");
++        return ret;
++    }
++
++    ret = wl2866d_read_reg(wl2866d_data.id_reg, &(wl2866d_data.chip_id));
++    if (ret < 0 ||
++	    (wl2866d_data.chip_id != wl2866d_data.id_val &&
++	     wl2866d_data.chip_id != wl2866d_data.id_val1)
++	    ) {
++        pr_err("wl2866d: is not found %d %x\n", ret, wl2866d_data.chip_id);
++        return -ENODEV;
++    }
++    pr_info("wl2866d: is found %d\n", wl2866d_data.chip_id);
++    return 0;
++}
++
++/*!
++ * wl2866d init dev function
++ *
++ * @param dev struct device *
++ * @return  Error code indicating success or failure
++ */
++static int cam_wl2866_init_module_dev(struct device *dev)
++{
++    int ret = 0, i = 0;
++    u32 inits[32];
++    ret = of_property_read_u32(dev->of_node, "init_num",
++        (u32 *) &(wl2866d_data.init_num));
++    if (ret)
++    {
++        pr_err("init_num missing or invalid\n");
++        return ret;
++    }
++
++    ret = of_property_read_u32_array(dev->of_node, "inits",
++        inits, wl2866d_data.init_num * 2);
++    if (ret)
++    {
++        pr_err("inits missing or invalid\n");
++        return ret;
++    }
++
++    for (i = 0; i < wl2866d_data.init_num; i++)
++    {
++        wl2866d_data.inits[i].u8Add = inits[i * 2 + 0];
++        wl2866d_data.inits[i].u8Val = inits[i * 2 + 1];
++        ret = wl2866d_write_reg(wl2866d_data.inits[i].u8Add, wl2866d_data.inits[i].u8Val);
++        if (ret < 0 )
++        {
++            pr_err("wl2866d: update failed %d\n", ret);
++            return ret;
++        }
++    }
++    printk("wl2866d:init done\n");
++    return 0;
++}
++
++//bit0:DVDD1, bit1:DVDD2, bit2:AVDD1, bit3:AVDD2
++int wl2866d_camera_power_control(unsigned int out_iotype, int is_power_on)
++{
++    int ret = -1;
++    unsigned char reg_val = 0, reg_read;
++
++    if (!wl2866d_data.on){
++	    pr_err("wl2866d probe fail the function is not available\n");
++	    return ret;
++    }
++
++    if(out_iotype > OUT_AVDD2){
++	    pr_err("out_iotype > OUT_AVDD2, para err\n");
++	    return ret;
++    }
++
++    mutex_lock(&wl2866d_mutex);
++    ret = wl2866d_read_reg(wl2866d_on_config[VOL_ENABLE].reg, &reg_val);
++    if (ret < 0)
++    {
++	    pr_err("wl2866d: read power out control reg failed\n");
++	    goto fail_return;
++    }
++    printk("wl2866d pwr_ctrl: %s\n", wl2866d_pwr_name[out_iotype]);
++
++	/* Enable DISCHARGE mode to avoid leakage */
++    ret = wl2866d_write_reg(wl2866d_on_config[DISCHARGE_ENABLE].reg, wl2866d_on_config[DISCHARGE_ENABLE].value);
++    if(ret < 0)
++    {
++        pr_err("wl2866d set discharge enable failed \n");
++    }
++
++    if(is_power_on) {
++	    if(reg_val == 0) {
++#if CONTROL_GPIO54_ENABLE
++		    enable_i2c_pullup();
++#endif
++	    }
++	    printk("wl2866d pwr_ctrl: power on, set voltage %d\n",
++			    wl2866d_pwr_value[out_iotype]);
++	    ret = wl2866d_read_reg(wl2866d_on_config[out_iotype].reg, &reg_read);
++	    if(ret < 0 || reg_read != wl2866d_on_config[out_iotype].value){
++			ret = wl2866d_write_reg(wl2866d_on_config[out_iotype].reg,
++						wl2866d_on_config[out_iotype].value);
++		    if (ret < 0 )
++		    {
++			    pr_err("wl2866d: set voltage fail %d\n", out_iotype);
++			    goto fail_return;
++		    }
++	    } else {
++		    printk("wl2866d: voltage is right, no need write reg\n");
++        }
++	    reg_val |= 1 << out_iotype;
++	    printk("wl2866d pwr_ctrl: power on, set reg %02x\n", reg_val);
++
++        if ((1050000 == is_power_on) &&  (OUT_DVDD1 == out_iotype)) {
++			ret = wl2866d_write_reg(wl2866d_on_config[out_iotype].reg, 0x4B);
++            if (ret < 0)
++                printk("hzk wl2866d pwr_ctrl set DVDD1 voltage failed\n");
++            else
++                printk("hzk set DVDD1 to 1.05V\n");
++
++        }
++    }
++    else{
++	    reg_val &= ~(1 << out_iotype);
++	    printk("wl2866d pwr_ctrl: power off, set reg %02x\n", reg_val);
++    }
++
++    ret = wl2866d_write_reg(wl2866d_on_config[VOL_ENABLE].reg, reg_val);
++    if (ret < 0) {
++	    pr_err("wl2866d set %d enable failed\n", out_iotype);
++	    goto fail_return;
++    }
++
++fail_return:
++    mutex_unlock(&wl2866d_mutex);
++    return ret;
++}
++EXPORT_SYMBOL(wl2866d_camera_power_control);
++
++/*!
++ * wl2866d GetHexCh function
++ *
++ * @param value u8
++ * @param shift int
++ * @return char value
++ */
++static char GetHexCh(
++    u8 value,
++    int shift)
++{
++    u8 data = (value >> shift) & 0x0F;
++    char ch = 0;
++    if(data >= 10)
++    {
++        ch = data - 10  + 'A';
++    }
++    else if (data >= 0)
++    {
++        ch = data + '0';
++    }
++    return ch;
++}
++
++/*!
++ * wl2866d read function
++ *
++ * @param file struct file *
++ * @param buf char __user *
++ * @param count size_t
++ * @param offset loff_t *
++ * @return  read count
++ */
++static ssize_t wl2866d_read(
++    struct file *file,
++    char __user *buf,
++    size_t count,
++    loff_t *offset)
++{
++    char *buffer = NULL;
++    int ret = 0, num = 0, i = 0;
++    u8 u8add = wl2866d_data.offset, u8val = 0;
++    buffer = kmalloc(WL2866D_IO_BUFFER_LIMIT, GFP_KERNEL);
++    if (buffer == NULL)
++    {
++        pr_err("wl2866d: malloc failed %d\n", ret);
++        return -ENOMEM;
++    }
++    if (count > WL2866D_IO_REG_LIMIT)
++    {
++        pr_err("wl2866d: read count %d > %d\n", count, WL2866D_IO_REG_LIMIT);
++        return -ERANGE;
++    }
++
++    pr_debug("wl2866d: read %d registers from %02X to %02X.\n",
++        count, u8add, (u8add + count - 1));
++    for (i = 0; i < count; i++, u8add++)
++    {
++        ret = wl2866d_read_reg(u8add, &u8val);
++        if (ret < 0)
++        {
++            pr_err("wl2866d: read %X failed %d\n", u8add, ret);
++            kfree(buffer);
++            return ret;
++        }
++        buffer[num++] = GetHexCh(u8add, 4);
++        buffer[num++] = GetHexCh(u8add, 0);
++        buffer[num++] = ' ';
++        buffer[num++] = GetHexCh(u8val, 4);
++        buffer[num++] = GetHexCh(u8val, 0);
++        buffer[num++] = ' ';
++        pr_debug("wl2866d: read REG[%02X %02X]\n", u8add, u8val);
++    }
++
++    if(copy_to_user(buf, buffer, num))
++		pr_err("wl2866d: %s copy_to_user failed\n", __func__);
++
++    kfree(buffer);
++    return count;
++}
++
++/*!
++ * wl2866d GetHex function
++ *
++ * @param ch char
++ * @return hex value
++ */
++static u8 GetHex(
++    char ch)
++{
++    u8 value = 0;
++    if(ch >= 'a')
++    {
++        value = ch - 'a' + 10;
++    }
++    else if (ch >= 'A')
++    {
++        value = ch - 'A' + 10;
++    }
++    else if (ch >= '0')
++    {
++        value = ch - '0';
++    }
++    return value;
++}
++
++/*!
++ * wl2866d write function
++ *
++ * @param file struct file *
++ * @param buf char __user *
++ * @param count size_t
++ * @param offset loff_t *
++ * @return  write count
++ */
++static ssize_t wl2866d_write(
++    struct file *file,
++    const char __user *buf,
++    size_t count,
++    loff_t *offset)
++{
++    int ret = 0, i = 0;
++    char *buffer = NULL;
++    if (count > WL2866D_IO_BUFFER_LIMIT)
++    {
++        pr_err("wl2866d: write size %d > %d\n", count, WL2866D_IO_BUFFER_LIMIT);
++        return -ERANGE;
++    }
++    buffer = memdup_user(buf, count);
++    if (IS_ERR(buffer))
++    {
++        pr_err("wl2866d: can't get user data\n");
++        return PTR_ERR(buffer);
++    }
++    pr_debug("wl2866d: write %d bytes.\n", count);
++    for (i = 0; i < count; i += 6)
++    {
++        u8 u8add = (GetHex(buffer[i + 0]) << 4) | GetHex(buffer[i + 1]);
++        u8 u8val = (GetHex(buffer[i + 3]) << 4) | GetHex(buffer[i + 4]);
++        ret = wl2866d_write_reg(u8add, u8val);
++        if (ret < 0 )
++        {
++            pr_err("wl2866d: write failed %d\n", ret);
++            kfree(buffer);
++            return -ENODEV;
++        }
++        pr_debug("wl2866d: write REG[%02X %02X]\n", u8add, u8val);
++    }
++    kfree(buffer);
++    return count;
++}
++
++/*!
++ * wl2866d seek function
++ *
++ * @param file struct file *
++ * @param offset loff_t
++ * @param whence int
++ * @return file pos
++ */
++loff_t wl2866d_llseek(
++    struct file *file,
++    loff_t offset,
++    int whence)
++{
++	switch (whence) {
++	case SEEK_CUR:
++		wl2866d_data.offset += offset;
++        break;
++	default:
++        wl2866d_data.offset = 0;
++		break;
++	}
++    pr_debug("wl2866d: update read pos to %02X\n", wl2866d_data.offset);
++	return file->f_pos;;
++}
++
++/*!
++ * wl2866d open function
++ *
++ * @param inode struct inode *
++ * @param file struct file *
++ * @return Error code indicating success or failure
++ */
++static int wl2866d_open(
++    struct inode *inode,
++    struct file *file)
++{
++	if (!wl2866d_data.on)
++    {
++        pr_err("wl2866d: open failed.\n");
++        return -ENODEV;
++    }
++    wl2866d_data.offset = 0;
++	return 0;
++}
++
++/*!
++ * file_operations struct
++ */
++static const struct file_operations wl2866d_fops =
++{
++    .owner   = THIS_MODULE,
++	.open    = wl2866d_open,
++	.llseek  = wl2866d_llseek,
++    .read    = wl2866d_read,
++    .write   = wl2866d_write,
++};
++
++/*!
++ * miscdevice struct
++ */
++static struct miscdevice wl2866d_miscdev =
++{
++    .minor    = WL2866D_MISC_MAJOR,
++    .name    = "wl2866d",
++    .fops    = &wl2866d_fops,
++};
++
++/*!
++ * wl2866d I2C probe function
++ *
++ * @param client struct i2c_client *
++ * @param id struct i2c_device_id *
++ * @return  Error code indicating success or failure
++ */
++static int wl2866d_probe(
++    struct i2c_client *client,
++    const struct i2c_device_id *id)
++{
++    int ret = 0;
++    memset(&wl2866d_data, 0, sizeof(struct wl2866d_data_t));
++    wl2866d_data.i2c_client = client;
++
++    ret = wl2866d_power_on(&client->dev);
++    if(ret)
++    {
++        pr_err("wl2866d_power_on failed %d\n", ret);
++        return ret;
++    }
++
++    ret = wl2866d_init_register();
++    if(ret) {
++		pr_err("wl2866d_init_register failed\n");
++		return ret;
++	}
++
++    ret = wl2866d_match_id(&client->dev);
++    if(ret)
++    {
++        pr_err("wl2866d_match_id failed %d\n", ret);
++        return ret;
++    }
++
++    ret = cam_wl2866_init_module_dev(&client->dev);
++    if (ret)
++    {
++        pr_err("cam_wl2866_init_module_dev failed %d\n", ret);
++        return -ENODEV;
++    }
++
++    ret = misc_register(&wl2866d_miscdev);
++    if (ret < 0)
++    {
++        pr_err("failed to register wl2866d device\n");
++        return ret;
++    }
++    wl2866d_data.on = true;
++    wl2866d_camera_power_control(OUT_DVDD1, 0);
++    wl2866d_camera_power_control(OUT_DVDD2, 0);
++    wl2866d_camera_power_control(OUT_AVDD1, 0);
++    wl2866d_camera_power_control(OUT_AVDD2, 0);
++
++	pr_info("wl2866d_probe successed!\n");
++    return 0;
++}
++
++/*!
++ * wl2866d I2C remove function
++ *
++ * @param client struct i2c_client *
++ * @return  Error code indicating success or failure
++ */
++static int wl2866d_remove(
++    struct i2c_client *client)
++{
++    int ret = 0;
++    misc_deregister(&wl2866d_miscdev);
++    if (ret < 0)
++    {
++        pr_err("failed to deregister wl2866d device\n");
++        return ret;
++    }
++    wl2866d_data.on = false;
++    pr_info("deregister wl2866d device ok\n");
++    return 0;
++}
++
++/*!
++ * i2c_device_id struct
++ */
++static const struct i2c_device_id wl2866d_id[] =
++{
++    {"ovti,wl2866d-i2c", 0},
++    {},
++};
++
++MODULE_DEVICE_TABLE(i2c, wl2866d_id);
++
++#ifdef CONFIG_OF
++static const struct of_device_id wl2866d_i2c_of_match_table[] = {
++		{ .compatible = "ovti,wl2866d-i2c" },
++		{},
++};
++MODULE_DEVICE_TABLE(of, wl2866d_i2c_of_match_table);
++#endif
++
++/*!
++ * i2c_driver struct
++ */
++static struct i2c_driver wl2866d_i2c_driver =
++{
++    .driver =
++        {
++          .owner = THIS_MODULE,
++          .name  = "ovti,wl2866d-i2c",
++	    .of_match_table = of_match_ptr(wl2866d_i2c_of_match_table),
++        .probe_type = PROBE_FORCE_SYNCHRONOUS,
++        },
++    .probe  = wl2866d_probe,
++    .remove = wl2866d_remove,
++    .id_table = wl2866d_id,
++};
++
++/*!
++ * wl2866d init function
++ *
++ * @return  Error code indicating success or failure
++ */
++int cam_wl2866_init_module(void)
++{
++    u8 ret = 0;
++    int num_retry = 3;
++
++    ret = i2c_add_driver(&wl2866d_i2c_driver);
++    if (ret != 0)
++    {
++        pr_err("%s: add wl2866d driver failed, error=%d\n",
++            __func__, ret);
++        return ret;
++    }
++    do{
++        i2c_del_driver(&wl2866d_i2c_driver);
++        ret = i2c_add_driver(&wl2866d_i2c_driver);
++        if (ret != 0){
++        pr_err("%s: add wl2866d driver failed, error=%d\n",
++            __func__, ret);
++        return ret;
++        }
++        pr_info("wl2866d driver retry num:%d\n", num_retry);
++        num_retry--;
++    }while ((!wl2866d_data.on)&&(num_retry > 0));
++
++    pr_info("%s: add wl2866d driver success\n", __func__);
++    return ret;
++}
++
++/*!
++ * WL2866D cleanup function
++ */
++void cam_wl2866_exit_module(void)
++{
++    i2c_del_driver(&wl2866d_i2c_driver);
++    pr_info("%s: delete wl2866d driver success\n", __func__);
++}
++
++MODULE_DESCRIPTION("WL2866D Power IC Driver");
++MODULE_LICENSE("GPL");
++MODULE_VERSION("1.0");
+diff --git a/drivers/wl2866d/wl2866d.h b/drivers/wl2866d/wl2866d.h
+new file mode 100644
+index 0000000..b2d8aac
+--- /dev/null
++++ b/drivers/wl2866d/wl2866d.h
+@@ -0,0 +1,25 @@
++/*
++ * Copyright (C) 2022 XiaoMi, Inc.
++ */
++#ifndef __WL2866D_H
++#define __WL2866D_H
++
++enum {
++	OUT_DVDD1,
++	OUT_DVDD2,
++	OUT_AVDD1,
++	OUT_AVDD2,
++	VOL_ENABLE,
++	VOL_DISABLE,
++	DISCHARGE_ENABLE,
++	DISCHARGE_DISABLE,
++};
++
++/* wl2866 init module */
++int cam_wl2866_init_module(void);
++
++/* wl2866 exit module */
++void cam_wl2866_exit_module(void);
++
++int wl2866d_camera_power_control(unsigned int out_iotype, int is_power_on);
++#endif /* __WL2866D_H */
+-- 
+2.53.0
+

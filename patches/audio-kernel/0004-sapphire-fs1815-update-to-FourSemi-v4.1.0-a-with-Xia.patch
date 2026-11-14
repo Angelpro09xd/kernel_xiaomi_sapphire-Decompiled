@@ -1,0 +1,7761 @@
+From 2786426c7681261c0a2c05f347fb2bbe55c4cf52 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH 4/7] sapphire: fs1815: update to FourSemi v4.1.0-a with Xiaomi
+ changes
+
+Stock sapphire ships FourSemi driver v4.1.0-a. Import the public v4.1.0-a
+core, keep the Qualcomm Kbuild glue, adapt i2c probe/remove to 5.15 and
+re-add the Xiaomi changes recovered from the stock fs1815_dlkm.ko:
+- chip id pre-check with 0x34 address fallback before reset
+- g_probe_complete_flag / get_fsm_probe_complete_flag() for the
+  dual-sourced amplifier arbitration with aw87xxx
+- report "<dev>-FSM-" to lct_audio_info
+- idempotent fsm_speaker_onn/off
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ asoc/codecs/fs1815/Kbuild                    |    1 +
+ asoc/codecs/fs1815/fs1815.c                  |  343 +-
+ asoc/codecs/fs1815/fs1815_dlkm.o.symversions |   10 +
+ asoc/codecs/fs1815/fsm-dev.h                 |   69 +-
+ asoc/codecs/fs1815/fsm_core.c                | 3820 ++++++++++--------
+ asoc/codecs/fs1815/fsm_core.o.symversions    |    7 +
+ asoc/codecs/fs1815/fsm_firmware.c            |  272 +-
+ asoc/codecs/fs1815/fsm_i2c.c                 | 1470 +++----
+ asoc/codecs/fs1815/fsm_i2c.o.symversions     |    3 +
+ asoc/codecs/fs1815/fsm_misc.c                |  956 ++---
+ asoc/codecs/fs1815/fsm_public.h              |  478 ++-
+ asoc/codecs/fs1815/fsm_sysfs.c               |  150 +
+ 12 files changed, 4119 insertions(+), 3460 deletions(-)
+ mode change 100755 => 100644 asoc/codecs/fs1815/fs1815.c
+ create mode 100644 asoc/codecs/fs1815/fs1815_dlkm.o.symversions
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm-dev.h
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm_core.c
+ create mode 100644 asoc/codecs/fs1815/fsm_core.o.symversions
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm_firmware.c
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm_i2c.c
+ create mode 100644 asoc/codecs/fs1815/fsm_i2c.o.symversions
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm_misc.c
+ mode change 100755 => 100644 asoc/codecs/fs1815/fsm_public.h
+ create mode 100644 asoc/codecs/fs1815/fsm_sysfs.c
+
+diff --git a/asoc/codecs/fs1815/Kbuild b/asoc/codecs/fs1815/Kbuild
+index 19c0331..6034ed0 100644
+--- a/asoc/codecs/fs1815/Kbuild
++++ b/asoc/codecs/fs1815/Kbuild
+@@ -75,6 +75,7 @@ ifdef CONFIG_SND_SOC_FS1815
+ 	FS1815_OBJS += fsm_firmware.o
+ 	FS1815_OBJS += fsm_i2c.o
+ 	FS1815_OBJS += fsm_misc.o
++	FS1815_OBJS += fsm_sysfs.o
+ endif
+ 
+ LINUX_INC +=	-Iinclude/linux
+diff --git a/asoc/codecs/fs1815/fs1815.c b/asoc/codecs/fs1815/fs1815.c
+old mode 100755
+new mode 100644
+index dff978a..351dce2
+--- a/asoc/codecs/fs1815/fs1815.c
++++ b/asoc/codecs/fs1815/fs1815.c
+@@ -1,171 +1,172 @@
+-/**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2019-01-29 File created.
+- */
+-
+-#include "fsm_public.h"
+-#if defined(CONFIG_FSM_FS1815)
+-
+-#define FS1815_STATUS         0xF000
+-#define FS1815_BOVDS          0x0000
+-#define FS1815_OTPDS          0x0200
+-#define FS1815_OVDS           0x0300
+-#define FS1815_UVDS           0x0400
+-#define FS1815_OCDS           0x0500
+-#define FS1815_OTWDS          0x0800
+-#define FS1815_BOPS           0x0900
+-#define FS1815_SPKS           0x0A00
+-#define FS1815_SPKT           0x0B00
+-
+-#define FS1815_DEVID          0xF001
+-#define FS1815_REVID          0xF002
+-
+-#define FS1815_ANASTAT        0xF003
+-#define FS1815_DIGSTAT        0xF004
+-
+-#define FS1815_CHIPINI        0xF00E
+-
+-#define FS1815_PWRCTRL        0xF010
+-#define FS1815_PWDN           0x0010
+-#define FS1815_I2CR           0x0110
+-
+-#define FS1815_SYSCTRL        0xF011
+-#define FS1815_OSCEN          0x0011
+-#define FS1815_VBGEN          0x0111
+-#define FS1815_ZMEN           0x0211
+-#define FS1815_ADCEN          0x0311
+-#define FS1815_BSTPD          0x0611
+-#define FS1815_AMPEN          0x0711
+-
+-#define FS1815_SPKCOEF        0xF014
+-
+-#define FS1815_GAINCTRL       0xF018
+-
+-#define FS1815_ACCKEY         0xF01F
+-
+-#define FS1815_BSTCTRL        0xF020
+-#define FS1815_SSEND          0x0F20
+-#define FS1815_VOUTSEL        0x4820
+-#define FS1815_ILIMSEL        0x2420
+-#define FS1815_BSTMODE        0x1020
+-
+-#define FS1815_DACCTRL        0xF030
+-
+-#define FS1815_LNMCTRL        0xF03F
+-
+-#define FS1815_TSCTRL         0xF04C
+-#define FS1815_OFFSTA         0x0E4C
+-#define FS1815_OFF_AUTOEN     0x0D4C
+-#define FS1815_TSEN           0x034C
+-
+-#define FS1815_AGC1           0x3059
+-#define FS1815_AGC1RT         0x3059
+-#define FS1815_AGC2           0x305A
+-#define FS1815_AGC3           0x305B
+-#define FS1815_AGC4           0x305C
+-
+-#define FS1815_BSGCTRL        0xF0BC
+-
+-#define FS1815_FW_NAME        "fs1815.fsm"
+-
+-
+-static int fs1815_i2c_reset(fsm_dev_t *fsm_dev)
+-{
+-	uint16_t val;
+-	int ret;
+-	int i;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-
+-	for (i = 0; i < FSM_I2C_RETRY; i++) {
+-		fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0002); // reset nack
+-		fsm_reg_read(fsm_dev, REG(FS1815_PWRCTRL), NULL); // dummy read
+-		fsm_delay_ms(15); // 15ms
+-		ret = fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0001);
+-		ret |= fsm_reg_read(fsm_dev, REG(FS1815_CHIPINI), &val);
+-		if ((val == 0x0003) || (val == 0x0300)) { // init finished
+-			break;
+-		}
+-	}
+-	if (i == FSM_I2C_RETRY) {
+-		pr_addr(err, "retry timeout");
+-		ret = -ETIMEDOUT;
+-	}
+-
+-	return ret;
+-}
+-
+-int fs1815_reg_init(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	int ret;
+-
+-	if (fsm_dev == NULL || cfg == NULL) {
+-		return -EINVAL;
+-	}
+-
+-	ret = fs1815_i2c_reset(fsm_dev);
+-	ret |= fsm_reg_write(fsm_dev, REG(FS1815_SPKCOEF), (fsm_dev->tcoef << 1));
+-	ret |= fsm_write_reg_tbl(fsm_dev, FSM_SCENE_COMMON);
+-	ret |= fsm_write_reg_tbl(fsm_dev, cfg->next_scene);
+-	if (ret) {
+-		pr_addr(err, "init failed:%d", ret);
+-		fsm_dev->state.dev_inited = false;
+-	}
+-
+-	return ret;
+-}
+-
+-int fs1815_start_up(fsm_dev_t *fsm_dev)
+-{
+-	int ret;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->revid == 0x0011) {
+-		ret = fsm_reg_write(fsm_dev, REG(FS1815_BSGCTRL), 0x9433);
+-	}
+-	// 0x1100EF; all enable
+-	ret = fsm_reg_write(fsm_dev, REG(FS1815_SYSCTRL), 0x008F);
+-	// 0x100000; power up
+-	ret |= fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0000);
+-	ret |= fsm_config_vol(fsm_dev);
+-	fsm_delay_ms(10);
+-	fsm_dev->errcode = ret;
+-
+-	return ret;
+-}
+-
+-int fs1815_shut_down(fsm_dev_t *fsm_dev)
+-{
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	ret = fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0001);
+-	ret |= fsm_reg_write(fsm_dev, REG(FS1815_SYSCTRL), 0x0000);
+-	fsm_delay_ms(10);
+-
+-	return ret;
+-}
+-
+-void fs1815_ops(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!fsm_dev || !cfg) {
+-		return;
+-	}
+-
+-	fsm_set_fw_name(FS1815_FW_NAME);
+-	fsm_dev->dev_ops.reg_init = fs1815_reg_init;
+-	fsm_dev->dev_ops.start_up = fs1815_start_up;
+-	fsm_dev->dev_ops.shut_down = fs1815_shut_down;
+-	cfg->nondsp_mode = true;
+-	cfg->store_otp = false;
+-}
+-#endif
++/**
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-08-18 File created.
++ */
++
++#include "fsm_public.h"
++#if defined(CONFIG_FSM_FS1815)
++
++#define FS1815_STATUS         0xF000
++#define FS1815_BOVDS          0x0000
++#define FS1815_OTPDS          0x0200
++#define FS1815_OVDS           0x0300
++#define FS1815_UVDS           0x0400
++#define FS1815_OCDS           0x0500
++#define FS1815_OTWDS          0x0800
++#define FS1815_BOPS           0x0900
++#define FS1815_SPKS           0x0A00
++#define FS1815_SPKT           0x0B00
++
++#define FS1815_DEVID          0xF001
++#define FS1815_REVID          0xF002
++
++#define FS1815_ANASTAT        0xF003
++#define FS1815_DIGSTAT        0xF004
++
++#define FS1815_CHIPINI        0xF00E
++
++#define FS1815_PWRCTRL        0xF010
++#define FS1815_PWDN           0x0010
++#define FS1815_I2CR           0x0110
++
++#define FS1815_SYSCTRL        0xF011
++#define FS1815_OSCEN          0x0011
++#define FS1815_VBGEN          0x0111
++#define FS1815_ZMEN           0x0211
++#define FS1815_ADCEN          0x0311
++#define FS1815_BSTPD          0x0611
++#define FS1815_AMPEN          0x0711
++
++#define FS1815_SPKCOEF        0xF014
++
++#define FS1815_GAINCTRL       0xF018
++
++#define FS1815_ACCKEY         0xF01F
++
++#define FS1815_BSTCTRL        0xF020
++#define FS1815_SSEND          0x0F20
++#define FS1815_VOUTSEL        0x4820
++#define FS1815_ILIMSEL        0x2420
++#define FS1815_BSTMODE        0x1020
++
++#define FS1815_DACCTRL        0xF030
++
++#define FS1815_LNMCTRL        0xF03F
++
++#define FS1815_TSCTRL         0xF04C
++#define FS1815_OFFSTA         0x0E4C
++#define FS1815_OFF_AUTOEN     0x0D4C
++#define FS1815_TSEN           0x034C
++
++#define FS1815_AGC1           0x3059
++#define FS1815_AGC1RT         0x3059
++#define FS1815_AGC2           0x305A
++#define FS1815_AGC3           0x305B
++#define FS1815_AGC4           0x305C
++
++#define FS1815_BSGCTRL        0xF0BC
++
++#define FS1815_FW_NAME        "fs1815.fsm"
++
++
++static int fs1815_i2c_reset(fsm_dev_t *fsm_dev)
++{
++	uint16_t val;
++	int ret;
++	int i;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++
++	for (i = 0; i < FSM_I2C_RETRY; i++) {
++		fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0002); // reset nack
++		fsm_delay_ms(15); // 15ms
++		ret = fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0001);
++		if (!ret)
++			break;
++		ret |= fsm_reg_read(fsm_dev, REG(FS1815_CHIPINI), &val);
++		if ((val == 0x0003) || (val == 0x0300)) { // init finished
++			break;
++		}
++	}
++	if (i == FSM_I2C_RETRY) {
++		pr_addr(err, "retry timeout");
++		ret = -ETIMEDOUT;
++	}
++
++	return ret;
++}
++
++int fs1815_reg_init(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int ret;
++
++	if (fsm_dev == NULL || cfg == NULL) {
++		return -EINVAL;
++	}
++
++	ret = fs1815_i2c_reset(fsm_dev);
++	ret |= fsm_reg_write(fsm_dev, REG(FS1815_SPKCOEF), (fsm_dev->tcoef << 1));
++	ret |= fsm_write_reg_tbl(fsm_dev, FSM_SCENE_COMMON);
++	ret |= fsm_write_reg_tbl(fsm_dev, cfg->next_scene);
++	if (ret) {
++		pr_addr(err, "init failed:%d", ret);
++		fsm_dev->state.dev_inited = false;
++	}
++
++	return ret;
++}
++
++int fs1815_start_up(fsm_dev_t *fsm_dev)
++{
++	int ret;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	if (fsm_dev->revid == 0x0011) {
++		ret = fsm_reg_write(fsm_dev, REG(FS1815_BSGCTRL), 0x9433);
++	}
++	// 0x1100EF; all enable
++	ret = fsm_reg_write(fsm_dev, REG(FS1815_SYSCTRL), 0x008F);
++	// 0x100000; power up
++	ret |= fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0000);
++	ret |= fsm_config_vol(fsm_dev);
++	fsm_delay_ms(10);
++	fsm_dev->errcode = ret;
++
++	return ret;
++}
++
++int fs1815_shut_down(fsm_dev_t *fsm_dev)
++{
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	ret = fsm_reg_write(fsm_dev, REG(FS1815_PWRCTRL), 0x0001);
++	ret |= fsm_reg_write(fsm_dev, REG(FS1815_SYSCTRL), 0x0000);
++	fsm_delay_ms(10);
++
++	return ret;
++}
++
++void fs1815_ops(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!fsm_dev || !cfg) {
++		return;
++	}
++
++	fsm_set_fw_name(FS1815_FW_NAME);
++	fsm_dev->dev_ops.reg_init = fs1815_reg_init;
++	fsm_dev->dev_ops.start_up = fs1815_start_up;
++	fsm_dev->dev_ops.shut_down = fs1815_shut_down;
++	cfg->nondsp_mode = true;
++	cfg->store_otp = false;
++}
++#endif
+diff --git a/asoc/codecs/fs1815/fs1815_dlkm.o.symversions b/asoc/codecs/fs1815/fs1815_dlkm.o.symversions
+new file mode 100644
+index 0000000..d411a83
+--- /dev/null
++++ b/asoc/codecs/fs1815/fs1815_dlkm.o.symversions
+@@ -0,0 +1,10 @@
++__crc_fsm_get_config = 0x3870683e;
++__crc_fsm_add_codec_controls = 0xef7296e1;
++__crc_fsm_add_card_controls = 0x960495bc;
++__crc_fsm_speaker_onn = 0x0884adf0;
++__crc_fsm_speaker_off = 0xb44b3a4b;
++__crc_fsm_amp_switch = 0xce73773c;
++__crc_fsm_amp_set_scene = 0xe665c81e;
++__crc_get_fsm_probe_complete_flag = 0x8efeec83;
++__crc_exfsm_i2c_probe = 0x4dd6d956;
++__crc_exfsm_i2c_remove = 0xca2efb17;
+diff --git a/asoc/codecs/fs1815/fsm-dev.h b/asoc/codecs/fs1815/fsm-dev.h
+old mode 100755
+new mode 100644
+index ff316a7..21bfefc
+--- a/asoc/codecs/fs1815/fsm-dev.h
++++ b/asoc/codecs/fs1815/fsm-dev.h
+@@ -1,6 +1,6 @@
+ /**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2018-10-16 File created.
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-8-18 File created.
+  */
+ 
+ #ifndef __FSM_DEV_H__
+@@ -19,17 +19,15 @@
+ //#define CONFIG_FSM_CODEC
+ #define CONFIG_FSM_FIRMWARE
+ #define CONFIG_FSM_I2C
+-//#define CONFIG_FSM_Q6AFE
++#define CONFIG_FSM_SYSFS
+ #endif
+ 
+ /* device chip select: */
+-//#define CONFIG_FSM_NONDSP
+-//#define CONFIG_FSM_FS1958
+ #define CONFIG_FSM_FS1815
+ 
+ /* VERSION INFORMATION */
+-#define FSM_CODE_VERSION "v4.0.6-b"
+-#define FSM_CODE_DATE    "20230404"
++#define FSM_CODE_VERSION "v4.1.0-a"
++#define FSM_CODE_DATE    "20240806"
+ #define FSM_GIT_BRANCH   "spc-driver-v1"
+ #define FSM_GIT_COMMIT   "23749327"
+ 
+@@ -39,31 +37,6 @@
+ // #define FSM_CALIB_SAVE_PATH   "/data"
+ // TODO
+ #define FSM_CALIB_SAVE_PATH "/mnt/vendor/persist/audio"
+-//#ifndef BIT
+-//#define BIT(nr)       (1UL << (nr))
+-//#endif
+-
+-/* scenes defination */
+-#define FSM_SCENE_UNKNOW           (0)
+-#define FSM_SCENE_MUSIC            BIT(0)
+-#define FSM_SCENE_VOICE            BIT(1)
+-#define FSM_SCENE_VOIP             BIT(2)
+-#define FSM_SCENE_RING             BIT(3)
+-#define FSM_SCENE_LOW_PWR          BIT(4)
+-#define FSM_SCENE_MMI_ALL          BIT(5)
+-#define FSM_SCENE_MMI_ALL_BYPASS   BIT(6)
+-#define FSM_SCENE_TOP_LEFT         BIT(7)
+-#define FSM_SCENE_TOP_LEFT_BYPASS  BIT(8)
+-#define FSM_SCENE_TOP_RIGHT        BIT(9)
+-#define FSM_SCENE_TOP_RIGHT_BYPASS BIT(10)
+-#define FSM_SCENE_BOT_LEFT         BIT(11)
+-#define FSM_SCENE_BOT_LEFT_BYPASS  BIT(12)
+-#define FSM_SCENE_BOT_RIGHT        BIT(13)
+-#define FSM_SCENE_BOT_RIGHT_BYPASS BIT(14)
+-#define FSM_SCENE_RCV              BIT(15)
+-#define FSM_SCENE_MAX              (16) // TODO
+-#define FSM_SCENE_COMMON           (0xFFFF)
+-#define FSM_VOLUME_MAX             (0xFF)
+ 
+ /* ------- MACRO FEATURE ------- */
+ 
+@@ -87,6 +60,9 @@
+ #include <sound/control.h>
+ #endif
+ #define logprint(fmt, args...) printk(KERN_CONT fmt, ##args)
++#ifndef pr_warning
++#define pr_warning pr_warn
++#endif
+ #elif defined(FSM_HAL_SUPPORT)
+ #include <stdio.h>
+ #include <string.h>
+@@ -187,6 +163,32 @@
+ 
+ #define UNUSED(expr) do { (void)(expr); } while(0)
+ 
++#ifndef BIT
++#define BIT(nr)       (1UL << (nr))
++#endif
++
++/* scenes defination */
++#define FSM_SCENE_UNKNOW           (0)
++#define FSM_SCENE_MUSIC            BIT(0)
++#define FSM_SCENE_VOICE            BIT(1)
++#define FSM_SCENE_VOIP             BIT(2)
++#define FSM_SCENE_RING             BIT(3)
++#define FSM_SCENE_LOW_PWR          BIT(4)
++#define FSM_SCENE_MMI_ALL          BIT(5)
++#define FSM_SCENE_MMI_ALL_BYPASS   BIT(6)
++#define FSM_SCENE_TOP_LEFT         BIT(7)
++#define FSM_SCENE_TOP_LEFT_BYPASS  BIT(8)
++#define FSM_SCENE_TOP_RIGHT        BIT(9)
++#define FSM_SCENE_TOP_RIGHT_BYPASS BIT(10)
++#define FSM_SCENE_BOT_LEFT         BIT(11)
++#define FSM_SCENE_BOT_LEFT_BYPASS  BIT(12)
++#define FSM_SCENE_BOT_RIGHT        BIT(13)
++#define FSM_SCENE_BOT_RIGHT_BYPASS BIT(14)
++#define FSM_SCENE_RCV              BIT(15)
++#define FSM_SCENE_MAX              (16) // TODO
++#define FSM_SCENE_COMMON           (0xFFFF)
++#define FSM_VOLUME_MAX             (0xFF)
++
+ enum dev_id_index {
+ 	FS1601S_DEV_ID = 0x3,
+ 	FS1603_DEV_ID = 0x5,
+@@ -229,7 +231,9 @@ enum dev_id_index {
+ 
+ #define FSM_DEV_MAX   (4)
+ #define FSM_ADDR_BASE (0x34)
++#ifndef MIN
+ #define MIN(a, b)     ((a) < (b) ? (a) : (b))
++#endif
+ #define HIGH8(val)    ((val >> 8) & 0xFF)
+ #define LOW8(val)     (val & 0xFF)
+ #define WORD(addr)    ((*(addr) << 8) & *((addr) + 1))
+@@ -815,6 +819,7 @@ struct fsm_dev {
+ 	uint16_t is1801    : 1;
+ 	uint16_t is1820    : 1;
+ 	uint16_t is1958    : 1;
++	bool amp_on;
+ 
+ 	int rst_gpio;
+ 	int irq_gpio;
+diff --git a/asoc/codecs/fs1815/fsm_core.c b/asoc/codecs/fs1815/fsm_core.c
+old mode 100755
+new mode 100644
+index 1e79a88..0abe190
+--- a/asoc/codecs/fs1815/fsm_core.c
++++ b/asoc/codecs/fs1815/fsm_core.c
+@@ -1,1696 +1,2124 @@
+-/**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2018-10-17 File created.
+- */
+-
+-#include "fsm_public.h"
+-
+-#ifdef CONFIG_OF
+-#include <linux/of.h>
+-#include <linux/of_gpio.h>
+-#endif
+-
+-#define CRC16_TABLE_SIZE      256
+-#define CRC16_POLY_NOMIAL     0xA001
+-
+-static int fsm_try_init(void);
+-static int g_dev_inited = 0;
+-
+-static LIST_HEAD(fsm_dev_list);
+-#define fsm_list_init(fsm_dev) \
+-	do { \
+-		INIT_LIST_HEAD(&fsm_dev->list); \
+-		list_add(&fsm_dev->list, &fsm_dev_list); \
+-	} while (0)
+-
+-#define fsm_list_entry(fsm_dev, ops) \
+-	do { \
+-		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
+-			if (!fsm_skip_device(fsm_dev) && ops) { \
+-				ops(fsm_dev); \
+-			} \
+-		} \
+-	} while(0)
+-
+-#define fsm_list_func(fsm_dev, func) \
+-	do { \
+-		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
+-			if (!fsm_skip_device(fsm_dev)) { \
+-				func(fsm_dev); \
+-			} \
+-		} \
+-	} while(0)
+-
+-#define fsm_list_check(fsm_dev, type, ret) \
+-	do { \
+-		ret = 0; \
+-		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
+-			if (!fsm_skip_device(fsm_dev)) { \
+-				ret |= fsm_stub_check_stable(fsm_dev, type); \
+-				if (ret) { \
+-					break; \
+-				} \
+-			} \
+-		} \
+-	} while(0)
+-
+-#define fsm_list_return(fsm_dev, func, ret) \
+-	do { \
+-		ret = 0; \
+-		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
+-			if (!fsm_skip_device(fsm_dev)) { \
+-				ret |= func(fsm_dev); \
+-			} \
+-		} \
+-	} while(0)
+-
+-#define fsm_list_func_arg(fsm_dev, func, argv) \
+-	do { \
+-		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
+-			if (!fsm_skip_device(fsm_dev)) { \
+-				func(fsm_dev, argv); \
+-			} \
+-		} \
+-	} while(0)
+-
+-
+-static uint16_t g_crc16table[CRC16_TABLE_SIZE] = {
+-	0x0000, 0xc0c1, 0xc181, 0x0140, 0xc301, 0x03c0, 0x0280, 0xc241,
+-	0xc601, 0x06c0, 0x0780, 0xc741, 0x0500, 0xc5c1, 0xc481, 0x0440,
+-	0xcc01, 0x0cc0, 0x0d80, 0xcd41, 0x0f00, 0xcfc1, 0xce81, 0x0e40,
+-	0x0a00, 0xcac1, 0xcb81, 0x0b40, 0xc901, 0x09c0, 0x0880, 0xc841,
+-	0xd801, 0x18c0, 0x1980, 0xd941, 0x1b00, 0xdbc1, 0xda81, 0x1a40,
+-	0x1e00, 0xdec1, 0xdf81, 0x1f40, 0xdd01, 0x1dc0, 0x1c80, 0xdc41,
+-	0x1400, 0xd4c1, 0xd581, 0x1540, 0xd701, 0x17c0, 0x1680, 0xd641,
+-	0xd201, 0x12c0, 0x1380, 0xd341, 0x1100, 0xd1c1, 0xd081, 0x1040,
+-	0xf001, 0x30c0, 0x3180, 0xf141, 0x3300, 0xf3c1, 0xf281, 0x3240,
+-	0x3600, 0xf6c1, 0xf781, 0x3740, 0xf501, 0x35c0, 0x3480, 0xf441,
+-	0x3c00, 0xfcc1, 0xfd81, 0x3d40, 0xff01, 0x3fc0, 0x3e80, 0xfe41,
+-	0xfa01, 0x3ac0, 0x3b80, 0xfb41, 0x3900, 0xf9c1, 0xf881, 0x3840,
+-	0x2800, 0xe8c1, 0xe981, 0x2940, 0xeb01, 0x2bc0, 0x2a80, 0xea41,
+-	0xee01, 0x2ec0, 0x2f80, 0xef41, 0x2d00, 0xedc1, 0xec81, 0x2c40,
+-	0xe401, 0x24c0, 0x2580, 0xe541, 0x2700, 0xe7c1, 0xe681, 0x2640,
+-	0x2200, 0xe2c1, 0xe381, 0x2340, 0xe101, 0x21c0, 0x2080, 0xe041,
+-	0xa001, 0x60c0, 0x6180, 0xa141, 0x6300, 0xa3c1, 0xa281, 0x6240,
+-	0x6600, 0xa6c1, 0xa781, 0x6740, 0xa501, 0x65c0, 0x6480, 0xa441,
+-	0x6c00, 0xacc1, 0xad81, 0x6d40, 0xaf01, 0x6fc0, 0x6e80, 0xae41,
+-	0xaa01, 0x6ac0, 0x6b80, 0xab41, 0x6900, 0xa9c1, 0xa881, 0x6840,
+-	0x7800, 0xb8c1, 0xb981, 0x7940, 0xbb01, 0x7bc0, 0x7a80, 0xba41,
+-	0xbe01, 0x7ec0, 0x7f80, 0xbf41, 0x7d00, 0xbdc1, 0xbc81, 0x7c40,
+-	0xb401, 0x74c0, 0x7580, 0xb541, 0x7700, 0xb7c1, 0xb681, 0x7640,
+-	0x7200, 0xb2c1, 0xb381, 0x7340, 0xb101, 0x71c0, 0x7080, 0xb041,
+-	0x5000, 0x90c1, 0x9181, 0x5140, 0x9301, 0x53c0, 0x5280, 0x9241,
+-	0x9601, 0x56c0, 0x5780, 0x9741, 0x5500, 0x95c1, 0x9481, 0x5440,
+-	0x9c01, 0x5cc0, 0x5d80, 0x9d41, 0x5f00, 0x9fc1, 0x9e81, 0x5e40,
+-	0x5a00, 0x9ac1, 0x9b81, 0x5b40, 0x9901, 0x59c0, 0x5880, 0x9841,
+-	0x8801, 0x48c0, 0x4980, 0x8941, 0x4b00, 0x8bc1, 0x8a81, 0x4a40,
+-	0x4e00, 0x8ec1, 0x8f81, 0x4f40, 0x8d01, 0x4dc0, 0x4c80, 0x8c41,
+-	0x4400, 0x84c1, 0x8581, 0x4540, 0x8701, 0x47c0, 0x4680, 0x8641,
+-	0x8201, 0x42c0, 0x4380, 0x8341, 0x4100, 0x81c1, 0x8081, 0x4040,
+-};
+-
+-static struct fsm_config g_fsm_config = {
+-	.dev_count  = 0,
+-	.volume     = FSM_VOLUME_MAX,
+-	.next_scene = FSM_SCENE_MUSIC,
+-	.i2s_bclk   = 1536000,
+-	.i2s_srate  = 48000,
+-	.test_type  = TEST_NONE,
+-	.freq_start = FREQ_START,
+-	.freq_end   = FREQ_END,
+-	.freq_step  = F0_FREQ_STEP,
+-	.freq_count = FREQ_COUNT,
+-	.amb_tempr  = FSM_DFT_AMB_TEMPR,
+-	.cur_angle  = 0,
+-	.next_angle = 0,
+-
+-	// flags
+-	.vddd_on = 0,
+-	.codec_inited = 0,
+-	.force_fw = 0,
+-	.force_init = 0,
+-	.force_scene = 0,
+-	.force_calib = 0,
+-	.store_otp = 0,
+-	.nondsp_mode = 1,
+-#ifdef FSM_DEBUG
+-	.i2c_debug = 1,
+-#endif
+-	.force_mute = 0,
+-	.stop_test = 0,
+-	.use_monitor = 0,
+-	.skip_monitor = 0,
+-	.stream_muted = 1,
+-	.fw_name = FSM_FW_NAME,
+-	.preset = NULL,
+-};
+-
+-static const struct fsm_srate g_srate_tbl[] = {
+-	{  8000, 0 },
+-	{ 16000, 3 },
+-	{ 32000, 8 },
+-	{ 44100, 7 },
+-	{ 48000, 8 },
+-	// fs1860 support below srate:
+-	{ 88200, 9 },
+-	{ 96000, 10 },
+-};
+-
+-int fsm_skip_device(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!fsm_dev || !cfg) {
+-		return 1;
+-	}
+-	if (!fsm_dev->state.dev_inited) {
+-		return 1;
+-	}
+-	if ((fsm_dev->own_scene & cfg->next_scene) == 0) {
+-		return 1;
+-	}
+-
+-	return 0;
+-}
+-
+-fsm_config_t *fsm_get_config(void)
+-{
+-	return &g_fsm_config;
+-}
+-#ifdef __KERNEL__
+-EXPORT_SYMBOL(fsm_get_config);
+-#endif
+-
+-void fsm_get_version(fsm_version_t *version)
+-{
+-	sprintf(version->git_branch, "%s", FSM_GIT_BRANCH);
+-	sprintf(version->git_commit, "%s", FSM_GIT_COMMIT);
+-	sprintf(version->code_date, "%s", FSM_CODE_DATE);
+-	sprintf(version->code_version, "%s", FSM_CODE_VERSION);
+-	pr_info("version %s", version->code_version);
+-}
+-
+-void *fsm_alloc_mem(int size)
+-{
+-#if defined(__KERNEL__)
+-	return kzalloc(size, GFP_KERNEL);
+-#elif defined(FSM_HAL_SUPPORT)
+-	return malloc(size);
+-#else
+-	return NULL;
+-#endif
+-}
+-
+-void fsm_free_mem(void **buf)
+-{
+-	if (*buf == NULL) {
+-		return;
+-	}
+-
+-#if defined(__KERNEL__)
+-	kfree(*buf);
+-#elif defined(FSM_HAL_SUPPORT)
+-	free(*buf);
+-#endif
+-	*buf = NULL;
+-}
+-
+-void fsm_delay_ms(uint32_t delay_ms)
+-{
+-	if (delay_ms == 0) {
+-		return;
+-	}
+-#if defined(__KERNEL__)
+-	usleep_range(delay_ms * 1000, delay_ms * 1000 + 1);
+-#elif defined(FSM_HAL_SUPPORT)
+-	usleep(delay_ms * 1000);
+-#endif
+-}
+-
+-uint16_t set_bf_val(uint16_t *pval, const uint16_t bf, const uint16_t bf_val)
+-{
+-	uint8_t len = (bf >> 12) & 0x0F;
+-	uint8_t pos = (bf >> 8) & 0x0F;
+-	uint16_t new_val;
+-	uint16_t old_val;
+-	uint16_t msk;
+-
+-	if (!pval) {
+-		return 0xFFFF;
+-	}
+-	old_val = new_val = *pval;
+-	msk = ((1 << (len + 1)) - 1) << pos;
+-	new_val &= ~msk;
+-	new_val |= bf_val << pos;
+-	*pval = new_val;
+-
+-	return old_val;
+-}
+-
+-uint16_t get_bf_val(const uint16_t bf, const uint16_t val)
+-{
+-	uint8_t len = (bf >> 12) & 0x0F;
+-	uint8_t pos = (bf >> 8) & 0x0F;
+-	uint16_t msk, value;
+-
+-	msk = ((1 << (len + 1)) - 1) << pos;
+-	value = (val & msk) >> pos;
+-
+-	return value;
+-}
+-
+-int fsm_set_bf(fsm_dev_t *fsm_dev, const uint16_t bf, const uint16_t val)
+-{
+-	reg_unit_t reg;
+-	uint16_t oldval;
+-	uint16_t msk;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	reg.len = (bf >> 12) & 0x0F;
+-	reg.pos = (bf >> 8) & 0x0F;
+-	reg.addr = bf & 0xFF;
+-	if (reg.len == 15) {
+-		return fsm_reg_write(fsm_dev, reg.addr, val);
+-	}
+-	ret = fsm_reg_read(fsm_dev, reg.addr, &oldval);
+-	if (ret) {
+-		pr_err("get bf:%04X failed", bf);
+-		return ret;
+-	}
+-
+-	msk = ((1 << (reg.len + 1)) - 1) << reg.pos;
+-	reg.value = oldval & (~msk);
+-	reg.value |= val << reg.pos;
+-
+-	if(oldval == reg.value) {
+-		return 0;
+-	}
+-	ret = fsm_reg_write(fsm_dev, reg.addr, reg.value);
+-	if (ret) {
+-		pr_err("set bf:%04X failed", bf);
+-		return ret;
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_get_bf(fsm_dev_t *fsm_dev, const uint16_t bf, uint16_t *pval)
+-{
+-	reg_unit_t reg;
+-	uint16_t msk;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	reg.len = (bf >> 12) & 0x0F;
+-	reg.pos = (bf >> 8) & 0x0F;
+-	reg.addr = bf & 0xFF;
+-	ret = fsm_reg_multiread(fsm_dev, reg.addr, &reg.value);
+-	if (ret) {
+-		pr_err("get bf:%04X failed", bf);
+-		return ret;
+-	}
+-	msk = ((1 << (reg.len + 1)) - 1) << reg.pos;
+-	reg.value &= msk;
+-	if(pval) {
+-		*pval = reg.value >> reg.pos;
+-	}
+-
+-	return ret;
+-}
+-
+-struct fsm_dev *fsm_get_fsm_dev(uint8_t addr)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-
+-	if (!cfg || cfg->dev_count <= 0) {
+-		return NULL;
+-	}
+-
+-	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
+-		if (fsm_dev && addr == fsm_dev->addr) {
+-			return fsm_dev;
+-		}
+-	}
+-
+-	return NULL;
+-}
+-
+-struct fsm_dev *fsm_get_fsm_dev_by_id(int id)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-
+-	if (!cfg || cfg->dev_count <= 0) {
+-		return NULL;
+-	}
+-
+-	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
+-		if (fsm_dev && id == fsm_dev->id) {
+-			return fsm_dev;
+-		}
+-	}
+-
+-	return NULL;
+-}
+-
+-int fsm_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
+-{
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-#if defined(FSM_DEBUG_I2C)
+-	if (g_fsm_config.i2c_debug) {
+-		pr_addr(info, "%02X<-%04X", reg, val);
+-	}
+-#endif
+-#if defined(CONFIG_FSM_REGMAP)
+-	ret = fsm_regmap_write(fsm_dev, reg, val);
+-#elif defined(CONFIG_FSM_I2C)
+-	ret = fsm_i2c_reg_write(fsm_dev, reg, val);
+-#elif defined(FSM_HAL_SUPPORT)
+-	ret = fsm_hal_reg_write(fsm_dev, reg, val);
+-#else
+-	ret = -EINVAL;
+-#endif
+-	if (ret) {
+-		pr_addr(err, "%02X<-%04X fail:%d", reg, val, ret);
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval)
+-{
+-	uint16_t value;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-#if defined(CONFIG_FSM_REGMAP)
+-	ret = fsm_regmap_read(fsm_dev, reg, &value);
+-#elif defined(CONFIG_FSM_I2C)
+-	ret = fsm_i2c_reg_read(fsm_dev, reg, &value);
+-#elif defined(FSM_HAL_SUPPORT)
+-	ret = fsm_hal_reg_read(fsm_dev, reg, &value);
+-#else
+-	ret = -EINVAL;
+-#endif
+-#if defined(FSM_DEBUG_I2C)
+-	if (g_fsm_config.i2c_debug) {
+-		pr_addr(info, " %02X->%04X", reg, value);
+-	}
+-#endif
+-	if (ret) {
+-		value = 0;
+-#if !defined(BUILD_FSTOOL)
+-		pr_addr(err, " %02X->%04X fail:%d", reg, value, ret);
+-#endif
+-	}
+-	if (pval) {
+-		*pval = value;
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_burst_write(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *data, int len)
+-{
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-#if defined(FSM_DEBUG_I2C)
+-	if (len >= 4) {
+-		if (g_fsm_config.i2c_debug) {
+-			pr_addr(info, "%02X<-%02X %02X %02X %02X", reg,
+-				data[0], data[1], data[2], data[3]);
+-		}
+-	}
+-	// logprint("%s: %02X: %02X<-", __func__, fsm_dev->addr, reg);
+-	// for (ret = 0; ret < len; ret++) {
+-	// logprint("%02X ", data[ret]);
+-	// }
+-	// logprint("\n");
+-#endif
+-
+-#if defined(CONFIG_FSM_REGMAP)
+-	ret = fsm_regmap_bulkwrite(fsm_dev, reg, data, len);
+-#elif defined(CONFIG_FSM_I2C)
+-	ret = fsm_i2c_bulkwrite(fsm_dev, reg, data, len);
+-#elif defined(FSM_HAL_SUPPORT)
+-	ret = fsm_hal_bulkwrite(fsm_dev, reg, data, len);
+-#else
+-	ret = -EINVAL;
+-#endif
+-	if (ret) {
+-		pr_addr(err, "BW %02X fail:%d", reg, ret);
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_reg_case(fsm_dev_t *fsm_dev, reg_unit_t *reg)
+-{
+-	reg_wait_t *reg_wait;
+-	uint16_t temp;
+-	uint16_t mask;
+-	int count;
+-	int ret = 0;
+-
+-	if (!fsm_dev || !reg) {
+-		return -EINVAL;
+-	}
+-	switch (reg->len) {
+-	case 1: // delay ms
+-		fsm_delay_ms(reg->value);
+-		break;
+-	case 2: // wait bits, 8bits max
+-		reg_wait = (reg_wait_t *)&reg->value;
+-		if (reg_wait->len >= 8) {
+-			pr_addr(err, "invalid len:%d", reg_wait->len);
+-			return -EINVAL;
+-		}
+-		mask = ((1 << (reg_wait->len + 1)) - 1);
+-		for (count = 0; count < 35; count++) {
+-			fsm_delay_ms(1);
+-			ret = fsm_reg_multiread(fsm_dev, reg->addr, &temp);
+-			temp = (temp >> reg_wait->pos) & (~mask);
+-			if (temp == reg_wait->val)
+-				break;
+-		}
+-		break;
+-	default:
+-		break;
+-	}
+-	return ret;
+-}
+-
+-static int fs1815_regs_compat_v1(fsm_dev_t *fsm_dev, reg_unit_t *reg)
+-{
+-	uint16_t temp;
+-	uint16_t mask;
+-	uint16_t val;
+-	uint8_t addr;
+-	int ret;
+-
+-	addr = reg->addr;
+-	val = reg->value;
+-	if (addr == 0x20) {
+-		if (reg->pos <= 8 && (reg->pos + reg->len) >= 12) {
+-			mask = ((8 - reg->pos) << 8) | 0x4000 | addr; // bit[12..8]
+-			val = get_bf_val(mask, reg->value);
+-			if (val <= 0x07) val = val + 0;
+-			else if (val <= 0x0F) val = val + 2;
+-			else if (val <= 0x17) val = val + 4;
+-			else if (val == 0x18) val = 0X1E;
+-			else val = 0x1F;
+-			temp = reg->value;
+-			set_bf_val(&temp, mask, val);
+-			val = temp;
+-		}
+-	}
+-	else if (addr >= 0x59 && addr <= 0x5C) {
+-		if (reg->pos == 0 && reg->len >= 3) {
+-			mask = 0x3000 | addr; // bit[3..0]
+-			val = get_bf_val(mask, reg->value);
+-			if (val <= 0x2) val = val * 2 + 1;
+-			else if (val <= 0x4) val = 0x6;
+-			else if (val <= 0x9) val = val + 2;
+-			else if (val <= 0xB) val = 0xC;
+-			else val = 0xE;
+-			temp = reg->value;
+-			set_bf_val(&temp, mask, val);
+-			val = temp;
+-		}
+-	}
+-	mask = ((1 << (reg->len + 1)) - 1) << reg->pos;
+-	val = (val << reg->pos);
+-	ret = fsm_reg_multiread(fsm_dev, addr, &temp);
+-	val = ((~mask & temp) | (val & mask));
+-	ret |= fsm_reg_write(fsm_dev, addr, val);
+-
+-	return ret;
+-}
+-
+-int fsm_reg_update_bits(fsm_dev_t *fsm_dev, reg_unit_t *reg)
+-{
+-	uint16_t temp;
+-	uint16_t mask;
+-	uint16_t val;
+-	uint8_t addr;
+-	int ret;
+-
+-	if (!fsm_dev || !reg) {
+-		return -EINVAL;
+-	}
+-	if (reg->pos == 0xF && reg->len > 0) {
+-		return fsm_reg_case(fsm_dev, reg);
+-	}
+-	addr = reg->addr;
+-	if (fsm_dev->is1820 && fsm_dev->revid == 0x0011) {
+-		if (addr == 0x20 || (addr >= 0x59 && addr <= 0x5C)) {
+-			return fs1815_regs_compat_v1(fsm_dev, reg);
+-		}
+-	}
+-	if (reg->pos == 0 && reg->len == 15) {
+-		return fsm_reg_write(fsm_dev, addr, reg->value);
+-	}
+-	mask = ((1 << (reg->len + 1)) - 1) << reg->pos;
+-	val = (reg->value << reg->pos);
+-	ret = fsm_reg_multiread(fsm_dev, addr, &temp);
+-	temp = ((~mask & temp) | (val & mask));
+-	ret |= fsm_reg_write(fsm_dev, addr, temp);
+-
+-	return ret;
+-}
+-
+-int fsm_reg_update(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
+-{
+-	uint16_t temp;
+-	int ret;
+-
+-	ret = fsm_reg_multiread(fsm_dev, reg, &temp);
+-	if (!ret && temp != val) {
+-		ret = fsm_reg_write(fsm_dev, reg, val);
+-	}
+-	if (ret) {
+-		pr_addr(err, "update reg:%02X failed:%d", reg, ret);
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_reg_multiread(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval)
+-{
+-	uint16_t value;
+-	uint16_t old;
+-	int count = 0;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	while (count++ < FSM_I2C_RETRY) {
+-		ret = fsm_reg_read(fsm_dev, reg, &value);
+-		if (ret)
+-			continue;
+-		if (count > 1 && old == value) {
+-			break;
+-		}
+-		old = value;
+-	}
+-	if (ret) {
+-		value = 0;
+-#if !defined(BUILD_FSTOOL)
+-		pr_addr(err, " %02X->%04X fail:%d", reg, value, ret);
+-#endif
+-	}
+-	if (pval) {
+-		*pval = value;
+-	}
+-
+-	return ret;
+-}
+-
+-uint16_t fsm_calc_checksum(uint16_t *data, int len)
+-{
+-	uint16_t crc = 0;
+-	uint8_t index;
+-	uint8_t b;
+-	int i;
+-
+-	if (len <= 0) {
+-		return 0;
+-	}
+-
+-	for (i = 0; i < len; i++) {
+-		b = (uint8_t)(data[i] & 0xFF);
+-		index = (uint8_t)(crc ^ b);
+-		crc = (uint16_t)((crc >> 8) ^ g_crc16table[index]);
+-		b = (uint8_t)((data[i] >> 8) & 0xFF);
+-		index = (uint8_t)(crc ^ b);
+-		crc = (uint16_t)((crc >> 8) ^ g_crc16table[index]);
+-	}
+-	return crc;
+-}
+-
+-int fsm_get_srate_bits(fsm_dev_t *fsm_dev, uint32_t srate)
+-{
+-	int size;
+-	int idx;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (srate > 48000 && HIGH8(fsm_dev->version) != FS1860_DEV_ID) {
+-		pr_addr(err, "invalid srate:%d", srate);
+-		return -EINVAL;
+-	}
+-	if (srate == 32000 && fsm_dev->is1603s) {
+-		return 6; // I2SSR=6
+-	}
+-	size = sizeof(g_srate_tbl)/ sizeof(struct fsm_srate);
+-	for (idx = 0; idx < size; idx++) {
+-		if (srate == g_srate_tbl[idx].srate)
+-			return g_srate_tbl[idx].bf_val;
+-	}
+-	return -EINVAL;
+-}
+-
+-int fsm_access_key(fsm_dev_t *fsm_dev, int access)
+-{
+-	uint8_t otpacc;
+-	int ret = 0;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->is1820) {
+-		otpacc = 0x1F;
+-	} else {
+-		otpacc = 0x0B;
+-	}
+-	ret = fsm_reg_write(fsm_dev, otpacc, (access ? FSM_OTP_ACC_KEY2 : 0));
+-
+-	return ret;
+-}
+-
+-int fsm_reg_dump(fsm_dev_t *fsm_dev)
+-{
+-	char buf[LOG_BUF_SIZE];
+-	uint16_t value;
+-	int reg_addr;
+-	int reg_end;
+-	int idx = 0;
+-	int ret = 0;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	reg_end = (fsm_dev->is1958 ? 0xEF : (fsm_dev->is1820 ? 0xEA : 0xE8));
+-	for (reg_addr = 0; reg_addr <= reg_end; reg_addr++) {
+-		if (fsm_dev->is1958) {
+-			if (reg_addr == 0x60) reg_addr = 0x80;
+-			else if (reg_addr == 0x81) reg_addr = 0xA1;
+-			else if (reg_addr == 0xD0)
+-				ret |= fsm_access_key(fsm_dev, 1);
+-		}
+-		if (fsm_dev->is1820) {
+-			if (reg_addr == 0x60) reg_addr = 0x80;
+-		}
+-		else if (reg_addr == 0x10) reg_addr = 0x40;
+-		else if (reg_addr == 0xD0) {
+-			ret |= fsm_access_key(fsm_dev, 1);
+-		}
+-		ret |= fsm_reg_read(fsm_dev, reg_addr, &value);
+-		snprintf(buf+idx*8, 9, "%02X:%04X ", reg_addr, value);
+-		idx++;
+-		if (idx == 8 || reg_addr == reg_end) {
+-			buf[idx*8-1] = '\0';
+-			pr_addr(info, "%s", buf);
+-			idx = 0;
+-		}
+-	}
+-	ret |= fsm_access_key(fsm_dev, 0);
+-
+-	return ret;
+-}
+-
+-static int fsm_search_list(fsm_dev_t *fsm_dev, struct preset_file *pfile)
+-{
+-	dev_list_t *dev_list;
+-	uint8_t *preset;
+-	uint16_t offset;
+-	uint16_t type;
+-	int idx;
+-
+-	preset = (uint8_t *)pfile;
+-	for (idx = 0; idx < pfile->hdr.ndev; idx++) {
+-		type = pfile->index[idx].type;
+-		if (FSM_DSC_DEV_INFO != type) {
+-			continue;
+-		}
+-		offset = pfile->index[idx].offset;
+-		pr_addr(debug, "offset[%d]: %d", idx, offset);
+-		dev_list = (struct dev_list *)&preset[offset];
+-		if (fsm_dev->addr == dev_list->addr) {
+-			pr_addr(info, "found dev_list");
+-			fsm_dev->dev_list = dev_list;
+-			break;
+-		}
+-	}
+-	if (idx == pfile->hdr.ndev) {
+-		pr_addr(err, "not found dev_list");
+-		fsm_dev->dev_list = NULL;
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-static int fsm_check_dev_type(fsm_dev_t *fsm_dev)
+-{
+-	uint16_t dev_type;
+-
+-	if (!fsm_dev || !fsm_dev->dev_list) {
+-		pr_addr(err, "bad parameter");
+-		return -EINVAL;
+-	}
+-	dev_type = fsm_dev->dev_list->dev_type;
+-	if (fsm_dev->is1820) {
+-		if (LOW8(fsm_dev->version) != HIGH8(dev_type)) {
+-			pr_addr(err, "type:%02X not match version:%02X",
+-					HIGH8(dev_type), HIGH8(fsm_dev->version));
+-			return -EINVAL;
+-		}
+-		return 0;
+-	}
+-	if (HIGH8(fsm_dev->version) == 0x06 || HIGH8(fsm_dev->version) == 0x0B) {
+-		// fs1801 series
+-		if (HIGH8(dev_type) != 0x0A && HIGH8(dev_type) != 0x06
+-				&& HIGH8(dev_type) != 0x0B) {
+-			pr_addr(err, "invalid type:%04X", dev_type);
+-			return -EINVAL;
+-		}
+-		return 0;
+-	}
+-	// other series
+-	if (HIGH8(fsm_dev->version) != HIGH8(dev_type)) {
+-		pr_addr(err, "type:%02X not match version:%02X",
+-				HIGH8(dev_type), HIGH8(fsm_dev->version));
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-int fsm_init_dev_list(fsm_dev_t *fsm_dev)
+-{
+-	struct preset_file *pfile;
+-	dev_list_t *dev_list;
+-	int ret;
+-
+-	pfile = fsm_get_presets();
+-	if (!fsm_dev || !pfile) {
+-		pr_addr(err, "bad parameter or invalid FW");
+-		return -EINVAL;
+-	}
+-
+-	pr_addr(debug, "ndev:%d", pfile->hdr.ndev);
+-	ret = fsm_search_list(fsm_dev, pfile);
+-	if (ret) {
+-		return ret;
+-	}
+-	dev_list = fsm_dev->dev_list;
+-	// assert(dev_list != NULL);
+-	ret = fsm_check_dev_type(fsm_dev);
+-	if (ret) {
+-		pr_addr(err, "type(%04X) not matched version(%04X)",
+-				dev_list->dev_type, fsm_dev->version);
+-		fsm_dev->dev_list = NULL;
+-		return ret;
+-	}
+-	pr_addr(info, "preset ver:%04X", dev_list->preset_ver);
+-	if ((dev_list->preset_ver & BIT(15)) == 0) { // BIT_15 must be 1
+-		pr_addr(err, "invalid preset version:%04X",
+-				dev_list->preset_ver);
+-		return -EINVAL;
+-	}
+-	pr_addr(debug, "bus  : %d, len: %d",
+-		dev_list->bus, dev_list->len);
+-	pr_addr(debug, "type : %04X, npreset: %d",
+-		dev_list->dev_type, dev_list->npreset);
+-	pr_addr(debug, "scene: eq:%04X, reg:%04X",
+-		dev_list->eq_scenes, dev_list->reg_scenes);
+-	fsm_dev->own_scene = dev_list->reg_scenes | dev_list->eq_scenes;
+-
+-	return 0;
+-}
+-
+-void *fsm_get_list_by_idx(fsm_dev_t *fsm_dev, int idx)
+-{
+-	dev_list_t *dev_list;
+-	fsm_index_t *index;
+-	uint8_t *pdata;
+-
+-	if (fsm_dev == NULL) {
+-		return NULL;
+-	}
+-	dev_list = fsm_dev->dev_list;
+-	if (dev_list == NULL) {
+-		return NULL;
+-	}
+-	index = &dev_list->index[0];
+-	pdata = (uint8_t *)index;
+-
+-	return (void *)(&pdata[index[idx].offset]);
+-}
+-
+-void *fsm_get_data_list(fsm_dev_t *fsm_dev, int type)
+-{
+-	dev_list_t *dev_list;
+-	fsm_index_t *index;
+-	int i;
+-
+-	if (fsm_dev == NULL || fsm_dev->dev_list == NULL) {
+-		return NULL;
+-	}
+-	dev_list = fsm_dev->dev_list;
+-	index = dev_list->index;
+-	if (index == NULL) {
+-		return NULL;
+-	}
+-	for (i = 0; i < dev_list->len; i++) {
+-		if (index[i].type == type) {
+-			break;
+-		}
+-	}
+-	if (i >= dev_list->len) {
+-		return NULL;
+-	}
+-
+-	return (void *)((uint8_t *)index + index[i].offset);
+-}
+-
+-int fsm_get_spk_info(fsm_dev_t *fsm_dev, uint16_t info_type)
+-{
+-	info_list_t *info;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	info = (info_list_t *)fsm_get_data_list(fsm_dev, FSM_DSC_SPK_INFO);
+-	if (!info || info_type > info->len) {
+-		return -EINVAL;
+-	}
+-	// pr_addr(debug, "spk info len: %d", info->len);
+-
+-	return info->data[info_type];
+-}
+-
+-int fsm_init_info(fsm_dev_t *fsm_dev)
+-{
+-	if (!fsm_dev || !fsm_dev->dev_list) {
+-		return -EINVAL;
+-	}
+-	fsm_dev->bus = fsm_dev->dev_list->bus;
+-	fsm_dev->addr = fsm_dev->dev_list->addr;
+-	fsm_dev->tmax = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TMAX);
+-	fsm_dev->tcoef = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TEMPR_COEF);
+-	fsm_dev->tsel = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TEMPR_SEL);
+-	pr_addr(info, "tmax:%d, tcoef:%d, tsel:%d",
+-		fsm_dev->tmax, fsm_dev->tcoef, fsm_dev->tsel);
+-	fsm_dev->spkr = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_RES);
+-	fsm_dev->rapp = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_RAPP);
+-	if (IS_PRESET_V3(fsm_dev->dev_list->preset_ver)) {
+-		fsm_dev->pos_mask = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_POSITION);
+-		fsm_dev->compat.RS2RL_RATIO = \
+-				fsm_get_spk_info(fsm_dev, FSM_INFO_RSRL_RATIO);
+-	}
+-	pr_addr(info, "pos:%02X, rs_ratio:%d",
+-		fsm_dev->pos_mask, fsm_dev->compat.RS2RL_RATIO);
+-	pr_addr(info, "spkr:%d, rapp:%d",
+-		fsm_dev->spkr, fsm_dev->rapp);
+-
+-	return 0;
+-}
+-
+-void *fsm_get_presets(void)
+-{
+-	return g_fsm_config.preset;
+-}
+-
+-void fsm_set_presets(void *preset)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (cfg) {
+-		fsm_free_mem((void **)&cfg->preset);
+-		cfg->preset = preset;
+-	}
+-}
+-
+-/**
+- * fsm device interface for external reference
+- */
+-int fsm_parse_preset(const void *data, uint32_t size)
+-{
+-	struct preset_file *pfile;
+-	struct preset_header *hdr;
+-	uint16_t checksum;
+-	int crc_size;
+-
+-	if (data == NULL || size == 0) {
+-		pr_err("bad parameter, size:%d", size);
+-		return -EINVAL;
+-	}
+-	pfile = fsm_get_presets();
+-	if (pfile) {
+-		pr_debug("already had presets, try init");
+-		fsm_try_init();
+-		return 0;
+-	}
+-	pfile = (struct preset_file *)fsm_alloc_mem(size);
+-	if (!pfile) {
+-		pr_err("alloc memery failed");
+-		return -ENOMEM;
+-	}
+-	memcpy(pfile, data, size);
+-
+-	hdr = &pfile->hdr;
+-	pr_debug("version : %04X", hdr->version);
+-	pr_info("customer: %s", hdr->customer);
+-	pr_info("project : %s", hdr->project);
+-	pr_info("date    : %4d%02d%02d-%02d%02d", hdr->date.year, \
+-		hdr->date.month, hdr->date.day, hdr->date.hour, hdr->date.min);
+-	pr_debug("size    : %d", hdr->size);
+-	pr_debug("crc16   : %04X", hdr->crc16);
+-
+-	crc_size = (size - sizeof(struct preset_header) + 2)/sizeof(uint16_t);
+-	if (hdr->size == 0 || hdr->size != size) {
+-		pr_err("invalid size: hdr:%d, fw:%d", hdr->size, size);
+-		fsm_free_mem((void **)&pfile);
+-		return -EINVAL;
+-	}
+-	checksum = fsm_calc_checksum((uint16_t *)(&(pfile->hdr.ndev)), crc_size);
+-	if (checksum != hdr->crc16) {
+-		pr_err("checksum(%04X) not match(%04X)", checksum, hdr->crc16);
+-		fsm_free_mem((void **)&pfile);
+-		return -EINVAL;
+-	}
+-	else {
+-		pr_info("checksum success!");
+-		fsm_set_presets(pfile);
+-	}
+-	fsm_try_init();
+-
+-	return 0;
+-}
+-
+-int fsm_swap_channel(fsm_dev_t *fsm_dev, int next_angle)
+-{
+-	uint16_t left_chn;
+-	uint8_t i2sctrl;
+-	uint16_t chs12;
+-	int ret = 0;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->is1820) {
+-		/* fs1815 not supported */
+-		return 0;
+-	}
+-	switch (next_angle) {
+-	case 90:
+-		left_chn = (FSM_POS_LBTM | FSM_POS_RBTM);
+-		break;
+-	case 180:
+-		left_chn = (FSM_POS_RTOP | FSM_POS_RBTM);
+-		break;
+-	case 270:
+-		left_chn = (FSM_POS_LTOP | FSM_POS_RTOP);
+-		break;
+-	case 0:
+-	default:
+-		left_chn = (FSM_POS_LTOP | FSM_POS_LBTM);
+-		break;
+-	}
+-	left_chn = (left_chn & fsm_dev->pos_mask);
+-	chs12 = ((left_chn != 0) ? 1 : 2);
+-	if ((g_fsm_config.dev_count == 1)
+-			|| (fsm_dev->pos_mask == FSM_POS_MONO)) {
+-		chs12 = 3;
+-	}
+-	if (fsm_dev->is1958) {
+-		i2sctrl = 0x17;
+-		ret = fsm_set_bf(fsm_dev, 0x1317, chs12); // 0x17[4..3]
+-	} else {
+-		i2sctrl = 0x04;
+-		ret = fsm_set_bf(fsm_dev, 0x1304, chs12); // 0x04[4..3]
+-	}
+-	pr_addr(debug, "pos:%02X, CHS12:%d", fsm_dev->pos_mask, chs12);
+-
+-	return ret;
+-}
+-
+-int fsm_write_reg_tbl(fsm_dev_t *fsm_dev, uint16_t scene)
+-{
+-	reg_scene_t *reg_scene;
+-	reg_comm_t *reg_comm;
+-	reg_unit_t *reg;
+-	regs_unit_t *regs;
+-	int ret = 0;
+-	int i;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	if (scene == FSM_SCENE_COMMON) {
+-		reg_comm = fsm_get_data_list(fsm_dev, FSM_DSC_REG_COMMON);
+-		if (!reg_comm) {
+-			pr_addr(info, "note: not found reg_common data");
+-			return 0;
+-		}
+-		reg = reg_comm->reg;
+-		pr_addr(debug, "reg comm len: %d", reg_comm->len);
+-		for (i = 0; i < reg_comm->len; i++) {
+-			ret |= fsm_reg_update_bits(fsm_dev, &reg[i]);
+-		}
+-	} else if (scene != FSM_SCENE_UNKNOW) {
+-		reg_scene = fsm_get_data_list(fsm_dev, FSM_DSC_REG_SCENES);
+-		if (!reg_scene) {
+-			pr_addr(info, "note: not found reg_scene data");
+-			return 0;
+-		}
+-		regs = reg_scene->regs;
+-		pr_addr(debug, "reg scene len: %d", reg_scene->len);
+-		for (i = 0; i < reg_scene->len; i++) {
+-			if ((regs[i].scene & scene) == 0) {
+-				continue;
+-			}
+-			ret |= fsm_reg_update_bits(fsm_dev, &regs[i].reg);
+-		}
+-	}
+-
+-	FSM_FUNC_EXIT(ret);
+-	return ret;
+-}
+-
+-int fsm_get_rstrim(fsm_dev_t *fsm_dev)
+-{
+-	uint16_t reg_rstrim;
+-	uint16_t value;
+-	int ret;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->is1958) {
+-		fsm_dev->rstrim = 0;
+-		return 0;
+-	} else if (fsm_dev->is1820) {
+-		reg_rstrim = 0x07;
+-	} else {
+-		reg_rstrim = 0xE6;
+-	}
+-	if (fsm_dev->rstrim != 0) {
+-		return 0;
+-	}
+-	fsm_access_key(fsm_dev, 1);
+-	ret = fsm_reg_read(fsm_dev, reg_rstrim, &value);
+-	fsm_access_key(fsm_dev, 0);
+-	if (ret || value == 0) {
+-		pr_debug("use default rs_trim value");
+-		value = FSM_RS_TRIM_DEFAULT;
+-	}
+-	fsm_dev->rstrim = value;
+-
+-	return 0;
+-}
+-
+-int fsm_check_spkcoef(fsm_dev_t *fsm_dev)
+-{
+-	uint8_t spkcoef;
+-	uint16_t value;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	spkcoef = ((fsm_dev->is1958 || fsm_dev->is1820) ? 0x14 : 0x08);
+-	ret = fsm_reg_read(fsm_dev, spkcoef, &value);
+-	if (value == 0) {
+-		// not inited yet
+-		return -EINVAL;
+-	}
+-
+-	return ret;
+-}
+-
+-int fsm_config_vol(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	uint16_t volctrl;
+-	uint16_t volume;
+-
+-	if (!fsm_dev || !cfg) {
+-		return -EINVAL;
+-	}
+-
+-	if (cfg->volume > FSM_VOLUME_MAX) {
+-		cfg->volume = FSM_VOLUME_MAX;
+-	}
+-	// volume = (fsm_dev->state.calibrated ? cfg->volume : 0xDF); // -12dB
+-	if (fsm_dev->is1820) {
+-		/* fs1815 not supported */
+-		return 0;
+-	}
+-	else if (fsm_dev->is1958) {
+-		volctrl = 0x16;
+-		volume = ((cfg->volume << 1) + 1) << 7;
+-	} else {
+-		volctrl = 0x06;
+-		volume = ((cfg->volume << 8) & 0xFF00);
+-	}
+-	pr_addr(debug, "vol: %04X", volume);
+-
+-	return fsm_reg_write(fsm_dev, volctrl, volume);
+-}
+-
+-int fsm_ops_dummy(fsm_dev_t *fsm_dev)
+-{
+-	return 0;
+-}
+-
+-/*
+- * fsm stub api
+- */
+-
+-int fsm_stub_switch_preset(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	int ret = 0;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	pr_addr(debug, "%s switching",
+-			(cfg->force_scene ? "force" : "auto"));
+-	if (!cfg->force_scene && fsm_dev->cur_scene == cfg->next_scene) {
+-		pr_addr(debug, "same scene, skip");
+-		return 0;
+-	}
+-	if (cfg->speaker_on) {
+-		ret |= fsm_stub_shut_down(fsm_dev);
+-	}
+-	if ((fsm_dev->own_scene & cfg->next_scene) == 0) {
+-		return ret;
+-	}
+-	if (fsm_dev->dev_ops.switch_preset) {
+-		ret |= fsm_dev->dev_ops.switch_preset(fsm_dev);
+-	}
+-	ret |= fsm_write_reg_tbl(fsm_dev, cfg->next_scene);
+-	fsm_dev->cur_scene = cfg->next_scene;
+-	if (cfg->speaker_on) {
+-		ret |= fsm_stub_start_up(fsm_dev);
+-	}
+-
+-	FSM_FUNC_EXIT(ret);
+-	return ret;
+-}
+-
+-int fsm_stub_dev_init(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	int ret;
+-
+-	if (fsm_dev == NULL || cfg == NULL) {
+-		return -EINVAL;
+-	}
+-
+-	if (gpio_is_valid(fsm_dev->rst_gpio))
+-		gpio_set_value(fsm_dev->rst_gpio, 1);
+-
+-	if (cfg->force_init) {
+-		pr_addr(info, "force init");
+-	}
+-	ret = fsm_check_spkcoef(fsm_dev);
+-	if (ret) {
+-		pr_addr(info, "try init device");
+-		fsm_dev->state.dev_inited = false;
+-	}
+-	if (!cfg->force_init && fsm_dev->state.dev_inited) {
+-		return 0;
+-	}
+-	if (fsm_dev->dev_ops.dev_init) {
+-		return fsm_dev->dev_ops.dev_init(fsm_dev);
+-	}
+-	ret = fsm_init_dev_list(fsm_dev);
+-	if (ret || !fsm_dev->dev_list) {
+-		pr_addr(err, "init dev_list fail:%d", ret);
+-		return ret;
+-	}
+-	fsm_dev->state.dev_inited = true;
+-	ret = fsm_init_info(fsm_dev);
+-	if (fsm_dev->dev_ops.reg_init) {
+-		ret |= fsm_dev->dev_ops.reg_init(fsm_dev);
+-	}
+-	ret |= fsm_get_rstrim(fsm_dev);
+-	ret |= fsm_stub_shut_down(fsm_dev);
+-	fsm_dev->errcode = ret;
+-
+-	return ret;
+-}
+-
+-int fsm_stub_start_up(fsm_dev_t *fsm_dev)
+-{
+-	int ret = 0;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->dev_ops.start_up) {
+-		return fsm_dev->dev_ops.start_up(fsm_dev);
+-	}
+-	pr_addr(err, "none ops");
+-
+-	return ret;
+-}
+-
+-int fsm_stub_shut_down(fsm_dev_t *fsm_dev)
+-{
+-	int ret = 0;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->dev_ops.shut_down) {
+-		return fsm_dev->dev_ops.shut_down(fsm_dev);
+-	}
+-	pr_addr(err, "none ops");
+-
+-	return ret;
+-}
+-
+-int fsm_stub_dev_deinit(fsm_dev_t *fsm_dev)
+-{
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->dev_ops.deinit) {
+-		return fsm_dev->dev_ops.deinit(fsm_dev);
+-	}
+-	pr_addr(err, "none ops");
+-
+-	return 0;
+-}
+-
+-int fsm_save_re25(struct fsm_calib_v2 *data)
+-{
+-	if (!data) {
+-		return -EINVAL;
+-	}
+-	return -EINVAL;
+-}
+-
+-int fsm_get_re25(struct fsm_calib_v2 *data)
+-{
+-	if (!data) {
+-		return -EINVAL;
+-	}
+-	if (data->dev_count > 0) {
+-		// already loaded
+-		return 0;
+-	}
+-	return -EINVAL;
+-}
+-
+-int fsm_dev_count(void)
+-{
+-	return g_fsm_config.dev_count;
+-}
+-
+-void fsm_set_i2s_clocks(uint32_t rate, uint32_t bclk)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!cfg) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	cfg->i2s_bclk = bclk;
+-	cfg->i2s_srate = rate;
+-	if (rate == 32000) {
+-		cfg->i2s_bclk += 32;
+-	}
+-	fsm_mutex_unlock();
+-}
+-
+-void fsm_set_scene(int scene)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev = NULL;
+-
+-	if (!cfg || scene < 0 || scene >= FSM_SCENE_MAX) {
+-		pr_err("invaild scene:%d", scene);
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	cfg->next_scene = BIT(scene);
+-	fsm_list_func(fsm_dev, fsm_stub_switch_preset);
+-	fsm_mutex_unlock();
+-}
+-
+-void fsm_set_volume(int volume)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-
+-	if (!cfg) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	if (volume < 0 || volume > FSM_VOLUME_MAX) {
+-		pr_debug("invalid volume: %d, default 0dB", volume);
+-		volume = FSM_VOLUME_MAX;
+-	}
+-	cfg->volume = volume;
+-	if (!cfg->stream_muted) {
+-		fsm_list_func(fsm_dev, fsm_config_vol);
+-	}
+-	fsm_mutex_unlock();
+-}
+-
+-void fsm_set_fw_name(char *name)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (cfg) {
+-		cfg->fw_name = name;
+-	}
+-}
+-
+-int fsm_detect_device(fsm_dev_t *fsm_dev, uint8_t dev_id)
+-{
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-	fsm_dev->use_irq = false;
+-	memset(&fsm_dev->dev_ops, 0, sizeof(fsm_dev->dev_ops));
+-	switch (dev_id) {
+-	case FS1603_DEV_ID:
+-		//fs1603_ops(fsm_dev);
+-		break;
+-	case FS1818_DEV_ID:
+-	case FS1896_DEV_ID:
+-		fsm_dev->is1801 = true;
+-		//fs1801_ops(fsm_dev);
+-		break;
+-	case FS1958_DEV_ID:
+-		fsm_dev->is1958 = true;
+-		//fs1958_ops(fsm_dev);
+-		break;
+-	case FS1815_DEV_ID:
+-		fsm_dev->is1820 = true;
+-		fsm_reg_read(fsm_dev, 0x02, &fsm_dev->revid);
+-		fs1815_ops(fsm_dev);
+-		break;
+-	default:
+-		pr_addr(err, "invalid dev_id:%02X", dev_id);
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-int fsm_probe(fsm_dev_t *fsm_dev, int addr)
+-{
+-	uint16_t id;
+-	int ret;
+-
+-	if (fsm_dev == NULL) {
+-		return -EINVAL;
+-	}
+-
+-	fsm_mutex_lock();
+-	fsm_dev->addr = addr;
+-	do {
+-		ret = fsm_reg_read(fsm_dev, 0x01, &id);
+-		if (ret) {
+-			fsm_dev->addr = 0;
+-			fsm_mutex_unlock();
+-			return ret;
+-		}
+-		fsm_dev->is1603s = IS_FS1603S(id);
+-		ret = fsm_detect_device(fsm_dev, LOW8(id));
+-		if (ret) {
+-			pr_addr(err, "Unknown DEVID: %04X", id);
+-			fsm_dev->addr = 0;
+-			fsm_mutex_unlock();
+-			return ret;
+-		}
+-	} while (0);
+-#ifndef BUILD_FSTOOL
+-	pr_addr(info, "Found DEVID: %04X", id);
+-#endif
+-	fsm_dev->ram_scene[FSM_EQ_RAM0] = FSM_SCENE_UNKNOW;
+-	fsm_dev->ram_scene[FSM_EQ_RAM1] = FSM_SCENE_UNKNOW;
+-	fsm_dev->own_scene = FSM_SCENE_UNKNOW;
+-	fsm_dev->cur_scene = FSM_SCENE_UNKNOW;
+-	fsm_dev->version = id;
+-	fsm_dev->acc_count = 0;
+-
+-	fsm_list_init(fsm_dev);
+-	g_fsm_config.dev_count++;
+-	fsm_mutex_unlock();
+-
+-	return 0;
+-}
+-
+-void fsm_remove(fsm_dev_t *fsm_dev)
+-{
+-	if (!fsm_dev) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	list_del(&fsm_dev->list);
+-	if (fsm_dev->tdata) {
+-		fsm_free_mem((void **)&fsm_dev->tdata);
+-	}
+-	g_fsm_config.dev_count--;
+-	fsm_mutex_unlock();
+-}
+-
+-/**
+- * try init deivce without lock
+- */
+-static int fsm_try_init(void)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	struct preset_file *preset;
+-	fsm_dev_t *fsm_dev;
+-	uint16_t next_scene;
+-	int ret;
+-
+-	if (cfg->dev_count <= 0) {
+-		pr_err("no found device");
+-		return -EINVAL;
+-	}
+-	cfg->force_scene = cfg->force_init;
+-	ret = fsm_firmware_init_sync(cfg->fw_name);
+-	preset = fsm_get_presets();
+-	if (preset == NULL) {
+-		pr_err("invalid firmware, ret:%d", ret);
+-		return -EINVAL;
+-	}
+-	next_scene = cfg->next_scene;
+-	cfg->next_scene = FSM_SCENE_MUSIC; // init all devices
+-	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
+-		fsm_stub_dev_init(fsm_dev);
+-	}
+-	cfg->next_scene = next_scene; // recovery scene
+-	cfg->force_scene = cfg->force_init = false;
+-
+-	return 0;
+-}
+-
+-void fsm_init(void)
+-{
+-	int ret;
+-
+-	ret = fsm_hal_open();
+-	if (ret) {
+-		pr_err("hal open fail:%d", ret);
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	pr_info("version: %s", FSM_CODE_VERSION);
+-	pr_info("branch : %s", FSM_GIT_BRANCH);
+-	pr_info("date   : %s", FSM_CODE_DATE);
+-	ret = fsm_try_init();
+-	if (ret) { // no device or firmware
+-		pr_err("init failed: %d", ret);
+-	}
+-	g_dev_inited = 1;
+-	pr_debug("done");
+-	fsm_mutex_unlock();
+-}
+-
+-static int fsm_get_scene_index(uint16_t scene)
+-{
+-	int index = 0;
+-
+-	while (scene) {
+-		scene = (scene >> 1);
+-		if (scene == 0) {
+-			break;
+-		}
+-		index++;
+-	}
+-
+-	return index;
+-}
+-
+-int fsm_scene_get(struct snd_kcontrol *kcontrol,
+-			struct snd_ctl_elem_value *ucontrol)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	int scene_index;
+-
+-	if (!cfg) {
+-		ucontrol->value.integer.value[0] = -1;
+-		return 0;
+-	}
+-	scene_index = fsm_get_scene_index(cfg->next_scene);
+-	pr_info("scene: %04X, BIT(%d)", cfg->next_scene, scene_index);
+-	ucontrol->value.integer.value[0] = scene_index;
+-
+-	return 0;
+-}
+-
+-int fsm_scene_put(struct snd_kcontrol *kcontrol,
+-			struct snd_ctl_elem_value *ucontrol)
+-{
+-	int next_scene = ucontrol->value.integer.value[0];
+-
+-	pr_info("next_scene: %d", next_scene);
+-	fsm_set_scene(next_scene);
+-
+-	return 0;
+-}
+-
+-int fsm_init_put(struct snd_kcontrol *kcontrol,
+-			struct snd_ctl_elem_value *ucontrol)
+-{
+-	fsm_init();
+-	return 0;
+-}
+-
+-int fsm_init_get(struct snd_kcontrol *kcontrol,
+-			struct snd_ctl_elem_value *ucontrol)
+-{
+-
+-	ucontrol->value.integer.value[0] = g_dev_inited;
+-	pr_info("dev %s", (g_dev_inited == 1) ? "initilized" : "init failed");
+-
+-	return 0;
+-}
+-
+-const struct snd_kcontrol_new fsm_snd_controls[] =
+-{
+-	SOC_SINGLE_EXT("FSM_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
+-			fsm_scene_get, fsm_scene_put),
+-	SOC_SINGLE_EXT("FSM_Init", SND_SOC_NOPM, 0, 1, 0,
+-			fsm_init_get, fsm_init_put),
+-};
+-
+-void fsm_add_codec_controls(struct snd_soc_codec *codec)
+-{
+-	snd_soc_add_codec_controls(codec, fsm_snd_controls,
+-				ARRAY_SIZE(fsm_snd_controls));
+-}
+-EXPORT_SYMBOL_GPL(fsm_add_codec_controls);
+-
+-void fsm_speaker_onn(void)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev = NULL;
+-	int ret;
+-
+-	pr_info("scene: %04X", cfg->next_scene);
+-	fsm_mutex_lock();
+-	cfg->stream_muted = false;
+-	ret = fsm_try_init();
+-	if (ret) { // no device or firmware
+-		pr_err("init failed: %d", ret);
+-		fsm_mutex_unlock();
+-		return;
+-	}
+-	fsm_list_func(fsm_dev, fsm_stub_switch_preset);
+-	fsm_list_func(fsm_dev, fsm_stub_start_up);
+-	cfg->cur_angle = cfg->next_angle;
+-	cfg->speaker_on = true;
+-	pr_debug("done");
+-	fsm_mutex_unlock();
+-}
+-EXPORT_SYMBOL(fsm_speaker_onn);
+-
+-void fsm_speaker_off(void)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev = NULL;
+-	int ret;
+-
+-	pr_info("scene: %04X", cfg->next_scene);
+-	fsm_mutex_lock();
+-	cfg->stream_muted = true;
+-	ret = fsm_try_init();
+-	if (ret) {
+-		pr_err("try init failed: %d", ret);
+-		fsm_mutex_unlock();
+-		return;
+-	}
+-	fsm_list_func(fsm_dev, fsm_stub_shut_down);
+-	cfg->speaker_on = false;
+-	fsm_mutex_unlock();
+-	fsm_set_scene(0); // scene music
+-	pr_debug("done");
+-}
+-EXPORT_SYMBOL(fsm_speaker_off);
+-
+-void fsm_stereo_rotation(int next_angle)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev = NULL;
+-
+-	if (next_angle >= 360) { // angle range: [0 ~ 359]
+-		next_angle %= 360;
+-	}
+-	if (cfg->cur_angle == next_angle) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	pr_info("scene:%04X, angle:%d", cfg->next_scene, next_angle);
+-	cfg->next_angle = next_angle;
+-	if (cfg->stream_muted || !(cfg->next_scene & FSM_SCENE_MUSIC)) {
+-		fsm_mutex_unlock();
+-		return;
+-	}
+-	fsm_list_func_arg(fsm_dev, fsm_swap_channel, cfg->next_angle);
+-	cfg->cur_angle = cfg->next_angle;
+-	fsm_mutex_unlock();
+-}
+-
+-void fsm_dump(void)
+-{
+-	fsm_dev_t *fsm_dev = NULL;
+-	fsm_mutex_lock();
+-	fsm_list_func(fsm_dev, fsm_reg_dump);
+-	fsm_mutex_unlock();
+-}
+-
+-void fsm_deinit(void)
+-{
+-	fsm_dev_t *fsm_dev = NULL;
+-
+-	fsm_mutex_lock();
+-	if (fsm_dev_count() <= 0) {
+-		fsm_mutex_unlock();
+-		return;
+-	}
+-	fsm_list_func(fsm_dev, fsm_stub_dev_deinit);
+-	fsm_firmware_deinit();
+-	fsm_mutex_unlock();
+-	fsm_hal_close();
+-}
++/**
++ * Copyright (C) Fourier Semiconductor Inc.
++ * 2025-8-18 File created.
++ */
++
++#include "fsm_public.h"
++#include <linux/gpio.h>
++
++#define CRC16_TABLE_SIZE      256
++#define CRC16_POLY_NOMIAL     0xA001
++
++static int fsm_try_init(void);
++static int g_dev_inited = 0;
++
++static LIST_HEAD(fsm_dev_list);
++#define fsm_list_init(fsm_dev) \
++	do { \
++		INIT_LIST_HEAD(&fsm_dev->list); \
++		list_add(&fsm_dev->list, &fsm_dev_list); \
++	} while (0)
++
++#define fsm_list_entry(fsm_dev, ops) \
++	do { \
++		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
++			if (!fsm_skip_device(fsm_dev) && ops) { \
++				ops(fsm_dev); \
++			} \
++		} \
++	} while(0)
++
++#define fsm_list_func(fsm_dev, func) \
++	do { \
++		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
++			if (!fsm_skip_device(fsm_dev)) { \
++				func(fsm_dev); \
++			} \
++		} \
++	} while(0)
++
++#define fsm_list_check(fsm_dev, type, ret) \
++	do { \
++		ret = 0; \
++		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
++			if (!fsm_skip_device(fsm_dev)) { \
++				ret |= fsm_stub_check_stable(fsm_dev, type); \
++				if (ret) { \
++					break; \
++				} \
++			} \
++		} \
++	} while(0)
++
++#define fsm_list_return(fsm_dev, func, ret) \
++	do { \
++		ret = 0; \
++		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
++			if (!fsm_skip_device(fsm_dev)) { \
++				ret |= func(fsm_dev); \
++			} \
++		} \
++	} while(0)
++
++#define fsm_list_func_arg(fsm_dev, func, argv) \
++	do { \
++		list_for_each_entry(fsm_dev, &fsm_dev_list, list) { \
++			if (!fsm_skip_device(fsm_dev)) { \
++				func(fsm_dev, argv); \
++			} \
++		} \
++	} while(0)
++
++
++static uint16_t g_crc16table[CRC16_TABLE_SIZE] = {
++	0x0000, 0xc0c1, 0xc181, 0x0140, 0xc301, 0x03c0, 0x0280, 0xc241,
++	0xc601, 0x06c0, 0x0780, 0xc741, 0x0500, 0xc5c1, 0xc481, 0x0440,
++	0xcc01, 0x0cc0, 0x0d80, 0xcd41, 0x0f00, 0xcfc1, 0xce81, 0x0e40,
++	0x0a00, 0xcac1, 0xcb81, 0x0b40, 0xc901, 0x09c0, 0x0880, 0xc841,
++	0xd801, 0x18c0, 0x1980, 0xd941, 0x1b00, 0xdbc1, 0xda81, 0x1a40,
++	0x1e00, 0xdec1, 0xdf81, 0x1f40, 0xdd01, 0x1dc0, 0x1c80, 0xdc41,
++	0x1400, 0xd4c1, 0xd581, 0x1540, 0xd701, 0x17c0, 0x1680, 0xd641,
++	0xd201, 0x12c0, 0x1380, 0xd341, 0x1100, 0xd1c1, 0xd081, 0x1040,
++	0xf001, 0x30c0, 0x3180, 0xf141, 0x3300, 0xf3c1, 0xf281, 0x3240,
++	0x3600, 0xf6c1, 0xf781, 0x3740, 0xf501, 0x35c0, 0x3480, 0xf441,
++	0x3c00, 0xfcc1, 0xfd81, 0x3d40, 0xff01, 0x3fc0, 0x3e80, 0xfe41,
++	0xfa01, 0x3ac0, 0x3b80, 0xfb41, 0x3900, 0xf9c1, 0xf881, 0x3840,
++	0x2800, 0xe8c1, 0xe981, 0x2940, 0xeb01, 0x2bc0, 0x2a80, 0xea41,
++	0xee01, 0x2ec0, 0x2f80, 0xef41, 0x2d00, 0xedc1, 0xec81, 0x2c40,
++	0xe401, 0x24c0, 0x2580, 0xe541, 0x2700, 0xe7c1, 0xe681, 0x2640,
++	0x2200, 0xe2c1, 0xe381, 0x2340, 0xe101, 0x21c0, 0x2080, 0xe041,
++	0xa001, 0x60c0, 0x6180, 0xa141, 0x6300, 0xa3c1, 0xa281, 0x6240,
++	0x6600, 0xa6c1, 0xa781, 0x6740, 0xa501, 0x65c0, 0x6480, 0xa441,
++	0x6c00, 0xacc1, 0xad81, 0x6d40, 0xaf01, 0x6fc0, 0x6e80, 0xae41,
++	0xaa01, 0x6ac0, 0x6b80, 0xab41, 0x6900, 0xa9c1, 0xa881, 0x6840,
++	0x7800, 0xb8c1, 0xb981, 0x7940, 0xbb01, 0x7bc0, 0x7a80, 0xba41,
++	0xbe01, 0x7ec0, 0x7f80, 0xbf41, 0x7d00, 0xbdc1, 0xbc81, 0x7c40,
++	0xb401, 0x74c0, 0x7580, 0xb541, 0x7700, 0xb7c1, 0xb681, 0x7640,
++	0x7200, 0xb2c1, 0xb381, 0x7340, 0xb101, 0x71c0, 0x7080, 0xb041,
++	0x5000, 0x90c1, 0x9181, 0x5140, 0x9301, 0x53c0, 0x5280, 0x9241,
++	0x9601, 0x56c0, 0x5780, 0x9741, 0x5500, 0x95c1, 0x9481, 0x5440,
++	0x9c01, 0x5cc0, 0x5d80, 0x9d41, 0x5f00, 0x9fc1, 0x9e81, 0x5e40,
++	0x5a00, 0x9ac1, 0x9b81, 0x5b40, 0x9901, 0x59c0, 0x5880, 0x9841,
++	0x8801, 0x48c0, 0x4980, 0x8941, 0x4b00, 0x8bc1, 0x8a81, 0x4a40,
++	0x4e00, 0x8ec1, 0x8f81, 0x4f40, 0x8d01, 0x4dc0, 0x4c80, 0x8c41,
++	0x4400, 0x84c1, 0x8581, 0x4540, 0x8701, 0x47c0, 0x4680, 0x8641,
++	0x8201, 0x42c0, 0x4380, 0x8341, 0x4100, 0x81c1, 0x8081, 0x4040,
++};
++
++static struct fsm_config g_fsm_config = {
++	.dev_count  = 0,
++	.volume     = FSM_VOLUME_MAX,
++	.next_scene = FSM_SCENE_MUSIC,
++	.i2s_bclk   = 1536000,
++	.i2s_srate  = 48000,
++	.test_type  = TEST_NONE,
++	.freq_start = FREQ_START,
++	.freq_end   = FREQ_END,
++	.freq_step  = F0_FREQ_STEP,
++	.freq_count = FREQ_COUNT,
++	.amb_tempr  = FSM_DFT_AMB_TEMPR,
++	.cur_angle  = 0,
++	.next_angle = 0,
++
++	// flags
++	.vddd_on = 0,
++	.codec_inited = 0,
++	.force_fw = 0,
++	.force_init = 0,
++	.force_scene = 0,
++	.force_calib = 0,
++	.store_otp = 0,
++	.nondsp_mode = 1,
++#ifdef FSM_DEBUG
++	.i2c_debug = 1,
++#endif
++	.force_mute = 0,
++	.stop_test = 0,
++	.use_monitor = 0,
++	.skip_monitor = 0,
++	.stream_muted = 1,
++	.fw_name = FSM_FW_NAME,
++	.preset = NULL,
++};
++
++static const struct fsm_srate g_srate_tbl[] = {
++	{  8000, 0 },
++	{ 16000, 3 },
++	{ 32000, 8 },
++	{ 44100, 7 },
++	{ 48000, 8 },
++	// fs1860 support below srate:
++	{ 88200, 9 },
++	{ 96000, 10 },
++};
++
++int fsm_skip_device(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!fsm_dev || !cfg) {
++		return 1;
++	}
++	if (!fsm_dev->state.dev_inited) {
++		return 1;
++	}
++	if ((fsm_dev->own_scene & cfg->next_scene) == 0) {
++		return 1;
++	}
++
++	return 0;
++}
++
++fsm_config_t *fsm_get_config(void)
++{
++	return &g_fsm_config;
++}
++#ifdef __KERNEL__
++EXPORT_SYMBOL(fsm_get_config);
++#endif
++
++void fsm_get_version(fsm_version_t *version)
++{
++	sprintf(version->git_branch, "%s", FSM_GIT_BRANCH);
++	sprintf(version->git_commit, "%s", FSM_GIT_COMMIT);
++	sprintf(version->code_date, "%s", FSM_CODE_DATE);
++	sprintf(version->code_version, "%s", FSM_CODE_VERSION);
++	pr_info("version %s", version->code_version);
++}
++
++void *fsm_alloc_mem(int size)
++{
++#if defined(__KERNEL__)
++	return kzalloc(size, GFP_KERNEL);
++#elif defined(FSM_HAL_SUPPORT)
++	return malloc(size);
++#else
++	return NULL;
++#endif
++}
++
++void fsm_free_mem(void **buf)
++{
++	if (*buf == NULL) {
++		return;
++	}
++
++#if defined(__KERNEL__)
++	kfree(*buf);
++#elif defined(FSM_HAL_SUPPORT)
++	free(*buf);
++#endif
++	*buf = NULL;
++}
++
++void fsm_delay_ms(uint32_t delay_ms)
++{
++	if (delay_ms == 0) {
++		return;
++	}
++#if defined(__KERNEL__)
++	usleep_range(delay_ms * 1000, delay_ms * 1000 + 1);
++#elif defined(FSM_HAL_SUPPORT)
++	usleep(delay_ms * 1000);
++#endif
++}
++
++uint16_t set_bf_val(uint16_t *pval, const uint16_t bf, const uint16_t bf_val)
++{
++	uint8_t len = (bf >> 12) & 0x0F;
++	uint8_t pos = (bf >> 8) & 0x0F;
++	uint16_t new_val;
++	uint16_t old_val;
++	uint16_t msk;
++
++	if (!pval) {
++		return 0xFFFF;
++	}
++	old_val = new_val = *pval;
++	msk = ((1 << (len + 1)) - 1) << pos;
++	new_val &= ~msk;
++	new_val |= bf_val << pos;
++	*pval = new_val;
++
++	return old_val;
++}
++
++uint16_t get_bf_val(const uint16_t bf, const uint16_t val)
++{
++	uint8_t len = (bf >> 12) & 0x0F;
++	uint8_t pos = (bf >> 8) & 0x0F;
++	uint16_t msk, value;
++
++	msk = ((1 << (len + 1)) - 1) << pos;
++	value = (val & msk) >> pos;
++
++	return value;
++}
++
++int fsm_set_bf(fsm_dev_t *fsm_dev, const uint16_t bf, const uint16_t val)
++{
++	reg_unit_t reg;
++	uint16_t oldval;
++	uint16_t msk;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	reg.len = (bf >> 12) & 0x0F;
++	reg.pos = (bf >> 8) & 0x0F;
++	reg.addr = bf & 0xFF;
++	if (reg.len == 15) {
++		return fsm_reg_write(fsm_dev, reg.addr, val);
++	}
++	ret = fsm_reg_read(fsm_dev, reg.addr, &oldval);
++	if (ret) {
++		pr_err("get bf:%04X failed", bf);
++		return ret;
++	}
++
++	msk = ((1 << (reg.len + 1)) - 1) << reg.pos;
++	reg.value = oldval & (~msk);
++	reg.value |= val << reg.pos;
++
++	if(oldval == reg.value) {
++		return 0;
++	}
++	ret = fsm_reg_write(fsm_dev, reg.addr, reg.value);
++	if (ret) {
++		pr_err("set bf:%04X failed", bf);
++		return ret;
++	}
++
++	return ret;
++}
++
++int fsm_get_bf(fsm_dev_t *fsm_dev, const uint16_t bf, uint16_t *pval)
++{
++	reg_unit_t reg;
++	uint16_t msk;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	reg.len = (bf >> 12) & 0x0F;
++	reg.pos = (bf >> 8) & 0x0F;
++	reg.addr = bf & 0xFF;
++	ret = fsm_reg_multiread(fsm_dev, reg.addr, &reg.value);
++	if (ret) {
++		pr_err("get bf:%04X failed", bf);
++		return ret;
++	}
++	msk = ((1 << (reg.len + 1)) - 1) << reg.pos;
++	reg.value &= msk;
++	if(pval) {
++		*pval = reg.value >> reg.pos;
++	}
++
++	return ret;
++}
++
++struct fsm_dev *fsm_get_fsm_dev(uint8_t addr)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++
++	if (!cfg || cfg->dev_count <= 0) {
++		return NULL;
++	}
++
++	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
++		if (fsm_dev && addr == fsm_dev->addr) {
++			return fsm_dev;
++		}
++	}
++
++	return NULL;
++}
++
++struct fsm_dev *fsm_get_fsm_dev_by_id(int id)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++
++	if (!cfg || cfg->dev_count <= 0) {
++		return NULL;
++	}
++
++	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
++		if (fsm_dev && id == fsm_dev->id) {
++			return fsm_dev;
++		}
++	}
++
++	return NULL;
++}
++
++static int fsm_pos_mask_to_index(uint8_t pos_mask)
++{
++	int pos_idx;
++
++	switch (pos_mask) {
++	case FSM_POS_LTOP:
++		pos_idx = 3;
++		break;
++	case FSM_POS_LBTM:
++		pos_idx = 2;
++		break;
++	case FSM_POS_RTOP:
++		pos_idx = 1;
++		break;
++	case FSM_POS_RBTM:
++	case FSM_POS_MONO:
++		pos_idx = 0;
++		break;
++	default:
++		pr_err("Failed to get fsm pos_idx: %x", pos_mask);
++		return 0;
++	}
++
++	return pos_idx;
++}
++
++struct fsm_dev *fsm_get_fsm_dev_by_position(uint8_t pos_mask)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++
++	if (!cfg || cfg->dev_count <= 0) {
++		return NULL;
++	}
++
++	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
++		if (fsm_dev && (pos_mask & fsm_dev->pos_mask)) {
++			return fsm_dev;
++		}
++	}
++
++	return NULL;
++}
++
++int fsm_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
++{
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++#if defined(FSM_DEBUG_I2C)
++	if (g_fsm_config.i2c_debug) {
++		pr_addr(info, "%02X<-%04X", reg, val);
++	}
++#endif
++#if defined(CONFIG_FSM_REGMAP)
++	ret = fsm_regmap_write(fsm_dev, reg, val);
++#elif defined(CONFIG_FSM_I2C)
++	ret = fsm_i2c_reg_write(fsm_dev, reg, val);
++#elif defined(FSM_HAL_SUPPORT)
++	ret = fsm_hal_reg_write(fsm_dev, reg, val);
++#else
++	ret = -EINVAL;
++#endif
++	if (ret) {
++		pr_addr(err, "%02X<-%04X fail:%d", reg, val, ret);
++	}
++
++	return ret;
++}
++
++int fsm_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval)
++{
++	uint16_t value;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++#if defined(CONFIG_FSM_REGMAP)
++	ret = fsm_regmap_read(fsm_dev, reg, &value);
++#elif defined(CONFIG_FSM_I2C)
++	ret = fsm_i2c_reg_read(fsm_dev, reg, &value);
++#elif defined(FSM_HAL_SUPPORT)
++	ret = fsm_hal_reg_read(fsm_dev, reg, &value);
++#else
++	ret = -EINVAL;
++#endif
++#if defined(FSM_DEBUG_I2C)
++	if (g_fsm_config.i2c_debug) {
++		pr_addr(info, " %02X->%04X", reg, value);
++	}
++#endif
++	if (ret) {
++		value = 0;
++#if !defined(BUILD_FSTOOL)
++		pr_addr(err, " %02X->%04X fail:%d", reg, value, ret);
++#endif
++	}
++	if (pval) {
++		*pval = value;
++	}
++
++	return ret;
++}
++
++int fsm_burst_write(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *data, int len)
++{
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++#if defined(FSM_DEBUG_I2C)
++	if (len >= 4) {
++		if (g_fsm_config.i2c_debug) {
++			pr_addr(info, "%02X<-%02X %02X %02X %02X", reg,
++				data[0], data[1], data[2], data[3]);
++		}
++	}
++	// logprint("%s: %02X: %02X<-", __func__, fsm_dev->addr, reg);
++	// for (ret = 0; ret < len; ret++) {
++	// logprint("%02X ", data[ret]);
++	// }
++	// logprint("\n");
++#endif
++
++#if defined(CONFIG_FSM_REGMAP)
++	ret = fsm_regmap_bulkwrite(fsm_dev, reg, data, len);
++#elif defined(CONFIG_FSM_I2C)
++	ret = fsm_i2c_bulkwrite(fsm_dev, reg, data, len);
++#elif defined(FSM_HAL_SUPPORT)
++	ret = fsm_hal_bulkwrite(fsm_dev, reg, data, len);
++#else
++	ret = -EINVAL;
++#endif
++	if (ret) {
++		pr_addr(err, "BW %02X fail:%d", reg, ret);
++	}
++
++	return ret;
++}
++
++int fsm_reg_case(fsm_dev_t *fsm_dev, reg_unit_t *reg)
++{
++	reg_wait_t *reg_wait;
++	uint16_t temp;
++	uint16_t mask;
++	int count;
++	int ret = 0;
++
++	if (!fsm_dev || !reg) {
++		return -EINVAL;
++	}
++	switch (reg->len) {
++	case 1: // delay ms
++		fsm_delay_ms(reg->value);
++		break;
++	case 2: // wait bits, 8bits max
++		reg_wait = (reg_wait_t *)&reg->value;
++		if (reg_wait->len >= 8) {
++			pr_addr(err, "invalid len:%d", reg_wait->len);
++			return -EINVAL;
++		}
++		mask = ((1 << (reg_wait->len + 1)) - 1);
++		for (count = 0; count < 35; count++) {
++			fsm_delay_ms(1);
++			ret = fsm_reg_multiread(fsm_dev, reg->addr, &temp);
++			temp = (temp >> reg_wait->pos) & (~mask);
++			if (temp == reg_wait->val)
++				break;
++		}
++		break;
++	default:
++		break;
++	}
++	return ret;
++}
++
++static int fs1815_regs_compat_v1(fsm_dev_t *fsm_dev, reg_unit_t *reg)
++{
++	uint16_t temp;
++	uint16_t mask;
++	uint16_t val;
++	uint8_t addr;
++	int ret;
++
++	addr = reg->addr;
++	val = reg->value;
++	if (addr == 0x20) {
++		if (reg->pos <= 8 && (reg->pos + reg->len) >= 12) {
++			mask = ((8 - reg->pos) << 8) | 0x4000 | addr; // bit[12..8]
++			val = get_bf_val(mask, reg->value);
++			if (val <= 0x07) val = val + 0;
++			else if (val <= 0x0F) val = val + 2;
++			else if (val <= 0x17) val = val + 4;
++			else if (val == 0x18) val = 0X1E;
++			else val = 0x1F;
++			temp = reg->value;
++			set_bf_val(&temp, mask, val);
++			val = temp;
++		}
++	}
++	else if (addr >= 0x59 && addr <= 0x5C) {
++		if (reg->pos == 0 && reg->len >= 3) {
++			mask = 0x3000 | addr; // bit[3..0]
++			val = get_bf_val(mask, reg->value);
++			if (val <= 0x2) val = val * 2 + 1;
++			else if (val <= 0x4) val = 0x6;
++			else if (val <= 0x9) val = val + 2;
++			else if (val <= 0xB) val = 0xC;
++			else val = 0xE;
++			temp = reg->value;
++			set_bf_val(&temp, mask, val);
++			val = temp;
++		}
++	}
++	mask = ((1 << (reg->len + 1)) - 1) << reg->pos;
++	val = (val << reg->pos);
++	ret = fsm_reg_multiread(fsm_dev, addr, &temp);
++	val = ((~mask & temp) | (val & mask));
++	ret |= fsm_reg_write(fsm_dev, addr, val);
++
++	return ret;
++}
++
++int fsm_reg_update_bits(fsm_dev_t *fsm_dev, reg_unit_t *reg)
++{
++	uint16_t temp;
++	uint16_t mask;
++	uint16_t val;
++	uint8_t addr;
++	int ret;
++
++	if (!fsm_dev || !reg) {
++		return -EINVAL;
++	}
++	if (reg->pos == 0xF && reg->len > 0) {
++		return fsm_reg_case(fsm_dev, reg);
++	}
++	addr = reg->addr;
++	if (fsm_dev->is1820 && fsm_dev->revid == 0x0011) {
++		if (addr == 0x20 || (addr >= 0x59 && addr <= 0x5C)) {
++			return fs1815_regs_compat_v1(fsm_dev, reg);
++		}
++	}
++	if (reg->pos == 0 && reg->len == 15) {
++		return fsm_reg_write(fsm_dev, addr, reg->value);
++	}
++	mask = ((1 << (reg->len + 1)) - 1) << reg->pos;
++	val = (reg->value << reg->pos);
++	ret = fsm_reg_multiread(fsm_dev, addr, &temp);
++	temp = ((~mask & temp) | (val & mask));
++	ret |= fsm_reg_write(fsm_dev, addr, temp);
++
++	return ret;
++}
++
++int fsm_reg_update(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
++{
++	uint16_t temp;
++	int ret;
++
++	ret = fsm_reg_multiread(fsm_dev, reg, &temp);
++	if (!ret && temp != val) {
++		ret = fsm_reg_write(fsm_dev, reg, val);
++	}
++	if (ret) {
++		pr_addr(err, "update reg:%02X failed:%d", reg, ret);
++	}
++
++	return ret;
++}
++
++int fsm_reg_multiread(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval)
++{
++	uint16_t value;
++	uint16_t old;
++	int count = 0;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	while (count++ < FSM_I2C_RETRY) {
++		ret = fsm_reg_read(fsm_dev, reg, &value);
++		if (ret)
++			continue;
++		if (count > 1 && old == value) {
++			break;
++		}
++		old = value;
++	}
++	if (ret) {
++		value = 0;
++#if !defined(BUILD_FSTOOL)
++		pr_addr(err, " %02X->%04X fail:%d", reg, value, ret);
++#endif
++	}
++	if (pval) {
++		*pval = value;
++	}
++
++	return ret;
++}
++
++uint16_t fsm_calc_checksum(uint16_t *data, int len)
++{
++	uint16_t crc = 0;
++	uint8_t index;
++	uint8_t b;
++	int i;
++
++	if (len <= 0) {
++		return 0;
++	}
++
++	for (i = 0; i < len; i++) {
++		b = (uint8_t)(data[i] & 0xFF);
++		index = (uint8_t)(crc ^ b);
++		crc = (uint16_t)((crc >> 8) ^ g_crc16table[index]);
++		b = (uint8_t)((data[i] >> 8) & 0xFF);
++		index = (uint8_t)(crc ^ b);
++		crc = (uint16_t)((crc >> 8) ^ g_crc16table[index]);
++	}
++	return crc;
++}
++
++int fsm_get_srate_bits(fsm_dev_t *fsm_dev, uint32_t srate)
++{
++	int size;
++	int idx;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	if (srate > 48000 && HIGH8(fsm_dev->version) != FS1860_DEV_ID) {
++		pr_addr(err, "invalid srate:%d", srate);
++		return -EINVAL;
++	}
++	if (srate == 32000 && fsm_dev->is1603s) {
++		return 6; // I2SSR=6
++	}
++	size = sizeof(g_srate_tbl)/ sizeof(struct fsm_srate);
++	for (idx = 0; idx < size; idx++) {
++		if (srate == g_srate_tbl[idx].srate)
++			return g_srate_tbl[idx].bf_val;
++	}
++	return -EINVAL;
++}
++
++int fsm_access_key(fsm_dev_t *fsm_dev, int access)
++{
++	uint8_t otpacc;
++	int ret = 0;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	if (fsm_dev->is1820) {
++		otpacc = 0x1F;
++	} else {
++		otpacc = 0x0B;
++	}
++	ret = fsm_reg_write(fsm_dev, otpacc, (access ? FSM_OTP_ACC_KEY2 : 0));
++
++	return ret;
++}
++
++int fsm_reg_dump(fsm_dev_t *fsm_dev)
++{
++	uint16_t val[8];
++	uint16_t idx;
++	int ret;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	ret = fsm_access_key(fsm_dev, 1);
++	for (idx = 0; idx < 0xF0; idx += 8) {
++		ret |= fsm_reg_read(fsm_dev, idx, &val[0]);
++		ret |= fsm_reg_read(fsm_dev, idx + 1, &val[1]);
++		ret |= fsm_reg_read(fsm_dev, idx + 2, &val[2]);
++		ret |= fsm_reg_read(fsm_dev, idx + 3, &val[3]);
++		ret |= fsm_reg_read(fsm_dev, idx + 4, &val[4]);
++		ret |= fsm_reg_read(fsm_dev, idx + 5, &val[5]);
++		ret |= fsm_reg_read(fsm_dev, idx + 6, &val[6]);
++		ret |= fsm_reg_read(fsm_dev, idx + 7, &val[7]);
++		pr_addr(info, "%02X: %02X %02X %02X %02X %02X %02X %02X %02X",
++			idx, val[0], val[1], val[2], val[3],
++			val[4], val[5], val[6], val[7]);
++	}
++	ret |= fsm_access_key(fsm_dev, 0);
++
++	return ret;
++}
++
++static int fsm_search_list(fsm_dev_t *fsm_dev, struct preset_file *pfile)
++{
++	dev_list_t *dev_list;
++	uint8_t *preset;
++	uint16_t offset;
++	uint16_t type;
++	int idx;
++
++	preset = (uint8_t *)pfile;
++	for (idx = 0; idx < pfile->hdr.ndev; idx++) {
++		type = pfile->index[idx].type;
++		if (FSM_DSC_DEV_INFO != type) {
++			continue;
++		}
++		offset = pfile->index[idx].offset;
++		pr_addr(debug, "offset[%d]: %d", idx, offset);
++		dev_list = (struct dev_list *)&preset[offset];
++		if (fsm_dev->addr == dev_list->addr) {
++			pr_addr(info, "found dev_list");
++			fsm_dev->dev_list = dev_list;
++			break;
++		}
++	}
++	if (idx == pfile->hdr.ndev) {
++		pr_addr(err, "not found dev_list");
++		fsm_dev->dev_list = NULL;
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int fsm_check_dev_type(fsm_dev_t *fsm_dev)
++{
++	uint16_t dev_type;
++
++	if (!fsm_dev || !fsm_dev->dev_list) {
++		pr_err("bad parameter");
++		return -EINVAL;
++	}
++	dev_type = fsm_dev->dev_list->dev_type;
++	if (fsm_dev->is1820) {
++		if (LOW8(fsm_dev->version) != HIGH8(dev_type)) {
++			pr_addr(err, "type:%02X not match version:%02X",
++					HIGH8(dev_type), HIGH8(fsm_dev->version));
++			return -EINVAL;
++		}
++		return 0;
++	}
++	if (HIGH8(fsm_dev->version) == 0x06 || HIGH8(fsm_dev->version) == 0x0B) {
++		// fs1801 series
++		if (HIGH8(dev_type) != 0x0A && HIGH8(dev_type) != 0x06
++				&& HIGH8(dev_type) != 0x0B) {
++			pr_addr(err, "invalid type:%04X", dev_type);
++			return -EINVAL;
++		}
++		return 0;
++	}
++	// other series
++	if (HIGH8(fsm_dev->version) != HIGH8(dev_type)) {
++		pr_addr(err, "type:%02X not match version:%02X",
++				HIGH8(dev_type), HIGH8(fsm_dev->version));
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++int fsm_init_dev_list(fsm_dev_t *fsm_dev)
++{
++	struct preset_file *pfile;
++	dev_list_t *dev_list;
++	int ret;
++
++	pfile = fsm_get_presets();
++	if (!fsm_dev || !pfile) {
++		pr_err("bad parameter or invalid FW");
++		return -EINVAL;
++	}
++
++	pr_addr(debug, "ndev:%d", pfile->hdr.ndev);
++	ret = fsm_search_list(fsm_dev, pfile);
++	if (ret) {
++		return ret;
++	}
++	dev_list = fsm_dev->dev_list;
++	// assert(dev_list != NULL);
++	ret = fsm_check_dev_type(fsm_dev);
++	if (ret) {
++		pr_addr(err, "type(%04X) not matched version(%04X)",
++				dev_list->dev_type, fsm_dev->version);
++		fsm_dev->dev_list = NULL;
++		return ret;
++	}
++	pr_addr(info, "preset ver:%04X", dev_list->preset_ver);
++	if ((dev_list->preset_ver & BIT(15)) == 0) { // BIT_15 must be 1
++		pr_addr(err, "invalid preset version:%04X",
++				dev_list->preset_ver);
++		return -EINVAL;
++	}
++	pr_addr(debug, "bus  : %d, len: %d",
++		dev_list->bus, dev_list->len);
++	pr_addr(debug, "type : %04X, npreset: %d",
++		dev_list->dev_type, dev_list->npreset);
++	pr_addr(debug, "scene: eq:%04X, reg:%04X",
++		dev_list->eq_scenes, dev_list->reg_scenes);
++	fsm_dev->own_scene = dev_list->reg_scenes | dev_list->eq_scenes;
++
++	return 0;
++}
++
++void *fsm_get_list_by_idx(fsm_dev_t *fsm_dev, int idx)
++{
++	dev_list_t *dev_list;
++	fsm_index_t *index;
++	uint8_t *pdata;
++
++	if (fsm_dev == NULL) {
++		return NULL;
++	}
++	dev_list = fsm_dev->dev_list;
++	if (dev_list == NULL) {
++		return NULL;
++	}
++	index = &dev_list->index[0];
++	pdata = (uint8_t *)index;
++
++	return (void *)(&pdata[index[idx].offset]);
++}
++
++void *fsm_get_data_list(fsm_dev_t *fsm_dev, int type)
++{
++	dev_list_t *dev_list;
++	fsm_index_t *index;
++	int i;
++
++	if (fsm_dev == NULL || fsm_dev->dev_list == NULL) {
++		return NULL;
++	}
++	dev_list = fsm_dev->dev_list;
++	index = dev_list->index;
++	if (index == NULL) {
++		return NULL;
++	}
++	for (i = 0; i < dev_list->len; i++) {
++		if (index[i].type == type) {
++			break;
++		}
++	}
++	if (i >= dev_list->len) {
++		return NULL;
++	}
++
++	return (void *)((uint8_t *)index + index[i].offset);
++}
++
++int fsm_get_spk_info(fsm_dev_t *fsm_dev, uint16_t info_type)
++{
++	info_list_t *info;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	info = (info_list_t *)fsm_get_data_list(fsm_dev, FSM_DSC_SPK_INFO);
++	if (!info || info_type > info->len) {
++		return -EINVAL;
++	}
++	// pr_addr(debug, "spk info len: %d", info->len);
++
++	return info->data[info_type];
++}
++
++int fsm_init_info(fsm_dev_t *fsm_dev)
++{
++	if (!fsm_dev || !fsm_dev->dev_list) {
++		return -EINVAL;
++	}
++	fsm_dev->bus = fsm_dev->dev_list->bus;
++	fsm_dev->addr = fsm_dev->dev_list->addr;
++	fsm_dev->tmax = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TMAX);
++	fsm_dev->tcoef = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TEMPR_COEF);
++	fsm_dev->tsel = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_TEMPR_SEL);
++	pr_addr(info, "tmax:%d, tcoef:%d, tsel:%d",
++		fsm_dev->tmax, fsm_dev->tcoef, fsm_dev->tsel);
++	fsm_dev->spkr = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_RES);
++	fsm_dev->rapp = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_RAPP);
++	if (IS_PRESET_V3(fsm_dev->dev_list->preset_ver)) {
++		fsm_dev->pos_mask = fsm_get_spk_info(fsm_dev, FSM_INFO_SPK_POSITION);
++		fsm_dev->compat.RS2RL_RATIO = \
++				fsm_get_spk_info(fsm_dev, FSM_INFO_RSRL_RATIO);
++	}
++	pr_addr(info, "pos:%02X, rs_ratio:%d",
++		fsm_dev->pos_mask, fsm_dev->compat.RS2RL_RATIO);
++	pr_addr(info, "spkr:%d, rapp:%d",
++		fsm_dev->spkr, fsm_dev->rapp);
++
++	return 0;
++}
++
++void *fsm_get_presets(void)
++{
++	return g_fsm_config.preset;
++}
++
++void fsm_set_presets(void *preset)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (cfg) {
++		fsm_free_mem((void **)&cfg->preset);
++		cfg->preset = preset;
++	}
++}
++
++/**
++ * fsm device interface for external reference
++ */
++int fsm_parse_preset(const void *data, uint32_t size)
++{
++	struct preset_file *pfile;
++	struct preset_header *hdr;
++	uint16_t checksum;
++	int crc_size;
++
++	if (data == NULL || size == 0) {
++		pr_err("bad parameter, size:%d", size);
++		return -EINVAL;
++	}
++	pfile = fsm_get_presets();
++	if (pfile) {
++		pr_debug("already had presets, try init");
++		fsm_try_init();
++		return 0;
++	}
++	pfile = (struct preset_file *)fsm_alloc_mem(size);
++	if (!pfile) {
++		pr_err("alloc memery failed");
++		return -ENOMEM;
++	}
++	memcpy(pfile, data, size);
++
++	hdr = &pfile->hdr;
++	pr_debug("version : %04X", hdr->version);
++	pr_info("customer: %s", hdr->customer);
++	pr_info("project : %s", hdr->project);
++	pr_info("date    : %4d%02d%02d-%02d%02d", hdr->date.year, \
++		hdr->date.month, hdr->date.day, hdr->date.hour, hdr->date.min);
++	pr_debug("size    : %d", hdr->size);
++	pr_debug("crc16   : %04X", hdr->crc16);
++
++	crc_size = (size - sizeof(struct preset_header) + 2)/sizeof(uint16_t);
++	if (hdr->size == 0 || hdr->size != size) {
++		pr_err("invalid size: hdr:%d, fw:%d", hdr->size, size);
++		fsm_free_mem((void **)&pfile);
++		return -EINVAL;
++	}
++	checksum = fsm_calc_checksum((uint16_t *)(&(pfile->hdr.ndev)), crc_size);
++	if (checksum != hdr->crc16) {
++		pr_err("checksum(%04X) not match(%04X)", checksum, hdr->crc16);
++		fsm_free_mem((void **)&pfile);
++		return -EINVAL;
++	}
++	else {
++		pr_info("checksum success!");
++		fsm_set_presets(pfile);
++	}
++	fsm_try_init();
++
++	return 0;
++}
++
++int fsm_swap_channel(fsm_dev_t *fsm_dev, int next_angle)
++{
++	uint16_t left_chn;
++	uint8_t i2sctrl;
++	uint16_t chs12;
++	int ret = 0;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	if (fsm_dev->is1820) {
++		/* fs1815 not supported */
++		return 0;
++	}
++	switch (next_angle) {
++	case 90:
++		left_chn = (FSM_POS_LBTM | FSM_POS_RBTM);
++		break;
++	case 180:
++		left_chn = (FSM_POS_RTOP | FSM_POS_RBTM);
++		break;
++	case 270:
++		left_chn = (FSM_POS_LTOP | FSM_POS_RTOP);
++		break;
++	case 0:
++	default:
++		left_chn = (FSM_POS_LTOP | FSM_POS_LBTM);
++		break;
++	}
++	left_chn = (left_chn & fsm_dev->pos_mask);
++	chs12 = ((left_chn != 0) ? 1 : 2);
++	if ((g_fsm_config.dev_count == 1)
++			|| (fsm_dev->pos_mask == FSM_POS_MONO)) {
++		chs12 = 3;
++	}
++	if (fsm_dev->is1958) {
++		i2sctrl = 0x17;
++		ret = fsm_set_bf(fsm_dev, 0x1317, chs12); // 0x17[4..3]
++	} else {
++		i2sctrl = 0x04;
++		ret = fsm_set_bf(fsm_dev, 0x1304, chs12); // 0x04[4..3]
++	}
++	pr_addr(debug, "pos:%02X, CHS12:%d", fsm_dev->pos_mask, chs12);
++
++	return ret;
++}
++
++int fsm_write_reg_tbl(fsm_dev_t *fsm_dev, uint16_t scene)
++{
++	reg_scene_t *reg_scene;
++	reg_comm_t *reg_comm;
++	reg_unit_t *reg;
++	regs_unit_t *regs;
++	int ret = 0;
++	int i;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	if (scene == FSM_SCENE_COMMON) {
++		reg_comm = fsm_get_data_list(fsm_dev, FSM_DSC_REG_COMMON);
++		if (!reg_comm) {
++			pr_addr(info, "note: not found reg_common data");
++			return 0;
++		}
++		reg = reg_comm->reg;
++		pr_addr(debug, "reg comm len: %d", reg_comm->len);
++		for (i = 0; i < reg_comm->len; i++) {
++			ret |= fsm_reg_update_bits(fsm_dev, &reg[i]);
++		}
++	} else if (scene != FSM_SCENE_UNKNOW) {
++		reg_scene = fsm_get_data_list(fsm_dev, FSM_DSC_REG_SCENES);
++		if (!reg_scene) {
++			pr_addr(info, "note: not found reg_scene data");
++			return 0;
++		}
++		regs = reg_scene->regs;
++		pr_addr(debug, "reg scene len: %d", reg_scene->len);
++		for (i = 0; i < reg_scene->len; i++) {
++			if ((regs[i].scene & scene) == 0) {
++				continue;
++			}
++			ret |= fsm_reg_update_bits(fsm_dev, &regs[i].reg);
++		}
++	}
++
++	FSM_FUNC_EXIT(ret);
++	return ret;
++}
++
++int fsm_get_rstrim(fsm_dev_t *fsm_dev)
++{
++	uint16_t reg_rstrim;
++	uint16_t value;
++	int ret;
++
++	if (!fsm_dev) {
++		return -EINVAL;
++	}
++	if (fsm_dev->is1958) {
++		fsm_dev->rstrim = 0;
++		return 0;
++	} else if (fsm_dev->is1820) {
++		reg_rstrim = 0x07;
++	} else {
++		reg_rstrim = 0xE6;
++	}
++	if (fsm_dev->rstrim != 0) {
++		return 0;
++	}
++	fsm_access_key(fsm_dev, 1);
++	ret = fsm_reg_read(fsm_dev, reg_rstrim, &value);
++	fsm_access_key(fsm_dev, 0);
++	if (ret || value == 0) {
++		pr_warning("use default rs_trim value");
++		value = FSM_RS_TRIM_DEFAULT;
++	}
++	fsm_dev->rstrim = value;
++
++	return 0;
++}
++
++int fsm_check_spkcoef(fsm_dev_t *fsm_dev)
++{
++	uint8_t spkcoef;
++	uint16_t value;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	spkcoef = ((fsm_dev->is1958 || fsm_dev->is1820) ? 0x14 : 0x08);
++	ret = fsm_reg_read(fsm_dev, spkcoef, &value);
++	if (value == 0) {
++		// not inited yet
++		return -EINVAL;
++	}
++
++	return ret;
++}
++
++int fsm_config_vol(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	uint16_t volctrl;
++	uint16_t volume;
++
++	if (!fsm_dev || !cfg) {
++		return -EINVAL;
++	}
++
++	if (cfg->volume > FSM_VOLUME_MAX) {
++		cfg->volume = FSM_VOLUME_MAX;
++	}
++	// volume = (fsm_dev->state.calibrated ? cfg->volume : 0xDF); // -12dB
++	if (fsm_dev->is1820) {
++		/* fs1815 not supported */
++		return 0;
++	}
++	else if (fsm_dev->is1958) {
++		volctrl = 0x16;
++		volume = ((cfg->volume << 1) + 1) << 7;
++	} else {
++		volctrl = 0x06;
++		volume = ((cfg->volume << 8) & 0xFF00);
++	}
++	pr_addr(debug, "vol: %04X", volume);
++
++	return fsm_reg_write(fsm_dev, volctrl, volume);
++}
++
++int fsm_ops_dummy(fsm_dev_t *fsm_dev)
++{
++	return 0;
++}
++
++/*
++ * fsm stub api
++ */
++
++int fsm_stub_switch_preset(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int ret = 0;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	pr_addr(debug, "%s switching",
++			(cfg->force_scene ? "force" : "auto"));
++	if (!cfg->force_scene && fsm_dev->cur_scene == cfg->next_scene) {
++		pr_addr(debug, "same scene, skip");
++		return 0;
++	}
++	if (cfg->speaker_on) {
++		ret |= fsm_stub_shut_down(fsm_dev);
++	}
++	if ((fsm_dev->own_scene & cfg->next_scene) == 0) {
++		return ret;
++	}
++	if (fsm_dev->dev_ops.switch_preset) {
++		ret |= fsm_dev->dev_ops.switch_preset(fsm_dev);
++	}
++	ret |= fsm_write_reg_tbl(fsm_dev, cfg->next_scene);
++	fsm_dev->cur_scene = cfg->next_scene;
++	if (cfg->speaker_on) {
++		ret |= fsm_stub_start_up(fsm_dev);
++	}
++
++	FSM_FUNC_EXIT(ret);
++	return ret;
++}
++
++int fsm_stub_dev_init(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int ret;
++
++	if (fsm_dev == NULL || cfg == NULL) {
++		return -EINVAL;
++	}
++
++	if (gpio_is_valid(fsm_dev->rst_gpio))
++		gpio_direction_output(fsm_dev->rst_gpio, 1);
++
++	if (cfg->force_init) {
++		pr_addr(info, "force init");
++	}
++	ret = fsm_check_spkcoef(fsm_dev);
++	if (ret) {
++		pr_addr(info, "try init device");
++		fsm_dev->state.dev_inited = false;
++	}
++	if (!cfg->force_init && fsm_dev->state.dev_inited) {
++		return 0;
++	}
++	if (fsm_dev->dev_ops.dev_init) {
++		return fsm_dev->dev_ops.dev_init(fsm_dev);
++	}
++	ret = fsm_init_dev_list(fsm_dev);
++	if (ret || !fsm_dev->dev_list) {
++		pr_addr(err, "init dev_list fail:%d", ret);
++		return ret;
++	}
++	fsm_dev->state.dev_inited = true;
++	ret = fsm_init_info(fsm_dev);
++	if (fsm_dev->dev_ops.reg_init) {
++		ret |= fsm_dev->dev_ops.reg_init(fsm_dev);
++	}
++	ret |= fsm_get_rstrim(fsm_dev);
++	ret |= fsm_stub_shut_down(fsm_dev);
++	fsm_dev->errcode = ret;
++
++	return ret;
++}
++
++int fsm_stub_start_up(fsm_dev_t *fsm_dev)
++{
++	int ret = 0;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	if (fsm_dev->dev_ops.start_up) {
++		return fsm_dev->dev_ops.start_up(fsm_dev);
++	}
++	pr_addr(err, "none ops");
++
++	return ret;
++}
++
++int fsm_stub_shut_down(fsm_dev_t *fsm_dev)
++{
++	int ret = 0;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	if (fsm_dev->dev_ops.shut_down) {
++		return fsm_dev->dev_ops.shut_down(fsm_dev);
++	}
++	pr_addr(err, "none ops");
++
++	return ret;
++}
++
++int fsm_stub_dev_deinit(fsm_dev_t *fsm_dev)
++{
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	if (fsm_dev->dev_ops.deinit) {
++		return fsm_dev->dev_ops.deinit(fsm_dev);
++	}
++	pr_addr(err, "none ops");
++
++	return 0;
++}
++
++int fsm_save_re25(struct fsm_calib_v2 *data)
++{
++	if (!data) {
++		return -EINVAL;
++	}
++	return -EINVAL;
++}
++
++int fsm_get_re25(struct fsm_calib_v2 *data)
++{
++	if (!data) {
++		return -EINVAL;
++	}
++	if (data->dev_count > 0) {
++		// already loaded
++		return 0;
++	}
++	return -EINVAL;
++}
++
++int fsm_dev_count(void)
++{
++	return g_fsm_config.dev_count;
++}
++
++int fsm_stub_set_mute(fsm_dev_t *fsm_dev, bool mute)
++{
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	if (fsm_dev->dev_ops.set_mute) {
++		return fsm_dev->dev_ops.set_mute(fsm_dev, mute);
++	}
++	pr_addr(debug, "none ops");
++
++	return 0;
++}
++
++int fsm_stub_amp_switch(struct fsm_dev *fsm_dev, bool on)
++{
++	int ret;
++
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	pr_addr(info, "amp switch:%d state:%d", on, fsm_dev->amp_on);
++	if (!(on ^ fsm_dev->amp_on))
++		return 0;
++
++	ret = fsm_stub_dev_init(fsm_dev); // try init
++	if (ret) { // no device or firmware
++		pr_err("init failed: %d", ret);
++		return ret;
++	}
++
++	if (on) {
++		ret  = fsm_stub_start_up(fsm_dev);
++		ret |= fsm_stub_set_mute(fsm_dev, false);
++	} else {
++		ret  = fsm_stub_set_mute(fsm_dev, true);
++		ret |= fsm_stub_shut_down(fsm_dev);
++	}
++
++	if (!ret)
++		fsm_dev->amp_on = on;
++	else
++		pr_addr(err, "Failed to amp switch %d", ret);
++
++	return ret;
++}
++
++int fsm_stub_set_scene(struct fsm_dev *fsm_dev, int scene)
++{
++	int state_on;
++	int ret = 0;
++
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	pr_addr(debug, "scene:%x", scene);
++	if (fsm_dev->cur_scene == scene)
++		return 0;
++
++	state_on = fsm_dev->amp_on;
++	if (state_on)
++		ret = fsm_stub_amp_switch(fsm_dev, false);
++
++	if ((fsm_dev->own_scene & scene) == 0)
++		return ret;
++
++	if (fsm_dev->dev_ops.switch_preset)
++		ret |= fsm_dev->dev_ops.switch_preset(fsm_dev);
++	ret |= fsm_write_reg_tbl(fsm_dev, scene);
++	if (!ret)
++		fsm_dev->cur_scene = scene;
++	else
++		pr_addr(err, "Failed to set scene: %x", scene);
++
++	if (state_on)
++		ret |= fsm_stub_amp_switch(fsm_dev, true);
++
++	return ret;
++}
++
++void fsm_set_i2s_clocks(uint32_t rate, uint32_t bclk)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!cfg) {
++		return;
++	}
++	fsm_mutex_lock();
++	cfg->i2s_bclk = bclk;
++	cfg->i2s_srate = rate;
++	if (rate == 32000) {
++		cfg->i2s_bclk += 32;
++	}
++	fsm_mutex_unlock();
++}
++
++void fsm_set_scene(int scene)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev = NULL;
++	int state_on;
++
++	if (!cfg || scene < 0 || scene >= FSM_SCENE_MAX) {
++		pr_err("invaild scene:%d", scene);
++		return;
++	}
++
++	state_on = cfg->speaker_on;
++	if (state_on)
++		fsm_speaker_off();
++
++	fsm_mutex_lock();
++	cfg->next_scene = BIT(scene);
++	fsm_list_func(fsm_dev, fsm_stub_switch_preset);
++	fsm_mutex_unlock();
++
++	if (state_on)
++		fsm_speaker_onn();
++}
++
++void fsm_set_volume(int volume)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++
++	if (!cfg) {
++		return;
++	}
++	fsm_mutex_lock();
++	if (volume < 0 || volume > FSM_VOLUME_MAX) {
++		pr_warning("invalid volume: %d, default 0dB", volume);
++		volume = FSM_VOLUME_MAX;
++	}
++	cfg->volume = volume;
++	if (!cfg->stream_muted) {
++		fsm_list_func(fsm_dev, fsm_config_vol);
++	}
++	fsm_mutex_unlock();
++}
++
++void fsm_set_fw_name(char *name)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (cfg) {
++		cfg->fw_name = name;
++	}
++}
++
++int fsm_detect_device(fsm_dev_t *fsm_dev, uint8_t dev_id)
++{
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++	fsm_dev->use_irq = false;
++	memset(&fsm_dev->dev_ops, 0, sizeof(fsm_dev->dev_ops));
++	switch (dev_id) {
++	case FS1603_DEV_ID:
++		//fs1603_ops(fsm_dev);
++		break;
++	case FS1818_DEV_ID:
++	case FS1896_DEV_ID:
++		fsm_dev->is1801 = true;
++		//fs1801_ops(fsm_dev);
++		break;
++	case FS1958_DEV_ID:
++		fsm_dev->is1958 = true;
++		//fs1958_ops(fsm_dev);
++		break;
++	case FS1815_DEV_ID:
++		fsm_dev->is1820 = true;
++		fsm_reg_read(fsm_dev, 0x02, &fsm_dev->revid);
++		fs1815_ops(fsm_dev);
++		break;
++	default:
++		pr_addr(err, "invalid dev_id:%02X", dev_id);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++int fsm_probe(fsm_dev_t *fsm_dev, int addr)
++{
++	uint16_t id;
++	int ret;
++
++	if (fsm_dev == NULL) {
++		return -EINVAL;
++	}
++
++	fsm_mutex_lock();
++	if (fsm_dev->addr == 0)
++		fsm_dev->addr = addr;
++	do {
++		ret = fsm_reg_read(fsm_dev, 0x01, &id);
++		if (ret) {
++			fsm_dev->addr = 0;
++			fsm_mutex_unlock();
++			return ret;
++		}
++		fsm_dev->is1603s = IS_FS1603S(id);
++		ret = fsm_detect_device(fsm_dev, LOW8(id));
++		if (ret) {
++			pr_addr(err, "Unknown DEVID: %04X", id);
++			fsm_dev->addr = 0;
++			fsm_mutex_unlock();
++			return ret;
++		}
++	} while (0);
++#ifndef BUILD_FSTOOL
++	pr_addr(info, "Found DEVID: %04X", id);
++#endif
++	fsm_dev->ram_scene[FSM_EQ_RAM0] = FSM_SCENE_UNKNOW;
++	fsm_dev->ram_scene[FSM_EQ_RAM1] = FSM_SCENE_UNKNOW;
++	fsm_dev->own_scene = FSM_SCENE_UNKNOW;
++	fsm_dev->cur_scene = FSM_SCENE_UNKNOW;
++	fsm_dev->version = id;
++	fsm_dev->acc_count = 0;
++
++	fsm_list_init(fsm_dev);
++	g_fsm_config.dev_count++;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++void fsm_remove(fsm_dev_t *fsm_dev)
++{
++	if (!fsm_dev) {
++		return;
++	}
++	fsm_mutex_lock();
++	list_del(&fsm_dev->list);
++	if (fsm_dev->tdata) {
++		fsm_free_mem((void **)&fsm_dev->tdata);
++	}
++	g_fsm_config.dev_count--;
++	fsm_mutex_unlock();
++}
++
++/**
++ * try init deivce without lock
++ */
++static int fsm_try_init(void)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	struct preset_file *preset;
++	fsm_dev_t *fsm_dev;
++	uint16_t next_scene;
++	int ret;
++
++	if (cfg->dev_count <= 0) {
++		pr_err("no found device");
++		return -EINVAL;
++	}
++	cfg->force_scene = cfg->force_init;
++	ret = fsm_firmware_init_sync(cfg->fw_name);
++	preset = fsm_get_presets();
++	if (preset == NULL) {
++		pr_err("invalid firmware, ret:%d", ret);
++		return -EINVAL;
++	}
++	next_scene = cfg->next_scene;
++	cfg->next_scene = FSM_SCENE_MUSIC; // init all devices
++	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
++		fsm_stub_dev_init(fsm_dev);
++	}
++	cfg->next_scene = next_scene; // recovery scene
++	cfg->force_scene = cfg->force_init = false;
++
++	return 0;
++}
++
++void fsm_init(void)
++{
++	int ret;
++
++	ret = fsm_hal_open();
++	if (ret) {
++		pr_err("hal open fail:%d", ret);
++		return;
++	}
++	fsm_mutex_lock();
++	pr_info("version: %s", FSM_CODE_VERSION);
++	pr_info("branch : %s", FSM_GIT_BRANCH);
++	pr_info("date   : %s", FSM_CODE_DATE);
++	ret = fsm_try_init();
++	if (ret) { // no device or firmware
++		pr_err("init failed: %d", ret);
++	}
++	g_dev_inited = 1;
++	pr_debug("done");
++	fsm_mutex_unlock();
++}
++
++static int fsm_get_scene_index(uint16_t scene)
++{
++	int index = 0;
++
++	while (scene) {
++		scene = (scene >> 1);
++		if (scene == 0) {
++			break;
++		}
++		index++;
++	}
++
++	return index;
++}
++
++int fsm_scene_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int scene_index;
++
++	if (!cfg) {
++		ucontrol->value.integer.value[0] = -1;
++		return 0;
++	}
++	scene_index = fsm_get_scene_index(cfg->next_scene);
++	pr_info("scene: %04X, BIT(%d)", cfg->next_scene, scene_index);
++	ucontrol->value.integer.value[0] = scene_index;
++
++	return 0;
++}
++
++int fsm_scene_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int next_scene = ucontrol->value.integer.value[0];
++
++	pr_info("next_scene: %d", next_scene);
++	fsm_set_scene(next_scene);
++
++	return 0;
++}
++
++int fsm_init_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	fsm_init();
++	return 0;
++}
++
++int fsm_init_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++
++	ucontrol->value.integer.value[0] = g_dev_inited;
++	pr_info("dev %s", (g_dev_inited == 1) ? "initilized" : "init failed");
++
++	return 0;
++}
++
++static int fsm_amp_switch_get(struct snd_kcontrol *kcontrol,
++		struct snd_ctl_elem_value *ucontrol)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int status;
++
++	fsm_mutex_lock();
++	status = cfg ? cfg->speaker_on : 0;
++	ucontrol->value.integer.value[0] = !!status;
++	fsm_mutex_unlock();
++	pr_info("status: %s", status ? "On" : "Off");
++
++	return 0;
++}
++
++static int fsm_amp_switch_set(struct snd_kcontrol *kcontrol,
++		struct snd_ctl_elem_value *ucontrol)
++{
++	int status;
++
++	status = !!ucontrol->value.integer.value[0];
++	pr_info("switch: %s", status ? "On" : "Off");
++	if (status)
++		fsm_speaker_onn();
++	else
++		fsm_speaker_off();
++
++	return 0;
++}
++
++
++static int g_amp_scene[FSM_DEV_MAX];
++
++int fsm_left1_scene_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	struct fsm_dev *fsm_dev;
++	int index;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_LTOP);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ucontrol->value.integer.value[0] = g_amp_scene[index];
++	return 0;
++}
++
++int fsm_left1_scene_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int next_scene = ucontrol->value.integer.value[0];
++	struct fsm_dev *fsm_dev;
++	int index;
++	int ret;
++
++	pr_info("spk next_scene: %d", next_scene);
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_LTOP);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ret = fsm_stub_set_scene(fsm_dev, BIT(next_scene));
++	if (!ret)
++		g_amp_scene[index] = next_scene;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++int fsm_left2_scene_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	struct fsm_dev *fsm_dev;
++	int index;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_LBTM);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ucontrol->value.integer.value[0] = g_amp_scene[index];
++	return 0;
++}
++
++int fsm_left2_scene_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int next_scene = ucontrol->value.integer.value[0];
++	struct fsm_dev *fsm_dev;
++	int index;
++	int ret;
++
++	pr_info("spk next_scene: %d", next_scene);
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_LBTM);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ret = fsm_stub_set_scene(fsm_dev, BIT(next_scene));
++	if (!ret)
++		g_amp_scene[index] = next_scene;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++int fsm_right1_scene_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	struct fsm_dev *fsm_dev;
++	int index;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_RTOP);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ucontrol->value.integer.value[0] = g_amp_scene[index];
++	return 0;
++}
++
++int fsm_right1_scene_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int next_scene = ucontrol->value.integer.value[0];
++	struct fsm_dev *fsm_dev;
++	int index;
++	int ret;
++
++	pr_info("spk next_scene: %d", next_scene);
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_RTOP);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ret = fsm_stub_set_scene(fsm_dev, BIT(next_scene));
++	if (!ret)
++		g_amp_scene[index] = next_scene;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++int fsm_right2_scene_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	struct fsm_dev *fsm_dev;
++	int index;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_RBTM);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ucontrol->value.integer.value[0] = g_amp_scene[index];
++	return 0;
++}
++
++int fsm_right2_scene_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int next_scene = ucontrol->value.integer.value[0];
++	struct fsm_dev *fsm_dev;
++	int index;
++	int ret;
++
++	pr_info("spk next_scene: %d", next_scene);
++	fsm_dev = fsm_get_fsm_dev_by_position(FSM_POS_RBTM);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	index = fsm_pos_mask_to_index(fsm_dev->pos_mask);
++	ret = fsm_stub_set_scene(fsm_dev, BIT(next_scene));
++	if (!ret)
++		g_amp_scene[index] = next_scene;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++static int g_spkx_switch = 0;
++
++int fsm_spkx_switch_get(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	ucontrol->value.integer.value[0] = g_spkx_switch;
++	return 0;
++}
++
++int fsm_spkx_switch_put(struct snd_kcontrol *kcontrol,
++			struct snd_ctl_elem_value *ucontrol)
++{
++	int spkx_switch = ucontrol->value.integer.value[0];
++	struct fsm_dev *fsm_dev;
++	bool on;
++	int ret;
++
++	pr_info("spkx switch: %d", spkx_switch);
++	if (g_spkx_switch == spkx_switch)
++		return 0;
++
++	g_spkx_switch = spkx_switch;
++	if (spkx_switch >= 10) {
++		spkx_switch -= 10;
++		on = true;
++	} else {
++		on = false;
++	}
++
++	if (spkx_switch >= FSM_DEV_MAX)
++		return -EINVAL;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(BIT(spkx_switch));
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	ret = fsm_stub_amp_switch(fsm_dev, on);
++	fsm_mutex_unlock();
++
++	return ret;
++}
++
++static const char *const amp_switch_text[] = { "Off", "On" };
++static const struct soc_enum fsm_snd_enum[] = {
++	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(amp_switch_text), amp_switch_text),
++};
++
++const struct snd_kcontrol_new fsm_snd_controls[] =
++{
++	SOC_SINGLE_EXT("FSM_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
++			fsm_scene_get, fsm_scene_put),
++	SOC_SINGLE_EXT("FSM_Init", SND_SOC_NOPM, 0, 1, 0,
++			fsm_init_get, fsm_init_put),
++	SOC_ENUM_EXT("FSM_Amp_Switch", fsm_snd_enum[0],
++			fsm_amp_switch_get, fsm_amp_switch_set),
++	SOC_SINGLE_EXT("FSM_SpkL1_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
++			fsm_left1_scene_get, fsm_left1_scene_put),
++	SOC_SINGLE_EXT("FSM_SpkR1_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
++			fsm_right1_scene_get, fsm_right1_scene_put),
++	SOC_SINGLE_EXT("FSM_SpkL2_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
++			fsm_left2_scene_get, fsm_left2_scene_put),
++	SOC_SINGLE_EXT("FSM_SpkR2_Scene", SND_SOC_NOPM, 0, FSM_SCENE_MAX, 0,
++			fsm_right2_scene_get, fsm_right2_scene_put),
++	SOC_SINGLE_EXT("FSM_SpkX_Switch", SND_SOC_NOPM, 0, 14, 0,
++			fsm_spkx_switch_get, fsm_spkx_switch_put),
++};
++
++int fsm_add_codec_controls(struct snd_soc_codec *codec)
++{
++	return snd_soc_add_codec_controls(codec, fsm_snd_controls,
++				ARRAY_SIZE(fsm_snd_controls));
++}
++EXPORT_SYMBOL_GPL(fsm_add_codec_controls);
++
++int fsm_add_card_controls(struct snd_soc_card *card)
++{
++	return snd_soc_add_card_controls(card, fsm_snd_controls,
++				ARRAY_SIZE(fsm_snd_controls));
++}
++EXPORT_SYMBOL_GPL(fsm_add_card_controls);
++
++void fsm_speaker_onn(void)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev = NULL;
++	int ret;
++
++	pr_info("scene: %04X", cfg->next_scene);
++	fsm_mutex_lock();
++	if (cfg->speaker_on) {
++		pr_info("no need to spk on twice");
++		fsm_mutex_unlock();
++		return;
++	}
++	cfg->stream_muted = false;
++	ret = fsm_try_init();
++	if (ret) { // no device or firmware
++		pr_err("init failed: %d", ret);
++		fsm_mutex_unlock();
++		return;
++	}
++	fsm_list_func(fsm_dev, fsm_stub_switch_preset);
++	fsm_list_func(fsm_dev, fsm_stub_start_up);
++	cfg->cur_angle = cfg->next_angle;
++	cfg->speaker_on = true;
++	pr_debug("done");
++	fsm_mutex_unlock();
++}
++EXPORT_SYMBOL_GPL(fsm_speaker_onn);
++
++void fsm_speaker_off(void)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev = NULL;
++	int ret;
++
++	pr_info("scene: %04X", cfg->next_scene);
++	fsm_mutex_lock();
++	if (!cfg->speaker_on) {
++		pr_info("no need to spk off twice");
++		fsm_mutex_unlock();
++		return;
++	}
++	cfg->stream_muted = true;
++	ret = fsm_try_init();
++	if (ret) {
++		pr_err("try init failed: %d", ret);
++		fsm_mutex_unlock();
++		return;
++	}
++	fsm_list_func(fsm_dev, fsm_stub_shut_down);
++	cfg->speaker_on = false;
++	fsm_mutex_unlock();
++	fsm_set_scene(0); // scene music
++	pr_debug("done");
++}
++EXPORT_SYMBOL_GPL(fsm_speaker_off);
++
++/**
++ * fsm_amp_switch()
++ * uint8_t pos_mask:
++ * === 1 SPEAKER ===
++ * 0x00: mono
++ * === 2 SPEAKER ===
++ * 0x0C: left
++ * 0x03: right
++ * === 4 SPEAKER ===
++ * 0x08: left1
++ * 0x04: left2
++ * 0x02: right1
++ * 0x01: right2
++ */
++int fsm_amp_switch(uint8_t pos_mask, bool on)
++{
++	struct fsm_dev *fsm_dev;
++	int ret;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(pos_mask);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	pr_addr(info, "amp switch: %d", on);
++	ret = fsm_stub_amp_switch(fsm_dev, on);
++	fsm_mutex_unlock();
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(fsm_amp_switch);
++
++int fsm_amp_set_scene(uint8_t pos_mask, int scene)
++{
++	struct fsm_dev *fsm_dev;
++	int ret;
++
++	fsm_dev = fsm_get_fsm_dev_by_position(pos_mask);
++	if (fsm_dev == NULL)
++		return -EINVAL;
++
++	fsm_mutex_lock();
++	pr_addr(info, "amp scene: %04X %04X", pos_mask, scene);
++	ret = fsm_stub_set_scene(fsm_dev, BIT(scene));
++	fsm_mutex_unlock();
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(fsm_amp_set_scene);
++
++void fsm_stereo_rotation(int next_angle)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev = NULL;
++
++	if (next_angle >= 360) { // angle range: [0 ~ 359]
++		next_angle %= 360;
++	}
++	if (cfg->cur_angle == next_angle) {
++		return;
++	}
++	fsm_mutex_lock();
++	pr_info("scene:%04X, angle:%d", cfg->next_scene, next_angle);
++	cfg->next_angle = next_angle;
++	if (cfg->stream_muted || !(cfg->next_scene & FSM_SCENE_MUSIC)) {
++		fsm_mutex_unlock();
++		return;
++	}
++	fsm_list_func_arg(fsm_dev, fsm_swap_channel, cfg->next_angle);
++	cfg->cur_angle = cfg->next_angle;
++	fsm_mutex_unlock();
++}
++
++void fsm_dump(void)
++{
++	fsm_dev_t *fsm_dev = NULL;
++	fsm_mutex_lock();
++	fsm_list_func(fsm_dev, fsm_reg_dump);
++	fsm_mutex_unlock();
++}
++
++void fsm_deinit(void)
++{
++	fsm_dev_t *fsm_dev = NULL;
++
++	fsm_mutex_lock();
++	if (fsm_dev_count() <= 0) {
++		fsm_mutex_unlock();
++		return;
++	}
++	fsm_list_func(fsm_dev, fsm_stub_dev_deinit);
++	fsm_firmware_deinit();
++	fsm_mutex_unlock();
++	fsm_hal_close();
++}
+diff --git a/asoc/codecs/fs1815/fsm_core.o.symversions b/asoc/codecs/fs1815/fsm_core.o.symversions
+new file mode 100644
+index 0000000..ec2d06c
+--- /dev/null
++++ b/asoc/codecs/fs1815/fsm_core.o.symversions
+@@ -0,0 +1,7 @@
++__crc_fsm_get_config = 0x3870683e;
++__crc_fsm_add_codec_controls = 0xef7296e1;
++__crc_fsm_add_card_controls = 0x960495bc;
++__crc_fsm_speaker_onn = 0x0884adf0;
++__crc_fsm_speaker_off = 0xb44b3a4b;
++__crc_fsm_amp_switch = 0xce73773c;
++__crc_fsm_amp_set_scene = 0xe665c81e;
+diff --git a/asoc/codecs/fs1815/fsm_firmware.c b/asoc/codecs/fs1815/fsm_firmware.c
+old mode 100755
+new mode 100644
+index c2960ff..ae8c5e2
+--- a/asoc/codecs/fs1815/fsm_firmware.c
++++ b/asoc/codecs/fs1815/fsm_firmware.c
+@@ -1,136 +1,136 @@
+-/**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2019-02-22 File created.
+- */
+-
+-#if defined(CONFIG_FSM_FIRMWARE)
+-#include "fsm_public.h"
+-#include <linux/firmware.h>
+-#include <linux/slab.h>
+-
+-static int g_fsm_fw_init = 0;
+-
+-#ifdef FSM_UNUSED_CODE
+-static void *fsm_devm_kzalloc(struct device *dev, void *buf, size_t size)
+-{
+-	char *devm_buf = devm_kzalloc(dev, size, GFP_KERNEL);
+-
+-	if (!devm_buf) {
+-		return devm_buf;
+-	} else {
+-		memcpy(devm_buf, buf, size);
+-	}
+-
+-	return devm_buf;
+-}
+-
+-static void fsm_devm_kfree(struct device *dev, void **buf)
+-{
+-	if (*buf) {
+-		devm_kfree(dev, *buf);
+-		*buf = NULL;
+-	}
+-}
+-#endif
+-
+-static void fsm_firmware_inited(const struct firmware *cont, void *context)
+-{
+-	struct device *dev = (struct device *)context;
+-	int ret;
+-
+-	if (dev == NULL || cont == NULL) {
+-		pr_err("bad parameter");
+-		return;
+-	}
+-
+-	pr_info("size: %zu", cont->size);
+-	fsm_mutex_lock();
+-	ret = fsm_parse_preset(cont->data, (uint32_t)cont->size);
+-	fsm_mutex_unlock();
+-	release_firmware(cont);
+-	if (ret) {
+-		pr_err("parse firmware fail: %d", ret);
+-		g_fsm_fw_init = 0;
+-	}
+-}
+-
+-int fsm_firmware_init(char *fw_name)
+-{
+-	struct device *dev;
+-	int ret;
+-
+-	if (fw_name == NULL) {
+-		pr_err("invalid firmware name");
+-		return -EINVAL;
+-	}
+-	if (fsm_get_presets() || g_fsm_fw_init) {
+-		return MODULE_INITED;
+-	}
+-	dev = fsm_get_pdev();
+-	if (dev == NULL) {
+-		pr_err("invalid device");
+-		return -EINVAL;
+-	}
+-
+-	pr_info("loading %s in nowait mode", fw_name);
+-	ret = request_firmware_nowait(THIS_MODULE, 1,
+-			fw_name, dev, GFP_KERNEL,
+-			dev, fsm_firmware_inited);
+-	if (ret) {
+-		pr_err("request %s failed: %d\n", fw_name, ret);
+-		return ret;
+-	}
+-	g_fsm_fw_init = 1;
+-
+-	return ret;
+-}
+-
+-int fsm_firmware_init_sync(char *fw_name)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	const struct firmware *fw_cont;
+-	struct device *dev;
+-	int ret;
+-
+-	if (fw_name == NULL) {
+-		pr_err("invalid firmware name");
+-		return -EINVAL;
+-	}
+-	if (cfg->force_fw) {
+-		pr_info("force loading");
+-		cfg->force_fw = false;
+-		fsm_set_presets(NULL);
+-	}
+-	if (fsm_get_presets()) {
+-		return MODULE_INITED;
+-	}
+-	dev = fsm_get_pdev();
+-	if (dev == NULL) {
+-		pr_err("invalid device");
+-		return -EINVAL;
+-	}
+-
+-	g_fsm_fw_init = 0;
+-	pr_info("loading %s in sync mode", fw_name);
+-	ret = request_firmware(&fw_cont, fw_name, dev);
+-	if (ret) {
+-		pr_err("request %s failed: %d\n", fw_name, ret);
+-		return ret;
+-	}
+-	ret = fsm_parse_preset(fw_cont->data, (uint32_t)fw_cont->size);
+-	release_firmware(fw_cont);
+-	if (ret) {
+-		pr_err("parse firmware fail: %d", ret);
+-		return ret;
+-	}
+-	g_fsm_fw_init = 1;
+-
+-	return ret;
+-}
+-
+-void fsm_firmware_deinit(void)
+-{
+-	fsm_set_presets(NULL);
+-	g_fsm_fw_init = 0;
+-}
+-#endif
++/**
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-8-18 File created.
++ */
++
++#if defined(CONFIG_FSM_FIRMWARE)
++#include "fsm_public.h"
++#include <linux/firmware.h>
++#include <linux/slab.h>
++
++static int g_fsm_fw_init = 0;
++
++#ifdef FSM_UNUSED_CODE
++static void *fsm_devm_kzalloc(struct device *dev, void *buf, size_t size)
++{
++	char *devm_buf = devm_kzalloc(dev, size, GFP_KERNEL);
++
++	if (!devm_buf) {
++		return devm_buf;
++	} else {
++		memcpy(devm_buf, buf, size);
++	}
++
++	return devm_buf;
++}
++
++static void fsm_devm_kfree(struct device *dev, void **buf)
++{
++	if (*buf) {
++		devm_kfree(dev, *buf);
++		*buf = NULL;
++	}
++}
++#endif
++
++static void fsm_firmware_inited(const struct firmware *cont, void *context)
++{
++	struct device *dev = (struct device *)context;
++	int ret;
++
++	if (dev == NULL || cont == NULL) {
++		pr_err("bad parameter");
++		return;
++	}
++
++	pr_info("size: %zu", cont->size);
++	fsm_mutex_lock();
++	ret = fsm_parse_preset(cont->data, (uint32_t)cont->size);
++	fsm_mutex_unlock();
++	release_firmware(cont);
++	if (ret) {
++		pr_err("parse firmware fail: %d", ret);
++		g_fsm_fw_init = 0;
++	}
++}
++
++int fsm_firmware_init(char *fw_name)
++{
++	struct device *dev;
++	int ret;
++
++	if (fw_name == NULL) {
++		pr_err("invalid firmware name");
++		return -EINVAL;
++	}
++	if (fsm_get_presets() || g_fsm_fw_init) {
++		return MODULE_INITED;
++	}
++	dev = fsm_get_pdev();
++	if (dev == NULL) {
++		pr_err("invalid device");
++		return -EINVAL;
++	}
++
++	pr_info("loading %s in nowait mode", fw_name);
++	ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
++			fw_name, dev, GFP_KERNEL,
++			dev, fsm_firmware_inited);
++	if (ret) {
++		pr_err("request %s failed: %d\n", fw_name, ret);
++		return ret;
++	}
++	g_fsm_fw_init = 1;
++
++	return ret;
++}
++
++int fsm_firmware_init_sync(char *fw_name)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	const struct firmware *fw_cont;
++	struct device *dev;
++	int ret;
++
++	if (fw_name == NULL) {
++		pr_err("invalid firmware name");
++		return -EINVAL;
++	}
++	if (cfg->force_fw) {
++		pr_info("force loading");
++		cfg->force_fw = false;
++		fsm_set_presets(NULL);
++	}
++	if (fsm_get_presets()) {
++		return MODULE_INITED;
++	}
++	dev = fsm_get_pdev();
++	if (dev == NULL) {
++		pr_err("invalid device");
++		return -EINVAL;
++	}
++
++	g_fsm_fw_init = 0;
++	pr_info("loading %s in sync mode", fw_name);
++	ret = request_firmware(&fw_cont, fw_name, dev);
++	if (ret) {
++		pr_err("request %s failed: %d\n", fw_name, ret);
++		return ret;
++	}
++	ret = fsm_parse_preset(fw_cont->data, (uint32_t)fw_cont->size);
++	release_firmware(fw_cont);
++	if (ret) {
++		pr_err("parse firmware fail: %d", ret);
++		return ret;
++	}
++	g_fsm_fw_init = 1;
++
++	return ret;
++}
++
++void fsm_firmware_deinit(void)
++{
++	fsm_set_presets(NULL);
++	g_fsm_fw_init = 0;
++}
++#endif
+diff --git a/asoc/codecs/fs1815/fsm_i2c.c b/asoc/codecs/fs1815/fsm_i2c.c
+old mode 100755
+new mode 100644
+index ef20091..dfe07d2
+--- a/asoc/codecs/fs1815/fsm_i2c.c
++++ b/asoc/codecs/fs1815/fsm_i2c.c
+@@ -1,715 +1,755 @@
+-/*
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- */
+-#include "fsm_public.h"
+-#include <linux/module.h>
+-#include <linux/moduleparam.h>
+-#include <linux/gpio.h>
+-#include <linux/i2c.h>
+-#include <linux/platform_device.h>
+-#include <linux/power_supply.h>
+-#include <linux/version.h>
+-#include <linux/interrupt.h>
+-#include <linux/fs.h>
+-#ifdef CONFIG_OF
+-#include <linux/of.h>
+-#include <linux/of_gpio.h>
+-#endif
+-#if defined(CONFIG_REGULATOR)
+-#include <linux/regulator/consumer.h>
+-static struct regulator *g_fsm_vdd = NULL;
+-#endif
+-
+-static DEFINE_MUTEX(g_fsm_mutex);
+-static struct device *g_fsm_pdev = NULL;
+-static int g_probe_complete_flag = 0;
+-
+-/* customize configrature */
+-#include "fsm_firmware.c"
+-#include "fsm_misc.c"
+-//#include "fsm_codec.c"
+-
+-void fsm_mutex_lock()
+-{
+-	mutex_lock(&g_fsm_mutex);
+-}
+-
+-void fsm_mutex_unlock()
+-{
+-	mutex_unlock(&g_fsm_mutex);
+-}
+-
+-int fsm_i2c_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pVal)
+-{
+-	struct i2c_msg msgs[2];
+-	uint8_t retries = 0;
+-	uint8_t buffer[2];
+-	int ret;
+-
+-	if (!fsm_dev || !fsm_dev->i2c || !pVal) {
+-		return -EINVAL;
+-	}
+-
+-	// write register address.
+-	msgs[0].addr = fsm_dev->i2c->addr;
+-	msgs[0].flags = 0;
+-	msgs[0].len = 1;
+-	msgs[0].buf = &reg;
+-	// read register buffer.
+-	msgs[1].addr = fsm_dev->i2c->addr;
+-	msgs[1].flags = I2C_M_RD;
+-	msgs[1].len = 2;
+-	msgs[1].buf = &buffer[0];
+-
+-	do {
+-		mutex_lock(&fsm_dev->i2c_lock);
+-		ret = i2c_transfer(fsm_dev->i2c->adapter, &msgs[0], ARRAY_SIZE(msgs));
+-		mutex_unlock(&fsm_dev->i2c_lock);
+-		if (ret != ARRAY_SIZE(msgs)) {
+-			fsm_delay_ms(5);
+-			retries++;
+-		}
+-	} while (ret != ARRAY_SIZE(msgs) && retries < FSM_I2C_RETRY);
+-
+-	if (ret != ARRAY_SIZE(msgs)) {
+-		pr_err("read %02x transfer error: %d", reg, ret);
+-		return -EIO;
+-	}
+-
+-	*pVal = ((buffer[0] << 8) | buffer[1]);
+-
+-	return 0;
+-}
+-
+-int fsm_i2c_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
+-{
+-	struct i2c_msg msgs[1];
+-	uint8_t retries = 0;
+-	uint8_t buffer[3];
+-	int ret;
+-
+-	if (!fsm_dev || !fsm_dev->i2c) {
+-		return -EINVAL;
+-	}
+-
+-	buffer[0] = reg;
+-	buffer[1] = (val >> 8) & 0x00ff;
+-	buffer[2] = val & 0x00ff;
+-	msgs[0].addr = fsm_dev->i2c->addr;
+-	msgs[0].flags = 0;
+-	msgs[0].len = sizeof(buffer);
+-	msgs[0].buf = &buffer[0];
+-
+-	do {
+-		mutex_lock(&fsm_dev->i2c_lock);
+-		ret = i2c_transfer(fsm_dev->i2c->adapter, &msgs[0], ARRAY_SIZE(msgs));
+-		mutex_unlock(&fsm_dev->i2c_lock);
+-		if (ret != ARRAY_SIZE(msgs)) {
+-			fsm_delay_ms(5);
+-			retries++;
+-		}
+-	} while (ret != ARRAY_SIZE(msgs) && retries < FSM_I2C_RETRY);
+-
+-	if (ret != ARRAY_SIZE(msgs)) {
+-		pr_err("write %02x transfer error: %d", reg, ret);
+-		return -EIO;
+-	}
+-
+-	return 0;
+-}
+-
+-int fsm_i2c_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg,
+-				uint8_t *data, int len)
+-{
+-	uint8_t retries = 0;
+-	uint8_t *buf;
+-	int size;
+-	int ret;
+-
+-	if (!fsm_dev || !fsm_dev->i2c || !data) {
+-		return -EINVAL;
+-	}
+-
+-	size = sizeof(uint8_t) + len;
+-	buf = (uint8_t *)fsm_alloc_mem(size);
+-	if (!buf) {
+-		pr_err("alloc memery failed");
+-		return -ENOMEM;
+-	}
+-
+-	buf[0] = reg;
+-	memcpy(&buf[1], data, len);
+-	do {
+-		mutex_lock(&fsm_dev->i2c_lock);
+-		ret = i2c_master_send(fsm_dev->i2c, buf, size);
+-		mutex_unlock(&fsm_dev->i2c_lock);
+-		if (ret < 0) {
+-			fsm_delay_ms(5);
+-			retries++;
+-		} else if (ret == size) {
+-			break;
+-		}
+-	} while (ret != size && retries < FSM_I2C_RETRY);
+-
+-	fsm_free_mem((void **)&buf);
+-
+-	if (ret != size) {
+-		pr_err("write %02x transfer error: %d", reg, ret);
+-		return -EIO;
+-	}
+-
+-	return 0;
+-}
+-
+-bool fsm_set_pdev(struct device *dev)
+-{
+-	if (g_fsm_pdev == NULL || dev == NULL) {
+-		g_fsm_pdev = dev;
+-		// pr_debug("dev_name: %s", dev_name(dev));
+-		return true;
+-	}
+-	return false; // already got device
+-}
+-
+-struct device *fsm_get_pdev(void)
+-{
+-	return g_fsm_pdev;
+-}
+-
+-int fsm_vddd_on(struct device *dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	int ret = 0;
+-
+-	if (!cfg || cfg->vddd_on) {
+-		return 0;
+-	}
+-#if defined(CONFIG_REGULATOR)
+-	g_fsm_vdd = regulator_get(dev, "fsm_vddd");
+-	if (IS_ERR(g_fsm_vdd) != 0) {
+-		pr_err("error getting fsm_vddd regulator");
+-		ret = PTR_ERR(g_fsm_vdd);
+-		g_fsm_vdd = NULL;
+-		return ret;
+-	}
+-	pr_info("enable regulator");
+-	regulator_set_voltage(g_fsm_vdd, 1800000, 1800000);
+-	ret = regulator_enable(g_fsm_vdd);
+-	if (ret < 0) {
+-		pr_err("enabling fsm_vddd failed: %d", ret);
+-	}
+-#endif
+-	cfg->vddd_on = 1;
+-	fsm_delay_ms(10);
+-
+-	return ret;
+-}
+-
+-void fsm_vddd_off(void)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!cfg || !cfg->vddd_on || cfg->dev_count > 0) {
+-		return;
+-	}
+-#if defined(CONFIG_REGULATOR)
+-	if (g_fsm_vdd) {
+-		pr_info("disable regulator");
+-		regulator_disable(g_fsm_vdd);
+-		regulator_put(g_fsm_vdd);
+-		g_fsm_vdd = NULL;
+-	}
+-#endif
+-	cfg->vddd_on = 0;
+-}
+-
+-int fsm_get_amb_tempr(void)
+-{
+-	union power_supply_propval psp = { 0 };
+-	struct power_supply *psy;
+-	int tempr = FSM_DFT_AMB_TEMPR;
+-	int vbat = FSM_DFT_AMB_VBAT;
+-
+-	psy = power_supply_get_by_name("battery");
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0))
+-	if (psy && psy->get_property) {
+-		// battery temperatrue
+-		psy->get_property(psy, POWER_SUPPLY_PROP_TEMP, &psp);
+-		tempr = DIV_ROUND_CLOSEST(psp.intval, 10);
+-		psy->get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &psp);
+-		vbat = DIV_ROUND_CLOSEST(psp.intval, 1000);
+-	}
+-#else
+-	if (psy && psy->desc && psy->desc->get_property) {
+-		// battery temperatrue
+-		psy->desc->get_property(psy, POWER_SUPPLY_PROP_TEMP, &psp);
+-		tempr = DIV_ROUND_CLOSEST(psp.intval, 10);
+-		psy->desc->get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &psp);
+-		vbat = DIV_ROUND_CLOSEST(psp.intval, 1000);
+-	}
+-#endif
+-	pr_info("vbat:%d, tempr:%d", vbat, tempr);
+-
+-	return tempr;
+-}
+-
+-void *fsm_devm_kstrdup(struct device *dev, void *buf, size_t size)
+-{
+-	char *devm_buf = devm_kzalloc(dev, size + 1, GFP_KERNEL);
+-
+-	if (!devm_buf) {
+-		return devm_buf;
+-	}
+-	memcpy(devm_buf, buf, size);
+-
+-	return devm_buf;
+-}
+-
+-static int fsm_set_irq(fsm_dev_t *fsm_dev, bool enable)
+-{
+-	if (!fsm_dev || fsm_dev->irq_id <= 0) {
+-		return -EINVAL;
+-	}
+-	if (enable)
+-		enable_irq(fsm_dev->irq_id);
+-	else
+-		disable_irq(fsm_dev->irq_id);
+-
+-	return 0;
+-}
+-
+-int fsm_set_monitor(fsm_dev_t *fsm_dev, bool enable)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!cfg || !fsm_dev || !fsm_dev->fsm_wq) {
+-		return -EINVAL;
+-	}
+-	if (!cfg->use_monitor) {
+-		return 0;
+-	}
+-	if (fsm_dev->use_irq) {
+-		return fsm_set_irq(fsm_dev, enable);
+-	}
+-	if (enable) {
+-		queue_delayed_work(fsm_dev->fsm_wq,
+-				&fsm_dev->monitor_work, 5*HZ);
+-	}
+-	else {
+-		if (delayed_work_pending(&fsm_dev->monitor_work)) {
+-			cancel_delayed_work_sync(&fsm_dev->monitor_work);
+-		}
+-	}
+-
+-	return 0;
+-}
+-
+-static int fsm_ext_reset(fsm_dev_t *fsm_dev)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	uint16_t id = 0;
+-	int ret;
+-
+-	if (!cfg || !fsm_dev) {
+-		return -EINVAL;
+-	}
+-	if (cfg->reset_chip) {
+-		return 0;
+-	}
+-	if (gpio_is_valid(fsm_dev->rst_gpio)) {
+-		gpio_set_value(fsm_dev->rst_gpio, 0);
+-		fsm_delay_ms(10); // mdelay
+-		gpio_set_value(fsm_dev->rst_gpio, 1);
+-		fsm_delay_ms(1); // mdelay
+-		// TODO: for sharing reset pin in multi-pa application
+-		// cfg->reset_chip = true;
+-	}
+-	fsm_mutex_lock();
+-	/* soft reset */
+-	fsm_dev->addr = fsm_dev->i2c->addr;
+-	ret = fsm_reg_read(fsm_dev, 0x01, &id);
+-	if (ret && fsm_dev->addr != 0x34) {
+-		fsm_dev->i2c->addr = 0x34;
+-		ret = fsm_reg_read(fsm_dev, 0x01, &id);
+-	}
+-	if (!ret && LOW8(id) == FS1815_DEV_ID) {
+-		fsm_reg_write(fsm_dev, 0x10, 0x0002);
+-		fsm_delay_ms(15);
+-	} else {
+-		ret = -ENODEV;
+-	}
+-	fsm_dev->i2c->addr = fsm_dev->addr;
+-	fsm_dev->addr = 0;
+-	fsm_mutex_unlock();
+-
+-	return 0;
+-}
+-
+-static irqreturn_t fsm_irq_hander(int irq, void *data)
+-{
+-	fsm_dev_t *fsm_dev = data;
+-
+-	queue_delayed_work(fsm_dev->fsm_wq, &fsm_dev->interrupt_work, 0);
+-
+-	return IRQ_HANDLED;
+-}
+-
+-static void fsm_work_monitor(struct work_struct *work)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-	//int ret;
+-
+-	fsm_dev = container_of(work, struct fsm_dev, monitor_work.work);
+-	if (!cfg || cfg->skip_monitor || !fsm_dev) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	//ret = fsm_dev_recover(fsm_dev);
+-	fsm_mutex_unlock();
+-	if (fsm_dev->rec_count >= 5) { // 5 time max
+-		pr_addr(debug, "recover max time, stop it");
+-		return;
+-	}
+-	/* reschedule */
+-	queue_delayed_work(fsm_dev->fsm_wq, &fsm_dev->monitor_work,
+-			5*HZ);
+-
+-}
+-
+-static void fsm_work_interrupt(struct work_struct *work)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-	//int ret;
+-
+-	fsm_dev = container_of(work, struct fsm_dev, interrupt_work.work);
+-	if (!cfg || cfg->skip_monitor || !fsm_dev) {
+-		return;
+-	}
+-	fsm_mutex_lock();
+-	//ret = fsm_dev_recover(fsm_dev);
+-	//fsm_get_spkr_tempr(fsm_dev);
+-
+-	fsm_mutex_unlock();
+-}
+-
+-static int fsm_request_irq(fsm_dev_t *fsm_dev)
+-{
+-	struct i2c_client *i2c;
+-	int irq_flags;
+-	int ret;
+-
+-	if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
+-		return -EINVAL;
+-	}
+-	fsm_dev->irq_id = -1;
+-	if (!fsm_dev->use_irq || !gpio_is_valid(fsm_dev->irq_gpio)) {
+-		pr_addr(info, "skip to request irq");
+-		return 0;
+-	}
+-	i2c = fsm_dev->i2c;
+-	/* register irq handler */
+-	fsm_dev->irq_id = gpio_to_irq(fsm_dev->irq_gpio);
+-	if (fsm_dev->irq_id <= 0) {
+-		dev_err(&i2c->dev, "invalid irq %d\n", fsm_dev->irq_id);
+-		return -EINVAL;
+-	}
+-	irq_flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
+-	ret = devm_request_threaded_irq(&i2c->dev, fsm_dev->irq_id,
+-				NULL, fsm_irq_hander, irq_flags, "fs16xx", fsm_dev);
+-	if (ret) {
+-		dev_err(&i2c->dev, "failed to request IRQ %d: %d\n",
+-				fsm_dev->irq_id, ret);
+-		return ret;
+-	}
+-	disable_irq(fsm_dev->irq_id);
+-
+-	return 0;
+-}
+-
+-static int fsm_i2c_pre_check(fsm_dev_t *fsm_dev)
+-{
+-	uint16_t id = 0;
+-	uint16_t temp_addr = 0;
+-	int ret;
+-
+-	if (!fsm_dev) {
+-		return -EINVAL;
+-	}
+-
+-	fsm_mutex_lock();
+-	temp_addr = fsm_dev->i2c->addr;
+-	ret = fsm_reg_read(fsm_dev, 0x01, &id);
+-	if (ret && (temp_addr != 0x34)) {
+-		fsm_dev->i2c->addr = 0x34;
+-		ret = fsm_reg_read(fsm_dev, 0x01, &id);
+-	}
+-	if (ret) {
+-		ret = -ENODEV;
+-		dev_err(&fsm_dev->i2c->dev, "precheck fsm devcie failed");
+-	}
+-	fsm_dev->i2c->addr = temp_addr;
+-	fsm_mutex_unlock();
+-
+-	return ret;
+-}
+-
+-#ifdef CONFIG_OF
+-static int fsm_parse_dts(struct i2c_client *i2c, fsm_dev_t *fsm_dev)
+-{
+-	struct device_node *np = i2c->dev.of_node;
+-	char *str_name;
+-	int ret;
+-
+-	if (fsm_dev == NULL || np == NULL) {
+-		return -EINVAL;
+-	}
+-
+-	str_name = devm_kzalloc(&i2c->dev, 32, GFP_KERNEL);
+-	fsm_dev->rst_gpio = of_get_named_gpio(np, "fsm,rst-gpio", 0);
+-	if (gpio_is_valid(fsm_dev->rst_gpio)) {
+-		snprintf(str_name, 32, "FS1815_SDZ_%02X", i2c->addr);
+-		ret = devm_gpio_request_one(&i2c->dev, fsm_dev->rst_gpio,
+-			GPIOF_OUT_INIT_LOW, str_name);
+-		if (ret)
+-			return ret;
+-	}
+-
+-	return 0;
+-}
+-
+-static struct of_device_id fsm_match_tbl[] =
+-{
+-	{ .compatible = "foursemi,fs16xx" },
+-	{ .compatible = "foursemi,fs1815" },
+-	{},
+-};
+-MODULE_DEVICE_TABLE(of, fsm_match_tbl);
+-#endif
+-
+-static int fsm_i2c_probe(struct i2c_client *i2c,
+-			const struct i2c_device_id *id)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	fsm_dev_t *fsm_dev;
+-	int ret = 0;
+-
+-	pr_debug("enter");
+-	if (!i2c_check_functionality(i2c->adapter, I2C_FUNC_I2C)) {
+-		dev_err(&i2c->dev, "check I2C_FUNC_I2C failed");
+-		g_probe_complete_flag = -EIO;
+-		return -EIO;
+-	}
+-
+-	fsm_dev = devm_kzalloc(&i2c->dev, sizeof(struct fsm_dev), GFP_KERNEL);
+-	if (fsm_dev == NULL) {
+-		dev_err(&i2c->dev, "alloc memory fialed");
+-		g_probe_complete_flag = -ENOMEM;
+-		return -ENOMEM;
+-	}
+-
+-	memset(fsm_dev, 0, sizeof(struct fsm_dev));
+-	mutex_init(&fsm_dev->i2c_lock);
+-	fsm_dev->i2c = i2c;
+-
+-	ret = fsm_i2c_pre_check(fsm_dev);
+-	if (ret) {
+-		devm_kfree(&i2c->dev, fsm_dev);
+-		dev_err(&i2c->dev, " fsm pre check failed");
+-		g_probe_complete_flag = ret;
+-		return ret;
+-	}
+-
+-#ifdef CONFIG_OF
+-	ret = fsm_parse_dts(i2c, fsm_dev);
+-	if (ret) {
+-		devm_kfree(&i2c->dev, fsm_dev);
+-		dev_err(&i2c->dev, "failed to parse DTS node");
+-		g_probe_complete_flag = ret;
+-		return ret;
+-	}
+-#endif
+-#if defined(CONFIG_FSM_REGMAP)
+-	fsm_dev->regmap = fsm_regmap_i2c_init(i2c);
+-	if (fsm_dev->regmap == NULL) {
+-		devm_kfree(&i2c->dev, fsm_dev);
+-		dev_err(&i2c->dev, "regmap init fialed");
+-		g_probe_complete_flag = -EINVAL;
+-		return -EINVAL;
+-	}
+-#endif
+-
+-	fsm_vddd_on(&i2c->dev);
+-	fsm_ext_reset(fsm_dev);
+-	ret = fsm_probe(fsm_dev, i2c->addr);
+-	if (ret) {
+-		dev_err(&i2c->dev, "detect device failed");
+-#if defined(CONFIG_FSM_REGMAP)
+-		fsm_regmap_i2c_deinit(fsm_dev->regmap);
+-#endif
+-		gpio_set_value(fsm_dev->rst_gpio, 0);
+-		devm_gpio_free(&i2c->dev, fsm_dev->rst_gpio);
+-		devm_kfree(&i2c->dev, fsm_dev);
+-		g_probe_complete_flag = ret;
+-		return ret;
+-	}
+-	fsm_dev->id = cfg->dev_count - 1;
+-	i2c_set_clientdata(i2c, fsm_dev);
+-	pr_addr(info, "index:%d", fsm_dev->id);
+-	fsm_dev->fsm_wq = create_singlethread_workqueue("fs16xx");
+-	INIT_DELAYED_WORK(&fsm_dev->monitor_work, fsm_work_monitor);
+-	INIT_DELAYED_WORK(&fsm_dev->interrupt_work, fsm_work_interrupt);
+-	fsm_request_irq(fsm_dev);
+-
+-	if(fsm_dev->id == 0) {
+-		// reigster only in the first device
+-#if !defined(CONFIG_FSM_CODEC)
+-		fsm_set_pdev(&i2c->dev);
+-#endif
+-		fsm_misc_init();
+-		fsm_sysfs_init(&i2c->dev);
+-		fsm_codec_register(&i2c->dev, fsm_dev->id);
+-	}
+-
+-	dev_info(&i2c->dev, "i2c probe completed");
+-
+-	g_probe_complete_flag = 1;
+-	return 0;
+-}
+-
+-int get_fsm_probe_complete_flag(void)
+-{
+-	return g_probe_complete_flag;
+-}
+-EXPORT_SYMBOL(get_fsm_probe_complete_flag);
+-
+-static int fsm_i2c_remove(struct i2c_client *i2c)
+-{
+-	fsm_dev_t *fsm_dev = i2c_get_clientdata(i2c);
+-
+-	pr_debug("enter");
+-	if (fsm_dev == NULL) {
+-		pr_err("bad parameter");
+-		return -EINVAL;
+-	}
+-	if (fsm_dev->fsm_wq) {
+-		cancel_delayed_work_sync(&fsm_dev->interrupt_work);
+-		cancel_delayed_work_sync(&fsm_dev->monitor_work);
+-		destroy_workqueue(fsm_dev->fsm_wq);
+-	}
+-#if defined(CONFIG_FSM_REGMAP)
+-	fsm_regmap_i2c_deinit(fsm_dev->regmap);
+-#endif
+-	if (fsm_dev->id == 0) {
+-		fsm_codec_unregister(&i2c->dev);
+-		fsm_sysfs_deinit(&i2c->dev);
+-		fsm_misc_deinit();
+-		fsm_set_pdev(NULL);
+-	}
+-
+-	fsm_remove(fsm_dev);
+-	fsm_vddd_off();
+-	if (gpio_is_valid(fsm_dev->irq_gpio)) {
+-		devm_gpio_free(&i2c->dev, fsm_dev->irq_gpio);
+-	}
+-	if (gpio_is_valid(fsm_dev->rst_gpio)) {
+-		devm_gpio_free(&i2c->dev, fsm_dev->rst_gpio);
+-	}
+-	devm_kfree(&i2c->dev, fsm_dev);
+-	dev_info(&i2c->dev, "i2c removed");
+-
+-	return 0;
+-}
+-
+-static void fsm_i2c_shutdown(struct i2c_client *i2c)
+-{
+-	fsm_dev_t *fsm_dev = i2c_get_clientdata(i2c);
+-
+-	pr_debug("enter");
+-	if (fsm_dev == NULL) {
+-		pr_err("bad parameter");
+-		return;
+-	}
+-
+-	fsm_stub_shut_down(fsm_dev);
+-	if (gpio_is_valid(fsm_dev->rst_gpio))
+-		gpio_set_value(fsm_dev->rst_gpio, 0);
+-
+-	dev_info(&i2c->dev, "i2c shutdowned");
+-}
+-
+-static const struct i2c_device_id fsm_i2c_id[] =
+-{
+-	{ "fs16xx", 0 },
+-	{ "fs1815", 0 },
+-	{ }
+-};
+-MODULE_DEVICE_TABLE(i2c, fsm_i2c_id);
+-
+-static struct i2c_driver fsm_i2c_driver =
+-{
+-	.driver = {
+-		.name  = FSM_DRV_NAME,
+-		.owner = THIS_MODULE,
+-#ifdef CONFIG_OF
+-		.of_match_table = of_match_ptr(fsm_match_tbl),
+-#endif
+-	},
+-	.probe    = fsm_i2c_probe,
+-	.remove   = fsm_i2c_remove,
+-	.shutdown = fsm_i2c_shutdown,
+-	.id_table = fsm_i2c_id,
+-};
+-
+-int exfsm_i2c_probe(struct i2c_client *i2c,
+-			const struct i2c_device_id *id)
+-{
+-	return fsm_i2c_probe(i2c, id);
+-}
+-EXPORT_SYMBOL(exfsm_i2c_probe);
+-
+-int exfsm_i2c_remove(struct i2c_client *i2c)
+-{
+-	return fsm_i2c_remove(i2c);
+-}
+-EXPORT_SYMBOL(exfsm_i2c_remove);
+-
+-int fsm_i2c_init(void)
+-{
+-	return i2c_add_driver(&fsm_i2c_driver);
+-}
+-
+-void fsm_i2c_exit(void)
+-{
+-	i2c_del_driver(&fsm_i2c_driver);
+-}
+-
+-static int __init fsm_mod_init(void)
+-{
+-	int ret;
+-
+-	ret = fsm_i2c_init();
+-	if (ret) {
+-		pr_err("init fail: %d", ret);
+-		return ret;
+-	}
+-
+-	return 0;
+-}
+-
+-static void __exit fsm_mod_exit(void)
+-{
+-	fsm_i2c_exit();
+-}
+-
+-//module_i2c_driver(fsm_i2c_driver);
+-module_init(fsm_mod_init);
+-module_exit(fsm_mod_exit);
+-
+-MODULE_AUTHOR("FourSemi SW <support@foursemi.com>");
+-MODULE_DESCRIPTION("FourSemi Smart PA Driver");
+-MODULE_VERSION(FSM_CODE_VERSION);
+-MODULE_ALIAS("foursemi:"FSM_DRV_NAME);
+-MODULE_LICENSE("GPL");
+-
++/*
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ */
++#include "fsm_public.h"
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/gpio.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/power_supply.h>
++#include <linux/version.h>
++#include <linux/interrupt.h>
++#include <linux/fs.h>
++#ifdef CONFIG_OF
++#include <linux/of.h>
++#include <linux/of_gpio.h>
++#endif
++#if defined(CONFIG_FSM_REGULATOR)
++#include <linux/regulator/consumer.h>
++static struct regulator *g_fsm_vdd = NULL;
++#endif
++
++static DEFINE_MUTEX(g_fsm_mutex);
++static struct device *g_fsm_pdev = NULL;
++
++/* customize configrature */
++#include "fsm_firmware.c"
++#include "fsm_misc.c"
++// #include "fsm_sysfs.c"
++//#include "fsm_codec.c"
++
++void fsm_mutex_lock(void)
++{
++	mutex_lock(&g_fsm_mutex);
++}
++
++void fsm_mutex_unlock(void)
++{
++	mutex_unlock(&g_fsm_mutex);
++}
++
++int fsm_i2c_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pVal)
++{
++	struct i2c_msg msgs[2];
++	uint8_t retries = 0;
++	uint8_t buffer[2];
++	int ret;
++
++	if (!fsm_dev || !fsm_dev->i2c || !pVal) {
++		return -EINVAL;
++	}
++
++	// write register address.
++	msgs[0].addr = fsm_dev->i2c->addr;
++	msgs[0].flags = 0;
++	msgs[0].len = 1;
++	msgs[0].buf = &reg;
++	// read register buffer.
++	msgs[1].addr = fsm_dev->i2c->addr;
++	msgs[1].flags = I2C_M_RD;
++	msgs[1].len = 2;
++	msgs[1].buf = &buffer[0];
++
++	do {
++		mutex_lock(&fsm_dev->i2c_lock);
++		ret = i2c_transfer(fsm_dev->i2c->adapter, &msgs[0], ARRAY_SIZE(msgs));
++		mutex_unlock(&fsm_dev->i2c_lock);
++		if (ret != ARRAY_SIZE(msgs)) {
++			fsm_delay_ms(5);
++			retries++;
++		}
++	} while (ret != ARRAY_SIZE(msgs) && retries < FSM_I2C_RETRY);
++
++	if (ret != ARRAY_SIZE(msgs)) {
++		pr_err("read %02x transfer error: %d", reg, ret);
++		return -EIO;
++	}
++
++	*pVal = ((buffer[0] << 8) | buffer[1]);
++
++	return 0;
++}
++
++int fsm_i2c_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val)
++{
++	struct i2c_msg msgs[1];
++	uint8_t retries = 0;
++	uint8_t buffer[3];
++	int ret;
++
++	if (!fsm_dev || !fsm_dev->i2c) {
++		return -EINVAL;
++	}
++
++	buffer[0] = reg;
++	buffer[1] = (val >> 8) & 0x00ff;
++	buffer[2] = val & 0x00ff;
++	msgs[0].addr = fsm_dev->i2c->addr;
++	msgs[0].flags = 0;
++	msgs[0].len = sizeof(buffer);
++	msgs[0].buf = &buffer[0];
++
++	do {
++		mutex_lock(&fsm_dev->i2c_lock);
++		ret = i2c_transfer(fsm_dev->i2c->adapter, &msgs[0], ARRAY_SIZE(msgs));
++		mutex_unlock(&fsm_dev->i2c_lock);
++		if (ret != ARRAY_SIZE(msgs)) {
++			fsm_delay_ms(5);
++			retries++;
++		}
++	} while (ret != ARRAY_SIZE(msgs) && retries < FSM_I2C_RETRY);
++
++	if (ret != ARRAY_SIZE(msgs)) {
++		pr_err("write %02x transfer error: %d", reg, ret);
++		return -EIO;
++	}
++
++	return 0;
++}
++
++int fsm_i2c_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg,
++				uint8_t *data, int len)
++{
++	uint8_t retries = 0;
++	uint8_t *buf;
++	int size;
++	int ret;
++
++	if (!fsm_dev || !fsm_dev->i2c || !data) {
++		return -EINVAL;
++	}
++
++	size = sizeof(uint8_t) + len;
++	buf = (uint8_t *)fsm_alloc_mem(size);
++	if (!buf) {
++		pr_err("alloc memery failed");
++		return -ENOMEM;
++	}
++
++	buf[0] = reg;
++	memcpy(&buf[1], data, len);
++	do {
++		mutex_lock(&fsm_dev->i2c_lock);
++		ret = i2c_master_send(fsm_dev->i2c, buf, size);
++		mutex_unlock(&fsm_dev->i2c_lock);
++		if (ret < 0) {
++			fsm_delay_ms(5);
++			retries++;
++		} else if (ret == size) {
++			break;
++		}
++	} while (ret != size && retries < FSM_I2C_RETRY);
++
++	fsm_free_mem((void **)&buf);
++
++	if (ret != size) {
++		pr_err("write %02x transfer error: %d", reg, ret);
++		return -EIO;
++	}
++
++	return 0;
++}
++
++bool fsm_set_pdev(struct device *dev)
++{
++	if (g_fsm_pdev == NULL || dev == NULL) {
++		g_fsm_pdev = dev;
++		// pr_debug("dev_name: %s", dev_name(dev));
++		return true;
++	}
++	return false; // already got device
++}
++
++struct device *fsm_get_pdev(void)
++{
++	return g_fsm_pdev;
++}
++
++#if defined(CONFIG_FSM_REGULATOR)
++int fsm_vddd_on(struct device *dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	int ret = 0;
++
++	if (!cfg || cfg->vddd_on) {
++		return 0;
++	}
++	g_fsm_vdd = regulator_get(dev, "fsm_vddd");
++	if (IS_ERR(g_fsm_vdd) != 0) {
++		pr_err("error getting fsm_vddd regulator");
++		ret = PTR_ERR(g_fsm_vdd);
++		g_fsm_vdd = NULL;
++		return ret;
++	}
++	pr_info("enable regulator");
++	regulator_set_voltage(g_fsm_vdd, 1800000, 1800000);
++	ret = regulator_enable(g_fsm_vdd);
++	if (ret < 0) {
++		pr_err("enabling fsm_vddd failed: %d", ret);
++	}
++	cfg->vddd_on = 1;
++	fsm_delay_ms(10);
++
++	return ret;
++}
++
++void fsm_vddd_off(void)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!cfg || !cfg->vddd_on || cfg->dev_count > 0) {
++		return;
++	}
++	if (g_fsm_vdd) {
++		pr_info("disable regulator");
++		regulator_disable(g_fsm_vdd);
++		regulator_put(g_fsm_vdd);
++		g_fsm_vdd = NULL;
++	}
++	cfg->vddd_on = 0;
++}
++#else
++#define fsm_vddd_on(...)
++#define fsm_vddd_off(...)
++#endif
++
++int fsm_get_amb_tempr(void)
++{
++	union power_supply_propval psp = { 0 };
++	struct power_supply *psy;
++	int tempr = FSM_DFT_AMB_TEMPR;
++	int vbat = FSM_DFT_AMB_VBAT;
++
++	psy = power_supply_get_by_name("battery");
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0))
++	if (psy && psy->get_property) {
++		// battery temperatrue
++		psy->get_property(psy, POWER_SUPPLY_PROP_TEMP, &psp);
++		tempr = DIV_ROUND_CLOSEST(psp.intval, 10);
++		psy->get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &psp);
++		vbat = DIV_ROUND_CLOSEST(psp.intval, 1000);
++	}
++#else
++	if (psy && psy->desc && psy->desc->get_property) {
++		// battery temperatrue
++		psy->desc->get_property(psy, POWER_SUPPLY_PROP_TEMP, &psp);
++		tempr = DIV_ROUND_CLOSEST(psp.intval, 10);
++		psy->desc->get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &psp);
++		vbat = DIV_ROUND_CLOSEST(psp.intval, 1000);
++	}
++#endif
++	pr_info("vbat:%d, tempr:%d", vbat, tempr);
++
++	return tempr;
++}
++
++void *fsm_devm_kstrdup(struct device *dev, void *buf, size_t size)
++{
++	char *devm_buf = devm_kzalloc(dev, size + 1, GFP_KERNEL);
++
++	if (!devm_buf) {
++		return devm_buf;
++	}
++	memcpy(devm_buf, buf, size);
++
++	return devm_buf;
++}
++
++static int fsm_set_irq(fsm_dev_t *fsm_dev, bool enable)
++{
++	if (!fsm_dev || fsm_dev->irq_id <= 0) {
++		return -EINVAL;
++	}
++	if (enable)
++		enable_irq(fsm_dev->irq_id);
++	else
++		disable_irq(fsm_dev->irq_id);
++
++	return 0;
++}
++
++int fsm_set_monitor(fsm_dev_t *fsm_dev, bool enable)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!cfg || !fsm_dev || !fsm_dev->fsm_wq) {
++		return -EINVAL;
++	}
++	if (!cfg->use_monitor) {
++		return 0;
++	}
++	if (fsm_dev->use_irq) {
++		return fsm_set_irq(fsm_dev, enable);
++	}
++	if (enable) {
++		queue_delayed_work(fsm_dev->fsm_wq,
++				&fsm_dev->monitor_work, 5*HZ);
++	}
++	else {
++		if (delayed_work_pending(&fsm_dev->monitor_work)) {
++			cancel_delayed_work_sync(&fsm_dev->monitor_work);
++		}
++	}
++
++	return 0;
++}
++
++static int fsm_ext_reset(fsm_dev_t *fsm_dev)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	uint16_t id = 0;
++	int addr;
++	int ret;
++
++	if (!cfg || !fsm_dev) {
++		return -EINVAL;
++	}
++	if (cfg->reset_chip) {
++		return 0;
++	}
++	if (gpio_is_valid(fsm_dev->rst_gpio)) {
++		gpio_set_value(fsm_dev->rst_gpio, 0);
++		fsm_delay_ms(10); // mdelay
++		gpio_set_value(fsm_dev->rst_gpio, 1);
++		fsm_delay_ms(1); // mdelay
++		// TODO: for sharing reset pin in multi-pa application
++		// cfg->reset_chip = true;
++	}
++	fsm_mutex_lock();
++	/* soft reset */
++	addr = fsm_dev->i2c->addr;
++	ret = fsm_reg_read(fsm_dev, 0x01, &id);
++	if (ret && addr != 0x34) {
++		fsm_dev->i2c->addr = 0x34;
++		ret = fsm_reg_read(fsm_dev, 0x01, &id);
++	}
++	if (!ret && LOW8(id) == FS1815_DEV_ID) {
++		fsm_reg_write(fsm_dev, 0x10, 0x0002);
++		fsm_delay_ms(15);
++	} else {
++		ret = -ENODEV;
++	}
++	fsm_dev->i2c->addr = addr;
++	fsm_mutex_unlock();
++
++	return 0;
++}
++
++static irqreturn_t fsm_irq_hander(int irq, void *data)
++{
++	fsm_dev_t *fsm_dev = data;
++
++	queue_delayed_work(fsm_dev->fsm_wq, &fsm_dev->interrupt_work, 0);
++
++	return IRQ_HANDLED;
++}
++
++static void fsm_work_monitor(struct work_struct *work)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++	//int ret;
++
++	fsm_dev = container_of(work, struct fsm_dev, monitor_work.work);
++	if (!cfg || cfg->skip_monitor || !fsm_dev) {
++		return;
++	}
++	fsm_mutex_lock();
++	//ret = fsm_dev_recover(fsm_dev);
++	fsm_mutex_unlock();
++	if (fsm_dev->rec_count >= 5) { // 5 time max
++		pr_addr(warning, "recover max time, stop it");
++		return;
++	}
++	/* reschedule */
++	queue_delayed_work(fsm_dev->fsm_wq, &fsm_dev->monitor_work,
++			5*HZ);
++
++}
++
++static void fsm_work_interrupt(struct work_struct *work)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++	//int ret;
++
++	fsm_dev = container_of(work, struct fsm_dev, interrupt_work.work);
++	if (!cfg || cfg->skip_monitor || !fsm_dev) {
++		return;
++	}
++	fsm_mutex_lock();
++	//ret = fsm_dev_recover(fsm_dev);
++	//fsm_get_spkr_tempr(fsm_dev);
++
++	fsm_mutex_unlock();
++}
++
++static int fsm_request_irq(fsm_dev_t *fsm_dev)
++{
++	struct i2c_client *i2c;
++	int irq_flags;
++	int ret;
++
++	if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
++		return -EINVAL;
++	}
++	fsm_dev->irq_id = -1;
++	if (!fsm_dev->use_irq || !gpio_is_valid(fsm_dev->irq_gpio)) {
++		pr_addr(info, "skip to request irq");
++		return 0;
++	}
++	i2c = fsm_dev->i2c;
++	/* register irq handler */
++	fsm_dev->irq_id = gpio_to_irq(fsm_dev->irq_gpio);
++	if (fsm_dev->irq_id <= 0) {
++		dev_err(&i2c->dev, "invalid irq %d\n", fsm_dev->irq_id);
++		return -EINVAL;
++	}
++	irq_flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
++	ret = devm_request_threaded_irq(&i2c->dev, fsm_dev->irq_id,
++				NULL, fsm_irq_hander, irq_flags, "fs16xx", fsm_dev);
++	if (ret) {
++		dev_err(&i2c->dev, "failed to request IRQ %d: %d\n",
++				fsm_dev->irq_id, ret);
++		return ret;
++	}
++	disable_irq(fsm_dev->irq_id);
++
++	return 0;
++}
++
++#ifdef CONFIG_OF
++static int fsm_parse_dts(struct i2c_client *i2c, fsm_dev_t *fsm_dev)
++{
++	struct device_node *np = i2c->dev.of_node;
++	uint8_t dummy_addr;
++	char *str_name;
++	int ret;
++
++	if (fsm_dev == NULL || np == NULL) {
++		return -EINVAL;
++	}
++
++	str_name = devm_kzalloc(&i2c->dev, 32, GFP_KERNEL);
++	fsm_dev->rst_gpio = of_get_named_gpio(np, "fsm,rst-gpio", 0);
++	if (gpio_is_valid(fsm_dev->rst_gpio)) {
++		snprintf(str_name, 32, "FS1815_SDZ_%d_%02X_%d",
++				i2c->adapter->nr, i2c->addr, fsm_dev->rst_gpio);
++		ret = devm_gpio_request_one(&i2c->dev, fsm_dev->rst_gpio,
++			GPIOF_OUT_INIT_LOW, str_name);
++		if (ret == -EBUSY) {
++			ret = 0;
++			fsm_dev->rst_gpio = -1;
++			dev_info(&i2c->dev, "request rst gpio busy!\n");
++		}
++		if (ret)
++			return ret;
++	}
++
++	ret = of_property_read_u8(np, "fsm,dummy-addr", &dummy_addr);
++	if (ret)
++		dummy_addr = 0;
++
++	fsm_dev->addr = dummy_addr;
++
++	return 0;
++}
++
++static struct of_device_id fsm_match_tbl[] =
++{
++	{ .compatible = "foursemi,fs16xx" },
++	{ .compatible = "foursemi,fs1815" },
++	{},
++};
++MODULE_DEVICE_TABLE(of, fsm_match_tbl);
++#endif
++
++/*
++ * sapphire: the speaker amplifier is dual-sourced (FourSemi fs1815 or
++ * Awinic aw87xxx). aw87xxx checks this flag to know whether the FourSemi
++ * part answered. 0 = not probed yet, 1 = probed OK, <0 = probe error.
++ * Reconstructed from the stock fs1815_dlkm.ko.
++ */
++static int g_probe_complete_flag;
++
++int get_fsm_probe_complete_flag(void)
++{
++	return g_probe_complete_flag;
++}
++EXPORT_SYMBOL(get_fsm_probe_complete_flag);
++
++extern int lct_audio_info_set_pa_name(const char *name, int len);
++
++/* stock reads the chip id once before touching the reset gpio; the
++ * part answers on its own address or on the 0x34 default address */
++static int fsm_i2c_check_chipid(fsm_dev_t *fsm_dev)
++{
++	struct i2c_client *i2c = fsm_dev->i2c;
++	uint16_t addr = i2c->addr;
++	uint16_t id = 0;
++	int ret;
++
++	fsm_mutex_lock();
++	ret = fsm_reg_read(fsm_dev, 0x01, &id);
++	if (ret && addr != 0x34) {
++		i2c->addr = 0x34;
++		ret = fsm_reg_read(fsm_dev, 0x01, &id);
++	}
++	if (!ret)
++		dev_info(&i2c->dev, "read chipid success: 0x%x", id);
++	i2c->addr = addr;
++	fsm_mutex_unlock();
++
++	return ret;
++}
++
++static int fsm_i2c_probe(struct i2c_client *i2c)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	fsm_dev_t *fsm_dev;
++	int ret;
++
++	char pa_name[32] = { 0 };
++
++	dev_info(&i2c->dev, "probe start!");
++	if (!i2c_check_functionality(i2c->adapter, I2C_FUNC_I2C)) {
++		dev_err(&i2c->dev, "check I2C_FUNC_I2C failed");
++		g_probe_complete_flag = -EIO;
++		return -EIO;
++	}
++
++	fsm_dev = devm_kzalloc(&i2c->dev, sizeof(struct fsm_dev), GFP_KERNEL);
++	if (fsm_dev == NULL) {
++		dev_err(&i2c->dev, "alloc memory fialed");
++		g_probe_complete_flag = -ENOMEM;
++		return -ENOMEM;
++	}
++
++	memset(fsm_dev, 0, sizeof(struct fsm_dev));
++	mutex_init(&fsm_dev->i2c_lock);
++	fsm_dev->i2c = i2c;
++
++	ret = fsm_i2c_check_chipid(fsm_dev);
++	if (ret) {
++		devm_kfree(&i2c->dev, fsm_dev);
++		dev_err(&i2c->dev, "failed to check chip_id");
++		g_probe_complete_flag = ret;
++		return ret;
++	}
++
++#ifdef CONFIG_OF
++	ret = fsm_parse_dts(i2c, fsm_dev);
++	if (ret) {
++		dev_err(&i2c->dev, "failed to parse DTS node");
++		devm_kfree(&i2c->dev, fsm_dev);
++		g_probe_complete_flag = ret;
++		return ret;
++	}
++#endif
++#if defined(CONFIG_FSM_REGMAP)
++	fsm_dev->regmap = fsm_regmap_i2c_init(i2c);
++	if (fsm_dev->regmap == NULL) {
++		devm_kfree(&i2c->dev, fsm_dev);
++		dev_err(&i2c->dev, "regmap init failed");
++		return -EINVAL;
++	}
++#endif
++
++	fsm_vddd_on(&i2c->dev);
++	fsm_ext_reset(fsm_dev);
++	ret = fsm_probe(fsm_dev, i2c->addr);
++	if (ret) {
++		dev_err(&i2c->dev, "detect device failed");
++#if defined(CONFIG_FSM_REGMAP)
++		fsm_regmap_i2c_deinit(fsm_dev->regmap);
++#endif
++		if (gpio_is_valid(fsm_dev->rst_gpio)) {
++			gpio_set_value(fsm_dev->rst_gpio, 0);
++			//devm_gpio_free(&i2c->dev, fsm_dev->rst_gpio);
++		}
++		devm_kfree(&i2c->dev, fsm_dev);
++		g_probe_complete_flag = ret;
++		return ret;
++	}
++	fsm_dev->id = cfg->dev_count - 1;
++	i2c_set_clientdata(i2c, fsm_dev);
++	pr_addr(info, "index:%d", fsm_dev->id);
++	fsm_dev->fsm_wq = create_singlethread_workqueue("fs16xx");
++	INIT_DELAYED_WORK(&fsm_dev->monitor_work, fsm_work_monitor);
++	INIT_DELAYED_WORK(&fsm_dev->interrupt_work, fsm_work_interrupt);
++	fsm_request_irq(fsm_dev);
++
++	fsm_sysfs_init(&i2c->dev);
++	if(fsm_dev->id == 0) {
++		// reigster only in the first device
++#if !defined(CONFIG_FSM_CODEC)
++		fsm_set_pdev(&i2c->dev);
++#endif
++		fsm_misc_init();
++		fsm_codec_register(&i2c->dev, fsm_dev->id);
++		ret = fsm_firmware_init(cfg->fw_name);
++		if(ret){
++			pr_err("firmware init failed:%d, retry later",ret);
++		}
++	}
++	/* report the fitted PA to lct_audio_info ("<dev>-FSM-") */
++	snprintf(pa_name, sizeof(pa_name), "%s-FSM-", dev_name(&i2c->dev));
++	lct_audio_info_set_pa_name(pa_name, strlen(pa_name));
++	dev_info(&i2c->dev, "i2c probe completed");
++	g_probe_complete_flag = 1;
++
++	return 0;
++}
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
++static int fsm_i2c_remove(struct i2c_client *i2c)
++#else
++static void fsm_i2c_remove(struct i2c_client *i2c)
++#endif
++{
++	fsm_dev_t *fsm_dev = i2c_get_clientdata(i2c);
++
++	pr_debug("enter");
++	if (fsm_dev == NULL) {
++		pr_err("bad parameter");
++	#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
++	return 0;
++#else
++	return;
++#endif
++	}
++	if (fsm_dev->fsm_wq) {
++		cancel_delayed_work_sync(&fsm_dev->interrupt_work);
++		cancel_delayed_work_sync(&fsm_dev->monitor_work);
++		destroy_workqueue(fsm_dev->fsm_wq);
++	}
++#if defined(CONFIG_FSM_REGMAP)
++	fsm_regmap_i2c_deinit(fsm_dev->regmap);
++#endif
++	fsm_sysfs_deinit(&i2c->dev);
++	if (fsm_dev->id == 0) {
++		fsm_codec_unregister(&i2c->dev);
++		fsm_misc_deinit();
++		fsm_set_pdev(NULL);
++	}
++
++	fsm_remove(fsm_dev);
++	fsm_vddd_off();
++	if (gpio_is_valid(fsm_dev->irq_gpio)) {
++		//devm_gpio_free(&i2c->dev, fsm_dev->irq_gpio);
++	}
++	if (gpio_is_valid(fsm_dev->rst_gpio)) {
++		//devm_gpio_free(&i2c->dev, fsm_dev->rst_gpio);
++	}
++	devm_kfree(&i2c->dev, fsm_dev);
++	dev_info(&i2c->dev, "i2c removed");
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
++	return 0;
++#endif
++}
++
++static void fsm_i2c_shutdown(struct i2c_client *i2c)
++{
++	fsm_dev_t *fsm_dev = i2c_get_clientdata(i2c);
++
++	pr_debug("enter");
++	if (fsm_dev == NULL) {
++		pr_err("bad parameter");
++		return;
++	}
++
++	fsm_stub_shut_down(fsm_dev);
++	if (gpio_is_valid(fsm_dev->rst_gpio))
++		gpio_set_value(fsm_dev->rst_gpio, 0);
++
++	dev_info(&i2c->dev, "i2c shutdowned");
++}
++
++static const struct i2c_device_id fsm_i2c_id[] =
++{
++	{ "fs16xx", 0 },
++	{ "fs1815", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, fsm_i2c_id);
++
++static struct i2c_driver fsm_i2c_driver =
++{
++	.driver = {
++		.name  = FSM_DRV_NAME,
++		.owner = THIS_MODULE,
++#ifdef CONFIG_OF
++		.of_match_table = of_match_ptr(fsm_match_tbl),
++#endif
++	},
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
++	.probe_new = fsm_i2c_probe,
++#else
++	.probe    = fsm_i2c_probe,
++#endif
++	.remove   = fsm_i2c_remove,
++	.shutdown = fsm_i2c_shutdown,
++	.id_table = fsm_i2c_id,
++};
++
++int exfsm_i2c_probe(struct i2c_client *i2c)
++{
++	return fsm_i2c_probe(i2c);
++}
++EXPORT_SYMBOL(exfsm_i2c_probe);
++
++void exfsm_i2c_remove(struct i2c_client *i2c)
++{
++	fsm_i2c_remove(i2c);
++}
++EXPORT_SYMBOL(exfsm_i2c_remove);
++
++int fsm_i2c_init(void)
++{
++	return i2c_add_driver(&fsm_i2c_driver);
++}
++
++void fsm_i2c_exit(void)
++{
++	i2c_del_driver(&fsm_i2c_driver);
++}
++
++static int __init fsm_mod_init(void)
++{
++	int ret;
++
++	ret = fsm_i2c_init();
++	if (ret) {
++		pr_err("init fail: %d", ret);
++		return ret;
++	}
++
++	return 0;
++}
++
++static void __exit fsm_mod_exit(void)
++{
++	fsm_i2c_exit();
++}
++
++//module_i2c_driver(fsm_i2c_driver);
++module_init(fsm_mod_init);
++module_exit(fsm_mod_exit);
++
++MODULE_AUTHOR("FourSemi SW <support@foursemi.com>");
++MODULE_DESCRIPTION("FourSemi Smart PA Driver");
++MODULE_VERSION(FSM_CODE_VERSION);
++MODULE_ALIAS("foursemi:"FSM_DRV_NAME);
++MODULE_LICENSE("GPL");
++
+diff --git a/asoc/codecs/fs1815/fsm_i2c.o.symversions b/asoc/codecs/fs1815/fsm_i2c.o.symversions
+new file mode 100644
+index 0000000..23e6c55
+--- /dev/null
++++ b/asoc/codecs/fs1815/fsm_i2c.o.symversions
+@@ -0,0 +1,3 @@
++__crc_get_fsm_probe_complete_flag = 0x8efeec83;
++__crc_exfsm_i2c_probe = 0x4dd6d956;
++__crc_exfsm_i2c_remove = 0xca2efb17;
+diff --git a/asoc/codecs/fs1815/fsm_misc.c b/asoc/codecs/fs1815/fsm_misc.c
+old mode 100755
+new mode 100644
+index 8b081b7..9b40562
+--- a/asoc/codecs/fs1815/fsm_misc.c
++++ b/asoc/codecs/fs1815/fsm_misc.c
+@@ -1,470 +1,486 @@
+-/**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2018-10-16 File created.
+- */
+-
+-#if defined(CONFIG_FSM_MISC)
+-#include "fsm_public.h"
+-#ifdef CONFIG_FSM_NONDSP
+-#include "fsm_q6afe.h"
+-#endif
+-#include <linux/uaccess.h>
+-#include <linux/module.h>
+-#include <linux/moduleparam.h>
+-#include <linux/miscdevice.h>
+-#include <linux/fs.h>
+-
+-#define FSM_I2C_MAX_LEN     (8192)
+-
+-/*
+- * misc driver for foursemi devices.
+- */
+-
+-struct fsm_misc {
+-	struct fsm_dev *fsm_dev[FSM_DEV_MAX];
+-	uint8_t addr;
+-	uint8_t index;
+-};
+-
+-static int g_misc_opened;
+-
+-static int fsm_misc_check_params(unsigned int cmd, unsigned long arg)
+-{
+-	int ret = 0;
+-
+-	if (cmd == FSM_IOC_SET_SLAVE) {
+-		return 0;
+-	}
+-	if (_IOC_TYPE(cmd) != FSM_IOC_MAGIC || _IOC_NR(cmd) >= FSM_IOC_MAXNR) {
+-		return -ENOTTY;
+-	}
+-
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
+-	if (_IOC_DIR(cmd) & _IOC_READ) {
+-		ret = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
+-	} else if (_IOC_DIR(cmd) & _IOC_WRITE) {
+-		ret = !access_ok(VERIFY_READ, (void __user *)arg, _IOC_SIZE(cmd));
+-	}
+-#else
+-	ret = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
+-#endif
+-
+-	return (ret ? -EFAULT : 0);
+-}
+-
+-static int fsm_misc_open(struct inode *inode, struct file *filp)
+-{
+-	struct fsm_misc *fsm_misc;
+-
+-	pr_debug("enter");
+-	if (xchg(&g_misc_opened, 1)) {
+-			pr_debug("device busy now");
+-			return -EBUSY;
+-	}
+-	fsm_misc = fsm_alloc_mem(sizeof(struct fsm_misc));
+-	if (fsm_misc == NULL) {
+-		pr_err("allocat memory fail");
+-		return -EINVAL;
+-	}
+-	memset(fsm_misc, 0, sizeof(struct fsm_misc));
+-	filp->private_data = fsm_misc;
+-
+-	return 0;
+-}
+-
+-static int fsm_misc_release(struct inode *inode, struct file *filp)
+-{
+-	struct fsm_misc *fsm_misc;
+-
+-	pr_debug("enter");
+-	if (!filp) {
+-		return -EINVAL;
+-	}
+-	fsm_misc = filp->private_data;
+-	g_misc_opened = 0;
+-	fsm_free_mem((void **)&fsm_misc);
+-
+-	return 0;
+-}
+-
+-static int fsm_misc_set_slave(struct fsm_misc *fsm_misc, uint8_t slave)
+-{
+-	int index;
+-
+-	if (fsm_misc == NULL) {
+-		return -EINVAL;
+-	}
+-	if (slave < FSM_ADDR_BASE || slave >= FSM_ADDR_BASE + FSM_DEV_MAX) {
+-		pr_err("invalid address:%02X", slave);
+-		return -EINVAL;
+-	}
+-	index = slave - FSM_ADDR_BASE;
+-	if (fsm_misc->fsm_dev[index] == 0) {
+-		fsm_misc->fsm_dev[index] = fsm_get_fsm_dev(slave);
+-		if (fsm_misc->fsm_dev[index] == NULL) {
+-			pr_debug("not found device:%02X", slave);
+-			fsm_misc->addr = 0;
+-			fsm_misc->index = 0;
+-			return -EINVAL;
+-		}
+-	}
+-	fsm_misc->index = index;
+-	fsm_misc->addr = slave;
+-
+-	return 0;
+-}
+-
+-static int fsm_misc_cmd_with_args(unsigned int cmd, uint8_t addr,
+-				struct fsm_misc_args *args)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-
+-	if (!cfg || !args) {
+-		pr_err("bad parameters");
+-		return -EINVAL;
+-	}
+-	switch (cmd) {
+-	case FSM_IOC_SET_SRATE:
+-		fsm_set_i2s_clocks(args->srate, args->bclk);
+-		break;
+-	case FSM_IOC_SET_SCENE:
+-		fsm_set_scene(args->scene);
+-		break;
+-	case FSM_IOC_INIT:
+-		cfg->force_init  = args->force_init;
+-		fsm_init();
+-		cfg->force_init  = 0;
+-		break;
+-	case FSM_IOC_CALIBRATE:
+-		break;
+-	case FSM_IOC_F0_TEST:
+-		break;
+-	default:
+-		pr_err("invalid cmd: %X", cmd);
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+-#ifdef CONFIG_FSM_NONDSP
+-int fsm_misc_send_apr(void __user *buf)
+-{
+-	uint32_t header[FSM_AFE_HEADER_LEN];
+-	uint32_t *ptr_data;
+-	struct fsm_afe afe;
+-	int buf_size;
+-	void *buffer;
+-	int ret;
+-
+-	if (!buf) {
+-		pr_err("bad parameter");
+-		return -EINVAL;
+-	}
+-	ret = copy_from_user(header, (void *)buf, sizeof(header));
+-	if (ret) {
+-		pr_err("Copy from user failed! buf = 0x%pK", buf);
+-		return ret;
+-	}
+-	/* buffer:
+-	 * [0]: buf_size
+-	 * [1]: cmd_size
+-	 * [2]: module_id
+-	 * [3]: param_id
+-	 * [4]: opcode
+-	 * [...]: data
+-	 */
+-	buf_size = header[0];
+-	if (buf_size <= 0) {
+-		pr_err("Invalid buffer size = %d", buf_size);
+-		return -EINVAL;
+-	}
+-	buffer = fsm_alloc_mem(buf_size);
+-	afe.module_id = header[2];
+-	if (afe.module_id == AFE_MODULE_ID_FSADSP_TX) {
+-		afe.port_id = fsm_afe_get_tx_port();
+-	} else {
+-		afe.port_id = fsm_afe_get_rx_port();
+-	}
+-	afe.param_id = header[3];
+-	ptr_data = (uint32_t *)buffer;
+-	if (header[4]) { // op_set = 1
+-		ret = copy_from_user(buffer, (void *)buf, buf_size);
+-		if (ret) {
+-			pr_err("copy from user fail:%d", ret);
+-			goto exit;
+-		}
+-		afe.op_set = true;
+-		ret = fsm_afe_send_apr(&afe, &ptr_data[5],
+-				(buf_size - FSM_AFE_HEADER_LEN * sizeof(uint32_t)));
+-		if (ret) {
+-			pr_err("set params fail:%d", ret);
+-			goto exit;
+-		}
+-	} else {
+-		afe.op_set = false;
+-		ret = fsm_afe_send_apr(&afe, &ptr_data[5],
+-				(buf_size - FSM_AFE_HEADER_LEN * sizeof(uint32_t)));
+-		if (ret) {
+-			pr_err("get params fail:%d", ret);
+-			goto exit;
+-		}
+-		// set ptr_data[0] = total size
+-		ptr_data[0] = afe.param_size + FSM_AFE_HEADER_LEN * sizeof(uint32_t);
+-		ret = copy_to_user((void __user *)buf, buffer, ptr_data[0]);
+-		if (ret) {
+-			pr_err("copy to user fail:%d", ret);
+-			goto exit;
+-		}
+-	}
+-exit:
+-	fsm_free_mem((void **)&buffer);
+-
+-	return ret;
+-}
+-#endif
+-
+-static long fsm_misc_ioctl(struct file *filp, unsigned int cmd,
+-		unsigned long arg)
+-{
+-	struct fsm_misc_args misc_args;
+-	struct fsm_misc *fsm_misc;
+-	int count;
+-	int ret;
+-
+-	if (filp == NULL || filp->private_data == NULL) {
+-		pr_err("invalid parameter");
+-		return -EINVAL;
+-	}
+-	fsm_misc = filp->private_data;
+-	ret = fsm_misc_check_params(cmd, arg);
+-	if (ret) {
+-		pr_err("invalid params: %X, %lX", cmd, arg);
+-		return ret;
+-	}
+-
+-	pr_debug("cmd:%X, arg:%lX", cmd, arg);
+-	switch (cmd) {
+-	case FSM_IOC_SET_SLAVE:
+-	case FSM_IOC_SET_ADDR:
+-		ret = fsm_misc_set_slave(fsm_misc, arg & 0xFF);
+-		break;
+-	case FSM_IOC_GET_DEVICE:
+-		count = fsm_dev_count();
+-		ret = copy_to_user((int *)arg, &count, sizeof(count));
+-		if (ret) {
+-			pr_err("cmd:%X, copy to user fail:%d", cmd, ret);
+-			return -EFAULT;
+-		}
+-		break;
+-	case FSM_IOC_SET_SRATE:
+-	case FSM_IOC_SET_SCENE:
+-	case FSM_IOC_INIT:
+-	case FSM_IOC_CALIBRATE:
+-	case FSM_IOC_F0_TEST:
+-		ret = copy_from_user(&misc_args, (void *)arg, sizeof(misc_args));
+-		if (ret) {
+-			pr_err("cmd:%X, copy from user fail:%d", cmd, ret);
+-			return -EFAULT;
+-		}
+-		ret = fsm_misc_cmd_with_args(cmd, fsm_misc->addr, &misc_args);
+-		if (ret) {
+-			pr_err("cmd:%X, error:%d", cmd, ret);
+-		}
+-		break;
+-	case FSM_IOC_SPEAKER_ON:
+-		fsm_speaker_onn();
+-		break;
+-	case FSM_IOC_SPEAKER_OFF:
+-		fsm_speaker_off();
+-		break;
+-	case FSM_IOC_GET_RESULT:
+-		break;
+-#ifdef CONFIG_FSM_NONDSP
+-	case FSM_IOC_SEND_APR:
+-		ret = fsm_misc_send_apr((void __user *)arg);
+-		if (ret) {
+-			pr_err("send apr fail:%d", ret);
+-		}
+-		break;
+-#endif
+-	default:
+-		pr_err("unknown cmd:%X", cmd);
+-		ret = -EINVAL;
+-	}
+-
+-	return ret;
+-}
+-
+-#if defined(CONFIG_COMPAT)
+-static long fsm_misc_compat_ioctl(struct file *filp, unsigned int cmd,
+-		unsigned long arg)
+-{
+-	switch (cmd) {
+-	case FSM_IOC_GET_RESULT32:
+-		cmd = FSM_IOC_GET_RESULT;
+-		break;
+-#ifdef CONFIG_FSM_NONDSP
+-	case FSM_IOC_SEND_APR:
+-	case FSM_IOC_SEND_APR32:
+-		cmd = FSM_IOC_SEND_APR;
+-		break;
+-#endif
+-	default:
+-		break;
+-	}
+-	return fsm_misc_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
+-}
+-#endif
+-
+-static ssize_t fsm_misc_read(struct file *filp, char __user *buf,
+-		size_t count, loff_t *offset)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	struct fsm_misc *fsm_misc;
+-	struct fsm_dev *fsm_dev;
+-	int retries = FSM_I2C_RETRY;
+-	uint8_t *tmp;
+-	int ret;
+-
+-	if (cfg == NULL || filp == NULL || filp->private_data == NULL) {
+-		pr_err("invalid parameter");
+-		return -EINVAL;
+-	}
+-	if (count > FSM_I2C_MAX_LEN) {
+-		count = FSM_I2C_MAX_LEN;
+-	}
+-	tmp = fsm_alloc_mem(count);
+-	if (tmp == NULL) {
+-		return -ENOMEM;
+-	}
+-
+-	if (cfg->skip_monitor == false) {
+-		cfg->skip_monitor = true;
+-	}
+-	fsm_misc = filp->private_data;
+-	do {
+-		fsm_dev = fsm_misc->fsm_dev[fsm_misc->index];
+-		if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
+-			ret = -EINVAL;
+-			break;
+-		}
+-		mutex_lock(&fsm_dev->i2c_lock);
+-		ret = i2c_master_recv(fsm_dev->i2c, tmp, count);
+-		mutex_unlock(&fsm_dev->i2c_lock);
+-		if (ret != count) {
+-			fsm_delay_ms(5);
+-		}
+-		// pr_debug("data: 0x%02x", tmp[0]);
+-	} while((ret != count) && (--retries >= 0));
+-
+-	if (ret == count) {
+-		ret = (copy_to_user(buf, tmp, count) ? -EFAULT : ret);
+-	} else {
+-		pr_err("%02X: reading %zu bytes failed:%d",
+-				fsm_misc->addr, count, ret);
+-	}
+-	fsm_free_mem((void **)&tmp);
+-
+-	return ret;
+-}
+-
+-static ssize_t fsm_misc_write(struct file *filp, const char __user *buf,
+-		size_t count, loff_t *offset)
+-{
+-	fsm_config_t *cfg = fsm_get_config();
+-	struct fsm_misc *fsm_misc;
+-	struct fsm_dev *fsm_dev;
+-	int retries = FSM_I2C_RETRY;
+-	uint8_t *tmp;
+-	int ret;
+-
+-	if (cfg == NULL || filp == NULL || filp->private_data == NULL) {
+-		pr_err("invalid parameter");
+-		return -EINVAL;
+-	}
+-	if (count > FSM_I2C_MAX_LEN) {
+-		count = FSM_I2C_MAX_LEN;
+-	}
+-	tmp = memdup_user(buf, count);
+-	if (IS_ERR(tmp)) {
+-		return PTR_ERR(tmp);
+-	}
+-
+-	if (cfg->skip_monitor == false) {
+-		cfg->skip_monitor = true;
+-	}
+-	fsm_misc = filp->private_data;
+-	do {
+-		fsm_dev = fsm_misc->fsm_dev[fsm_misc->index];
+-		if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
+-			ret = -EINVAL;
+-			break;
+-		}
+-		// pr_debug("data: 0x%02x-0x%02x", buf[0], tmp[0]);
+-		mutex_lock(&fsm_dev->i2c_lock);
+-		ret = i2c_master_send(fsm_dev->i2c, tmp, count);
+-		mutex_unlock(&fsm_dev->i2c_lock);
+-		if (ret != count) {
+-			fsm_delay_ms(5);
+-		}
+-	} while((ret != count) && (--retries >= 0));
+-
+-	if (ret != count) {
+-		pr_err("%02X: writing %zu bytes failed:%d",
+-				fsm_misc->addr, count, ret);
+-	}
+-	kfree(tmp);
+-
+-	return ret;
+-}
+-
+-static const struct file_operations g_fsm_misc_ops = {
+-	.owner   = THIS_MODULE,
+-	.open    = fsm_misc_open,
+-	.read    = fsm_misc_read,
+-	.write   = fsm_misc_write,
+-	.release = fsm_misc_release,
+-	.llseek  = no_llseek,
+-	.unlocked_ioctl = fsm_misc_ioctl,
+-#if defined(CONFIG_COMPAT)
+-	.compat_ioctl = fsm_misc_compat_ioctl,
+-#endif
+-};
+-
+-struct miscdevice g_fsm_misc = {
+-	.minor = MISC_DYNAMIC_MINOR,
+-	.name  = FSM_DRV_NAME,
+-	.fops  = &g_fsm_misc_ops,
+-	.this_device = NULL,
+-};
+-
+-int fsm_misc_init(void)
+-{
+-	struct miscdevice *misc = &g_fsm_misc;
+-	int ret;
+-
+-	pr_debug("enter");
+-	if (misc->this_device) {
+-		return 0;
+-	}
+-	ret = misc_register(misc);
+-	if (ret) {
+-		misc->this_device = NULL;
+-	}
+-
+-	FSM_FUNC_EXIT(ret);
+-	return ret;
+-}
+-
+-void fsm_misc_deinit(void)
+-{
+-	struct miscdevice *misc = &g_fsm_misc;
+-
+-	pr_debug("enter");
+-	if (misc->this_device == NULL) {
+-		return;
+-	}
+-	misc_deregister(misc);
+-}
+-#endif
++/**
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-8-18 File created.
++ */
++
++#if defined(CONFIG_FSM_MISC)
++#include "fsm_public.h"
++#ifdef CONFIG_FSM_NONDSP
++#include "fsm_q6afe.h"
++#endif
++#include <linux/uaccess.h>
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++#include <linux/miscdevice.h>
++#include <linux/fs.h>
++
++#define FSM_I2C_MAX_LEN     (8192)
++
++/*
++ * misc driver for foursemi devices.
++ */
++
++struct fsm_misc {
++	struct fsm_dev *fsm_dev[FSM_DEV_MAX];
++	uint8_t addr;
++	uint8_t index;
++};
++
++static int g_misc_opened;
++
++static int fsm_misc_check_params(unsigned int cmd, unsigned long arg)
++{
++	int ret = 0;
++
++	if (cmd == FSM_IOC_SET_SLAVE) {
++		return 0;
++	}
++	if (_IOC_TYPE(cmd) != FSM_IOC_MAGIC || _IOC_NR(cmd) >= FSM_IOC_MAXNR) {
++		return -ENOTTY;
++	}
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
++	if (_IOC_DIR(cmd) & _IOC_READ) {
++		ret = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
++	} else if (_IOC_DIR(cmd) & _IOC_WRITE) {
++		ret = !access_ok(VERIFY_READ, (void __user *)arg, _IOC_SIZE(cmd));
++	}
++#else
++	ret = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
++#endif
++
++	return (ret ? -EFAULT : 0);
++}
++
++static int fsm_misc_open(struct inode *inode, struct file *filp)
++{
++	struct fsm_misc *fsm_misc;
++
++	pr_debug("enter");
++	if (xchg(&g_misc_opened, 1)) {
++			pr_warning("device busy now");
++			return -EBUSY;
++	}
++	fsm_misc = fsm_alloc_mem(sizeof(struct fsm_misc));
++	if (fsm_misc == NULL) {
++		pr_err("allocat memory fail");
++		return -EINVAL;
++	}
++	memset(fsm_misc, 0, sizeof(struct fsm_misc));
++	filp->private_data = fsm_misc;
++
++	return 0;
++}
++
++static int fsm_misc_release(struct inode *inode, struct file *filp)
++{
++	struct fsm_misc *fsm_misc;
++
++	pr_debug("enter");
++	if (!filp) {
++		return -EINVAL;
++	}
++	fsm_misc = filp->private_data;
++	g_misc_opened = 0;
++	fsm_free_mem((void **)&fsm_misc);
++
++	return 0;
++}
++
++static int fsm_misc_set_slave(struct fsm_misc *fsm_misc, uint8_t slave)
++{
++	int index;
++
++	if (fsm_misc == NULL) {
++		return -EINVAL;
++	}
++	if (slave < FSM_ADDR_BASE || slave >= FSM_ADDR_BASE + FSM_DEV_MAX) {
++		pr_err("invalid address:%02X", slave);
++		return -EINVAL;
++	}
++	index = slave - FSM_ADDR_BASE;
++	if (fsm_misc->fsm_dev[index] == 0) {
++		fsm_misc->fsm_dev[index] = fsm_get_fsm_dev(slave);
++		if (fsm_misc->fsm_dev[index] == NULL) {
++			pr_debug("not found device:%02X", slave);
++			fsm_misc->addr = 0;
++			fsm_misc->index = 0;
++			return -EINVAL;
++		}
++	}
++	fsm_misc->index = index;
++	fsm_misc->addr = slave;
++
++	return 0;
++}
++
++static int fsm_misc_cmd_with_args(unsigned int cmd, uint8_t addr,
++				struct fsm_misc_args *args)
++{
++	fsm_config_t *cfg = fsm_get_config();
++
++	if (!cfg || !args) {
++		pr_err("bad parameters");
++		return -EINVAL;
++	}
++	switch (cmd) {
++	case FSM_IOC_SET_SRATE:
++		fsm_set_i2s_clocks(args->srate, args->bclk);
++		break;
++	case FSM_IOC_SET_SCENE:
++		fsm_set_scene(args->scene);
++		break;
++	case FSM_IOC_INIT:
++		cfg->force_init  = args->force_init;
++		fsm_init();
++		cfg->force_init  = 0;
++		break;
++	case FSM_IOC_CALIBRATE:
++		break;
++	case FSM_IOC_F0_TEST:
++		break;
++	default:
++		pr_err("invalid cmd: %X", cmd);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++#ifdef CONFIG_FSM_NONDSP
++int fsm_misc_send_apr(void __user *buf)
++{
++	uint32_t header[FSM_AFE_HEADER_LEN];
++	uint32_t *ptr_data;
++	struct fsm_afe afe;
++	int buf_size;
++	void *buffer;
++	int ret;
++
++	if (!buf) {
++		pr_err("bad parameter");
++		return -EINVAL;
++	}
++	ret = copy_from_user(header, (void *)buf, sizeof(header));
++	if (ret) {
++		pr_err("Copy from user failed! buf = 0x%pK", buf);
++		return ret;
++	}
++	/* buffer:
++	 * [0]: buf_size
++	 * [1]: cmd_size
++	 * [2]: module_id
++	 * [3]: param_id
++	 * [4]: opcode
++	 * [...]: data
++	 */
++	buf_size = header[0];
++	if (buf_size <= 0) {
++		pr_err("Invalid buffer size = %d", buf_size);
++		return -EINVAL;
++	}
++	buffer = fsm_alloc_mem(buf_size);
++	afe.module_id = header[2];
++	if (afe.module_id == AFE_MODULE_ID_FSADSP_TX) {
++		afe.port_id = fsm_afe_get_tx_port();
++	} else {
++		afe.port_id = fsm_afe_get_rx_port();
++	}
++	afe.param_id = header[3];
++	ptr_data = (uint32_t *)buffer;
++	if (header[4]) { // op_set = 1
++		ret = copy_from_user(buffer, (void *)buf, buf_size);
++		if (ret) {
++			pr_err("copy from user fail:%d", ret);
++			goto exit;
++		}
++		afe.op_set = true;
++		ret = fsm_afe_send_apr(&afe, &ptr_data[5],
++				(buf_size - FSM_AFE_HEADER_LEN * sizeof(uint32_t)));
++		if (ret) {
++			pr_err("set params fail:%d", ret);
++			goto exit;
++		}
++	} else {
++		afe.op_set = false;
++		ret = fsm_afe_send_apr(&afe, &ptr_data[5],
++				(buf_size - FSM_AFE_HEADER_LEN * sizeof(uint32_t)));
++		if (ret) {
++			pr_err("get params fail:%d", ret);
++			goto exit;
++		}
++		// set ptr_data[0] = total size
++		ptr_data[0] = afe.param_size + FSM_AFE_HEADER_LEN * sizeof(uint32_t);
++		ret = copy_to_user((void __user *)buf, buffer, ptr_data[0]);
++		if (ret) {
++			pr_err("copy to user fail:%d", ret);
++			goto exit;
++		}
++	}
++exit:
++	fsm_free_mem((void **)&buffer);
++
++	return ret;
++}
++#endif
++
++static long fsm_misc_ioctl(struct file *filp, unsigned int cmd,
++		unsigned long arg)
++{
++	struct fsm_misc_args misc_args;
++	struct fsm_misc *fsm_misc;
++	int count;
++	int ret;
++
++	if (filp == NULL || filp->private_data == NULL) {
++		pr_err("invalid parameter");
++		return -EINVAL;
++	}
++	fsm_misc = filp->private_data;
++	ret = fsm_misc_check_params(cmd, arg);
++	if (ret) {
++		pr_err("invalid params: %X, %lX", cmd, arg);
++		return ret;
++	}
++
++	pr_debug("cmd:%X, arg:%lX", cmd, arg);
++	switch (cmd) {
++	case FSM_IOC_SET_SLAVE:
++	case FSM_IOC_SET_ADDR:
++		ret = fsm_misc_set_slave(fsm_misc, arg & 0xFF);
++		break;
++	case FSM_IOC_GET_DEVICE:
++		count = fsm_dev_count();
++		ret = copy_to_user((int *)arg, &count, sizeof(count));
++		if (ret) {
++			pr_err("cmd:%X, copy to user fail:%d", cmd, ret);
++			return -EFAULT;
++		}
++		break;
++	case FSM_IOC_SET_SRATE:
++	case FSM_IOC_SET_SCENE:
++	case FSM_IOC_INIT:
++	case FSM_IOC_CALIBRATE:
++	case FSM_IOC_F0_TEST:
++		ret = copy_from_user(&misc_args, (void *)arg, sizeof(misc_args));
++		if (ret) {
++			pr_err("cmd:%X, copy from user fail:%d", cmd, ret);
++			return -EFAULT;
++		}
++		ret = fsm_misc_cmd_with_args(cmd, fsm_misc->addr, &misc_args);
++		if (ret) {
++			pr_err("cmd:%X, error:%d", cmd, ret);
++		}
++		break;
++	case FSM_IOC_SPEAKER_ON:
++		fsm_speaker_onn();
++		break;
++	case FSM_IOC_SPEAKER_OFF:
++		fsm_speaker_off();
++		break;
++	case FSM_IOC_GET_RESULT:
++		break;
++#ifdef CONFIG_FSM_NONDSP
++	case FSM_IOC_SEND_APR:
++		ret = fsm_misc_send_apr((void __user *)arg);
++		if (ret) {
++			pr_err("send apr fail:%d", ret);
++		}
++		break;
++#endif
++	default:
++		pr_err("unknown cmd:%X", cmd);
++		ret = -EINVAL;
++	}
++
++	return ret;
++}
++
++#if defined(CONFIG_COMPAT)
++static long fsm_misc_compat_ioctl(struct file *filp, unsigned int cmd,
++		unsigned long arg)
++{
++	switch (cmd) {
++	case FSM_IOC_GET_RESULT32:
++		cmd = FSM_IOC_GET_RESULT;
++		break;
++#ifdef CONFIG_FSM_NONDSP
++	case FSM_IOC_SEND_APR:
++	case FSM_IOC_SEND_APR32:
++		cmd = FSM_IOC_SEND_APR;
++		break;
++#endif
++	default:
++		break;
++	}
++	return fsm_misc_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
++}
++#endif
++
++static ssize_t fsm_misc_read(struct file *filp, char __user *buf,
++		size_t count, loff_t *offset)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	struct fsm_misc *fsm_misc;
++	struct fsm_dev *fsm_dev;
++	int retries = FSM_I2C_RETRY;
++	uint8_t *tmp;
++	int ret;
++
++	if (cfg == NULL || filp == NULL || filp->private_data == NULL) {
++		pr_err("invalid parameter");
++		return -EINVAL;
++	}
++	if (count > FSM_I2C_MAX_LEN) {
++		count = FSM_I2C_MAX_LEN;
++	}
++
++	fsm_misc = filp->private_data;
++	if (fsm_misc->index >= FSM_DEV_MAX || fsm_misc->addr == 0) {
++		pr_err("invalid misc parameter");
++		return -EINVAL;
++	}
++
++	tmp = fsm_alloc_mem(count);
++	if (tmp == NULL) {
++		return -ENOMEM;
++	}
++
++	if (cfg->skip_monitor == false) {
++		cfg->skip_monitor = true;
++	}
++	do {
++		fsm_dev = fsm_misc->fsm_dev[fsm_misc->index];
++		if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
++			ret = -EINVAL;
++			break;
++		}
++		mutex_lock(&fsm_dev->i2c_lock);
++		ret = i2c_master_recv(fsm_dev->i2c, tmp, count);
++		mutex_unlock(&fsm_dev->i2c_lock);
++		if (ret != count) {
++			fsm_delay_ms(5);
++		}
++		// pr_debug("data: 0x%02x", tmp[0]);
++	} while((ret != count) && (--retries >= 0));
++
++	if (ret == count) {
++		ret = (copy_to_user(buf, tmp, count) ? -EFAULT : ret);
++	} else {
++		pr_err("%02X: reading %zu bytes failed:%d",
++				fsm_misc->addr, count, ret);
++	}
++	fsm_free_mem((void **)&tmp);
++
++	return ret;
++}
++
++static ssize_t fsm_misc_write(struct file *filp, const char __user *buf,
++		size_t count, loff_t *offset)
++{
++	fsm_config_t *cfg = fsm_get_config();
++	struct fsm_misc *fsm_misc;
++	struct fsm_dev *fsm_dev;
++	int retries = FSM_I2C_RETRY;
++	uint8_t *tmp;
++	int ret;
++
++	if (cfg == NULL || filp == NULL || filp->private_data == NULL) {
++		pr_err("invalid parameter");
++		return -EINVAL;
++	}
++	if (count > FSM_I2C_MAX_LEN) {
++		count = FSM_I2C_MAX_LEN;
++	}
++
++	fsm_misc = filp->private_data;
++	if (fsm_misc->index >= FSM_DEV_MAX || fsm_misc->addr == 0) {
++		pr_err("invalid misc parameter");
++		return -EINVAL;
++	}
++
++	tmp = memdup_user(buf, count);
++	if (IS_ERR(tmp)) {
++		return PTR_ERR(tmp);
++	}
++
++	if (cfg->skip_monitor == false) {
++		cfg->skip_monitor = true;
++	}
++	do {
++		fsm_dev = fsm_misc->fsm_dev[fsm_misc->index];
++		if (fsm_dev == NULL || fsm_dev->i2c == NULL) {
++			ret = -EINVAL;
++			break;
++		}
++		// pr_debug("data: 0x%02x-0x%02x", buf[0], tmp[0]);
++		mutex_lock(&fsm_dev->i2c_lock);
++		ret = i2c_master_send(fsm_dev->i2c, tmp, count);
++		mutex_unlock(&fsm_dev->i2c_lock);
++		if (ret != count) {
++			fsm_delay_ms(5);
++		}
++	} while((ret != count) && (--retries >= 0));
++
++	if (ret != count) {
++		pr_err("%02X: writing %zu bytes failed:%d",
++				fsm_misc->addr, count, ret);
++	}
++	kfree(tmp);
++
++	return ret;
++}
++
++static const struct file_operations g_fsm_misc_ops = {
++	.owner   = THIS_MODULE,
++	.open    = fsm_misc_open,
++	.read    = fsm_misc_read,
++	.write   = fsm_misc_write,
++	.release = fsm_misc_release,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,6,0)
++	.llseek  = no_llseek,
++#else
++        .llseek  = NULL,
++#endif
++	.unlocked_ioctl = fsm_misc_ioctl,
++#if defined(CONFIG_COMPAT)
++	.compat_ioctl = fsm_misc_compat_ioctl,
++#endif
++};
++
++struct miscdevice g_fsm_misc = {
++	.minor = MISC_DYNAMIC_MINOR,
++	.name  = FSM_DRV_NAME,
++	.fops  = &g_fsm_misc_ops,
++	.this_device = NULL,
++};
++
++int fsm_misc_init(void)
++{
++	struct miscdevice *misc = &g_fsm_misc;
++	int ret;
++
++	pr_debug("enter");
++	if (misc->this_device) {
++		return 0;
++	}
++	ret = misc_register(misc);
++	if (ret) {
++		misc->this_device = NULL;
++	}
++
++	FSM_FUNC_EXIT(ret);
++	return ret;
++}
++
++void fsm_misc_deinit(void)
++{
++	struct miscdevice *misc = &g_fsm_misc;
++
++	pr_debug("enter");
++	if (misc->this_device == NULL) {
++		return;
++	}
++	misc_deregister(misc);
++}
++#endif
+diff --git a/asoc/codecs/fs1815/fsm_public.h b/asoc/codecs/fs1815/fsm_public.h
+old mode 100755
+new mode 100644
+index d3a82ee..c5ea3b3
+--- a/asoc/codecs/fs1815/fsm_public.h
++++ b/asoc/codecs/fs1815/fsm_public.h
+@@ -1,240 +1,238 @@
+-/**
+- * Copyright (C) Fourier Semiconductor Inc. 2016-2020. All rights reserved.
+- * 2018-10-18 File created.
+- */
+-
+-#ifndef __FSM_PUBLIC_H__
+-#define __FSM_PUBLIC_H__
+-
+-#ifdef __cplusplus
+-extern "C" {
+-#endif
+-
+-#include "fsm-dev.h"
+-#include <sound/soc.h>
+-#include <linux/version.h>
+-
+-/*
+- * module: fsm_regmap
+- */
+-#if defined(CONFIG_FSM_REGMAP)
+-#include <linux/regmap.h>
+-int fsm_regmap_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
+-int fsm_regmap_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *pval, uint32_t len);
+-int fsm_regmap_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
+-int fsm_regmap_bulkread(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *pval, uint32_t len);
+-int fsm_regmap_update_bits(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t mask, uint8_t val);
+-struct regmap *fsm_regmap_i2c_init(struct i2c_client *i2c);
+-int fsm_regmap_i2c_deinit(struct regmap *map);
+-#else
+-#define fsm_regmap_i2c_deinit(...)
+-#endif
+-/*
+- * module: fsm_i2c
+- */
+-#if defined(CONFIG_FSM_I2C)
+-#include <linux/i2c.h>
+-bool fsm_set_pdev(struct device *dev);
+-struct device *fsm_get_pdev(void);
+-void *fsm_devm_kstrdup(struct device *dev, void *buf, size_t size);
+-int fsm_i2c_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pVal);
+-int fsm_i2c_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
+-int fsm_i2c_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg,
+-				uint8_t *data, int len);
+-int fsm_get_amb_tempr(void);
+-int fsm_read_efsdata(struct fsm_calib_v2 *data);
+-int fsm_write_efsdata(struct fsm_calib_v2 *data);
+-int fsm_i2c_save_re25(struct fsm_calib_v2 *calib_data);
+-int fsm_i2c_init(void);
+-void fsm_i2c_exit(void);
+-#else
+-#define fsm_get_amb_tempr(...) (FSM_DFT_AMB_TEMPR)
+-#endif
+-
+-void fsm_mutex_lock(void);
+-void fsm_mutex_unlock(void);
+-
+-/*
+- * module: fsm_misc
+- */
+-#if defined(CONFIG_FSM_MISC)
+-int fsm_misc_init(void);
+-void fsm_misc_deinit(void);
+-#else
+-#define fsm_misc_init(...)
+-#define fsm_misc_deinit(...)
+-#endif
+-
+-/*
+- * module: fsm_sysfs
+- */
+-#if defined(CONFIG_FSM_SYSFS)
+-int fsm_sysfs_init(struct device *dev);
+-void fsm_sysfs_deinit(struct device *dev);
+-#else
+-#define fsm_sysfs_init(...)
+-#define fsm_sysfs_deinit(...)
+-#endif
+-
+-/*
+- * module: fsm_firmware
+- */
+-#if defined(CONFIG_FSM_FIRMWARE)
+-int fsm_firmware_init(char *fw_name);
+-int fsm_firmware_init_sync(char *fw_name);
+-void fsm_firmware_deinit(void);
+-#elif defined(FSM_HAL_SUPPORT)
+-int fsm_firmware_init_sync(char *fw_name);
+-void fsm_firmware_deinit(void);
+-#else
+-#define fsm_firmware_init(...) (-1)
+-#define fsm_firmware_init_sync(...) (-1)
+-#define fsm_firmware_deinit(...)
+-#endif
+-
+-/*
+- * module: fsm_codec
+- */
+-#if defined(CONFIG_FSM_CODEC)
+-int fsm_codec_register(struct device *dev, int id);
+-void fsm_codec_unregister(struct device *dev);
+-#else
+-#define fsm_codec_register(...)
+-#define fsm_codec_unregister(...)
+-#endif
+-
+-/*
+- * module: fsm_core
+- */
+-fsm_config_t *fsm_get_config(void);
+-void *fsm_get_presets(void);
+-void fsm_set_presets(void *preset);
+-void fsm_get_version(fsm_version_t *version);
+-void fsm_delay_ms(uint32_t delay_ms);
+-void *fsm_alloc_mem(int size);
+-void fsm_free_mem(void **buf);
+-uint16_t set_bf_val(uint16_t *pval, const uint16_t bf, const uint16_t bf_val);
+-uint16_t get_bf_val(const uint16_t bf, const uint16_t val);
+-int fsm_set_bf(fsm_dev_t *fsm_dev, const uint16_t bf, const uint16_t val);
+-int fsm_get_bf(fsm_dev_t *fsm_dev, const uint16_t bf, uint16_t *pval);
+-int fsm_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
+-int fsm_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
+-int fsm_reg_update_bits(fsm_dev_t *fsm_dev, reg_unit_t *reg);
+-int fsm_reg_update(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
+-int fsm_reg_multiread(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
+-int fsm_burst_write(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *data, int len);
+-uint16_t fsm_calc_checksum(uint16_t *data, int len);
+-struct fsm_dev *fsm_get_fsm_dev(uint8_t addr);
+-struct fsm_dev *fsm_get_fsm_dev_by_id(int id);
+-int fsm_read_vbat(fsm_dev_t *fsm_dev, uint16_t *vbat);
+-int fsm_get_srate_bits(fsm_dev_t *fsm_dev, uint32_t srate);
+-int fsm_access_key(fsm_dev_t *fsm_dev, int access);
+-int fsm_reg_dump(fsm_dev_t *fsm_dev);
+-int fsm_init_dev_list(fsm_dev_t *fsm_dev);
+-int fsm_init_info(fsm_dev_t *fsm_dev);
+-void *fsm_get_list_by_idx(fsm_dev_t *fsm_dev, int idx);
+-void *fsm_get_data_list(fsm_dev_t *fsm_dev, int type);
+-int fsm_get_spk_info(fsm_dev_t *fsm_dev, uint16_t info_type);
+-int zero_bit_counter(uint8_t byte);
+-int get_otp_counter(uint16_t byte);
+-int get_otp_max_count(fsm_dev_t *fsm_dev);
+-void convert_data_to_bytes(uint32_t val, uint8_t *buf);
+-int get_re25_from_buf(struct fsm_calib_v2 *data,
+-				char *buf, int buf_len);
+-int set_re25_to_buf(struct fsm_calib_v2 *data,
+-				char *buf, int buf_len);
+-int fsm_parse_preset(const void *data, uint32_t size);
+-int fsm_write_preset(fsm_dev_t *fsm_dev);
+-int fsm_swap_channel(fsm_dev_t *fsm_dev, int next_angle);
+-int fsm_set_monitor(fsm_dev_t *fsm_dev, bool enable);
+-int fsm_wait_stable(fsm_dev_t *fsm_dev, int type);
+-int fsm_parse_otp(fsm_dev_t *fsm_dev, uint16_t value, int *re25, int *count);
+-int fsm_config_vol(fsm_dev_t *fsm_dev);
+-int fsm_dev_recover(fsm_dev_t *fsm_dev);
+-int fsm_get_spkr_tempr(fsm_dev_t *fsm_dev);
+-int fsm_ops_dummy(fsm_dev_t *fsm_dev);
+-int fsm_write_reg_tbl(fsm_dev_t *fsm_dev, uint16_t scene);
+-int fsm_set_cal_scene(fsm_dev_t *fsm_dev);
+-int fsm_get_livedata(fsm_msg_t *data);
+-int fsm_save_re25(struct fsm_calib_v2 *data);
+-int fsm_get_re25(struct fsm_calib_v2 *data);
+-uint32_t fsm_cal_spkr_zmimp(fsm_dev_t *fsm_dev, uint16_t data);
+-int fsm_skip_device(fsm_dev_t *fsm_dev);
+-int fsm_cal_zmdata(fsm_dev_t *fsm_dev);
+-int fsm_get_rstrim(fsm_dev_t *fsm_dev);
+-uint16_t fsm_cal_threshold(fsm_dev_t *fsm_dev,
+-				int mt_type, uint16_t zmdata);
+-int fsm_check_otp(fsm_dev_t *fsm_dev);
+-int fsm_check_without_otp(fsm_dev_t *fsm_dev);
+-int fsm_stub_dev_init(fsm_dev_t *fsm_dev);
+-int fsm_stub_start_up(fsm_dev_t *fsm_dev);
+-int fsm_stub_check_stable(fsm_dev_t *fsm_dev, int type);
+-int fsm_stub_store_re25(fsm_dev_t *fsm_dev);
+-int fsm_stub_pre_calib(fsm_dev_t *fsm_dev);
+-int fsm_stub_post_calib(fsm_dev_t *fsm_dev);
+-int fsm_stub_set_mute(fsm_dev_t *fsm_dev, bool mute);
+-int fsm_stub_set_tsignal(fsm_dev_t *fsm_dev, bool enable);
+-int fsm_stub_shut_down(fsm_dev_t *fsm_dev);
+-int fsm_stub_dev_deinit(fsm_dev_t *fsm_dev);
+-
+-/*
+- * module: fsm_hal
+- */
+-#if defined(FSM_HAL_SUPPORT)
+-int fsm_open_device(void);
+-void fsm_close_device(void);
+-int fsm_check_device(char *dev_name);
+-int fsm_hal_open(void);
+-int fsm_hal_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *val);
+-int fsm_hal_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
+-int fsm_hal_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *val, uint32_t len);
+-int fsm_hal_bulkread(fsm_dev_t *fsm_dev, uint8_t reg, uint32_t len, uint8_t *val);
+-int fsm_hal_get_livedata(fsm_msg_t *data);
+-int fsm_hal_save_re25(struct fsm_calib_v2 *data);
+-int fsm_hal_get_re25(struct fsm_calib_v2 *data);
+-int fstool_reg_read(uint8_t addr, uint8_t reg, uint16_t *val);
+-int fstool_reg_write(uint8_t addr, uint8_t reg, uint16_t val);
+-int fstool_bulkwrite(uint8_t addr, uint8_t reg,
+-				uint32_t len, uint8_t *val);
+-int fstool_bulkread(uint8_t addr, uint8_t reg,
+-				uint32_t len, uint8_t *val);
+-void fsm_hal_close(void);
+-#else
+-#define fsm_hal_open(...) (0)
+-#define fsm_hal_close(...)
+-#endif
+-
+-void fsm_set_fw_name(char *name);
+-int fsm_probe(fsm_dev_t *fsm_dev, int addr);
+-void fsm_remove(fsm_dev_t *fsm_dev);
+-int fsm_dev_count(void);
+-void fsm_set_i2s_clocks(uint32_t rate, uint32_t bclk);
+-void fsm_set_tx_format(uint32_t format);
+-void fsm_set_scene(int scene);
+-void fsm_set_volume(int volume);
+-void fsm_set_cfg_flag(int pos, int mark);
+-void fsm_init(void);
+-void fsm_speaker_onn(void);
+-void fsm_speaker_off(void);
+-void fsm_stereo_rotation(int next_angle);
+-void fsm_batv_monitor(void);
+-void fsm_re25_test(bool force);
+-void fsm_f0_test(void);
+-int fsm_test_result(struct fsm_cal_result *result, int size);
+-void fsm_dump(void);
+-void fsm_deinit(void);
+-
+-void fs1815_ops(fsm_dev_t *fsm_dev);
+-
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+-#define snd_soc_codec              snd_soc_component
+-#define snd_soc_add_codec_controls snd_soc_add_component_controls
+-#define snd_soc_codec_get_drvdata  snd_soc_component_get_drvdata
+-#endif
+-void fsm_add_codec_controls(struct snd_soc_codec *codec);
+-
+-#ifdef __cplusplus
+-}
+-#endif
+-
+-#endif
++/**
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-8-18 File created.
++ */
++
++#ifndef __FSM_PUBLIC_H__
++#define __FSM_PUBLIC_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "fsm-dev.h"
++#include <sound/soc.h>
++#include <linux/version.h>
++
++/*
++ * module: fsm_regmap
++ */
++#if defined(CONFIG_FSM_REGMAP)
++#include <linux/regmap.h>
++int fsm_regmap_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
++int fsm_regmap_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *pval, uint32_t len);
++int fsm_regmap_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
++int fsm_regmap_bulkread(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *pval, uint32_t len);
++int fsm_regmap_update_bits(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t mask, uint8_t val);
++struct regmap *fsm_regmap_i2c_init(struct i2c_client *i2c);
++int fsm_regmap_i2c_deinit(struct regmap *map);
++#else
++#define fsm_regmap_i2c_deinit(...)
++#endif
++/*
++ * module: fsm_i2c
++ */
++#if defined(CONFIG_FSM_I2C)
++#include <linux/i2c.h>
++bool fsm_set_pdev(struct device *dev);
++struct device *fsm_get_pdev(void);
++void *fsm_devm_kstrdup(struct device *dev, void *buf, size_t size);
++int fsm_i2c_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pVal);
++int fsm_i2c_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
++int fsm_i2c_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg,
++				uint8_t *data, int len);
++int fsm_get_amb_tempr(void);
++int fsm_i2c_init(void);
++void fsm_i2c_exit(void);
++#else
++#define fsm_get_amb_tempr(...) (FSM_DFT_AMB_TEMPR)
++#endif
++
++void fsm_mutex_lock(void);
++void fsm_mutex_unlock(void);
++
++/*
++ * module: fsm_misc
++ */
++#if defined(CONFIG_FSM_MISC)
++int fsm_misc_init(void);
++void fsm_misc_deinit(void);
++#else
++#define fsm_misc_init(...)
++#define fsm_misc_deinit(...)
++#endif
++
++/*
++ * module: fsm_sysfs
++ */
++#if defined(CONFIG_FSM_SYSFS)
++int fsm_sysfs_init(struct device *dev);
++void fsm_sysfs_deinit(struct device *dev);
++#else
++#define fsm_sysfs_init(...)
++#define fsm_sysfs_deinit(...)
++#endif
++
++/*
++ * module: fsm_firmware
++ */
++#if defined(CONFIG_FSM_FIRMWARE)
++int fsm_firmware_init(char *fw_name);
++int fsm_firmware_init_sync(char *fw_name);
++void fsm_firmware_deinit(void);
++#elif defined(FSM_HAL_SUPPORT)
++int fsm_firmware_init_sync(char *fw_name);
++void fsm_firmware_deinit(void);
++#else
++#define fsm_firmware_init(...) (-1)
++#define fsm_firmware_init_sync(...) (-1)
++#define fsm_firmware_deinit(...)
++#endif
++
++/*
++ * module: fsm_codec
++ */
++#if defined(CONFIG_FSM_CODEC)
++int fsm_codec_register(struct device *dev, int id);
++void fsm_codec_unregister(struct device *dev);
++#else
++#define fsm_codec_register(...)
++#define fsm_codec_unregister(...)
++#endif
++
++/*
++ * module: fsm_core
++ */
++fsm_config_t *fsm_get_config(void);
++void *fsm_get_presets(void);
++void fsm_set_presets(void *preset);
++void fsm_get_version(fsm_version_t *version);
++void fsm_delay_ms(uint32_t delay_ms);
++void *fsm_alloc_mem(int size);
++void fsm_free_mem(void **buf);
++uint16_t set_bf_val(uint16_t *pval, const uint16_t bf, const uint16_t bf_val);
++uint16_t get_bf_val(const uint16_t bf, const uint16_t val);
++int fsm_set_bf(fsm_dev_t *fsm_dev, const uint16_t bf, const uint16_t val);
++int fsm_get_bf(fsm_dev_t *fsm_dev, const uint16_t bf, uint16_t *pval);
++int fsm_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
++int fsm_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
++int fsm_reg_update_bits(fsm_dev_t *fsm_dev, reg_unit_t *reg);
++int fsm_reg_update(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
++int fsm_reg_multiread(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *pval);
++int fsm_burst_write(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *data, int len);
++uint16_t fsm_calc_checksum(uint16_t *data, int len);
++struct fsm_dev *fsm_get_fsm_dev(uint8_t addr);
++struct fsm_dev *fsm_get_fsm_dev_by_id(int id);
++int fsm_read_vbat(fsm_dev_t *fsm_dev, uint16_t *vbat);
++int fsm_get_srate_bits(fsm_dev_t *fsm_dev, uint32_t srate);
++int fsm_access_key(fsm_dev_t *fsm_dev, int access);
++int fsm_reg_dump(fsm_dev_t *fsm_dev);
++int fsm_init_dev_list(fsm_dev_t *fsm_dev);
++int fsm_init_info(fsm_dev_t *fsm_dev);
++void *fsm_get_list_by_idx(fsm_dev_t *fsm_dev, int idx);
++void *fsm_get_data_list(fsm_dev_t *fsm_dev, int type);
++int fsm_get_spk_info(fsm_dev_t *fsm_dev, uint16_t info_type);
++int zero_bit_counter(uint8_t byte);
++int get_otp_counter(uint16_t byte);
++int get_otp_max_count(fsm_dev_t *fsm_dev);
++void convert_data_to_bytes(uint32_t val, uint8_t *buf);
++int get_re25_from_buf(struct fsm_calib_v2 *data,
++				char *buf, int buf_len);
++int set_re25_to_buf(struct fsm_calib_v2 *data,
++				char *buf, int buf_len);
++int fsm_parse_preset(const void *data, uint32_t size);
++int fsm_write_preset(fsm_dev_t *fsm_dev);
++int fsm_swap_channel(fsm_dev_t *fsm_dev, int next_angle);
++int fsm_set_monitor(fsm_dev_t *fsm_dev, bool enable);
++int fsm_wait_stable(fsm_dev_t *fsm_dev, int type);
++int fsm_parse_otp(fsm_dev_t *fsm_dev, uint16_t value, int *re25, int *count);
++int fsm_config_vol(fsm_dev_t *fsm_dev);
++int fsm_dev_recover(fsm_dev_t *fsm_dev);
++int fsm_get_spkr_tempr(fsm_dev_t *fsm_dev);
++int fsm_ops_dummy(fsm_dev_t *fsm_dev);
++int fsm_write_reg_tbl(fsm_dev_t *fsm_dev, uint16_t scene);
++int fsm_set_cal_scene(fsm_dev_t *fsm_dev);
++int fsm_get_livedata(fsm_msg_t *data);
++int fsm_save_re25(struct fsm_calib_v2 *data);
++int fsm_get_re25(struct fsm_calib_v2 *data);
++uint32_t fsm_cal_spkr_zmimp(fsm_dev_t *fsm_dev, uint16_t data);
++int fsm_skip_device(fsm_dev_t *fsm_dev);
++int fsm_cal_zmdata(fsm_dev_t *fsm_dev);
++int fsm_get_rstrim(fsm_dev_t *fsm_dev);
++uint16_t fsm_cal_threshold(fsm_dev_t *fsm_dev,
++				int mt_type, uint16_t zmdata);
++int fsm_check_otp(fsm_dev_t *fsm_dev);
++int fsm_check_without_otp(fsm_dev_t *fsm_dev);
++int fsm_stub_dev_init(fsm_dev_t *fsm_dev);
++int fsm_stub_start_up(fsm_dev_t *fsm_dev);
++int fsm_stub_check_stable(fsm_dev_t *fsm_dev, int type);
++int fsm_stub_store_re25(fsm_dev_t *fsm_dev);
++int fsm_stub_pre_calib(fsm_dev_t *fsm_dev);
++int fsm_stub_post_calib(fsm_dev_t *fsm_dev);
++int fsm_stub_set_mute(fsm_dev_t *fsm_dev, bool mute);
++int fsm_stub_set_tsignal(fsm_dev_t *fsm_dev, bool enable);
++int fsm_stub_shut_down(fsm_dev_t *fsm_dev);
++int fsm_stub_dev_deinit(fsm_dev_t *fsm_dev);
++
++/*
++ * module: fsm_hal
++ */
++#if defined(FSM_HAL_SUPPORT)
++int fsm_open_device(void);
++void fsm_close_device(void);
++int fsm_check_device(char *dev_name);
++int fsm_hal_open(void);
++int fsm_hal_reg_read(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t *val);
++int fsm_hal_reg_write(fsm_dev_t *fsm_dev, uint8_t reg, uint16_t val);
++int fsm_hal_bulkwrite(fsm_dev_t *fsm_dev, uint8_t reg, uint8_t *val, uint32_t len);
++int fsm_hal_bulkread(fsm_dev_t *fsm_dev, uint8_t reg, uint32_t len, uint8_t *val);
++int fsm_hal_get_livedata(fsm_msg_t *data);
++int fsm_hal_save_re25(struct fsm_calib_v2 *data);
++int fsm_hal_get_re25(struct fsm_calib_v2 *data);
++int fstool_reg_read(uint8_t addr, uint8_t reg, uint16_t *val);
++int fstool_reg_write(uint8_t addr, uint8_t reg, uint16_t val);
++int fstool_bulkwrite(uint8_t addr, uint8_t reg,
++				uint32_t len, uint8_t *val);
++int fstool_bulkread(uint8_t addr, uint8_t reg,
++				uint32_t len, uint8_t *val);
++void fsm_hal_close(void);
++#else
++#define fsm_hal_open(...) (0)
++#define fsm_hal_close(...)
++#endif
++
++void fsm_set_fw_name(char *name);
++int fsm_probe(fsm_dev_t *fsm_dev, int addr);
++void fsm_remove(fsm_dev_t *fsm_dev);
++int fsm_dev_count(void);
++void fsm_set_i2s_clocks(uint32_t rate, uint32_t bclk);
++void fsm_set_tx_format(uint32_t format);
++void fsm_set_scene(int scene);
++void fsm_set_volume(int volume);
++void fsm_set_cfg_flag(int pos, int mark);
++void fsm_init(void);
++void fsm_speaker_onn(void);
++void fsm_speaker_off(void);
++void fsm_stereo_rotation(int next_angle);
++void fsm_batv_monitor(void);
++void fsm_re25_test(bool force);
++void fsm_f0_test(void);
++int fsm_test_result(struct fsm_cal_result *result, int size);
++void fsm_dump(void);
++void fsm_deinit(void);
++
++void fs1815_ops(fsm_dev_t *fsm_dev);
++
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
++#define snd_soc_codec              snd_soc_component
++#define snd_soc_add_codec_controls snd_soc_add_component_controls
++#define snd_soc_codec_get_drvdata  snd_soc_component_get_drvdata
++#endif
++int fsm_add_codec_controls(struct snd_soc_codec *codec);
++int fsm_add_card_controls(struct snd_soc_card *card);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/asoc/codecs/fs1815/fsm_sysfs.c b/asoc/codecs/fs1815/fsm_sysfs.c
+new file mode 100644
+index 0000000..6bb32cb
+--- /dev/null
++++ b/asoc/codecs/fs1815/fsm_sysfs.c
+@@ -0,0 +1,150 @@
++/**
++ * Copyright (C) Fourier Semiconductor Inc. 2025. All rights reserved.
++ * 2025-08-18 File created.
++ */
++
++#include "fsm_public.h"
++#if defined(CONFIG_FSM_SYSFS)
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/device.h>
++#include <linux/kobject.h>
++#include <linux/version.h>
++
++#define REG_RD_ACCESS (1 << 0)
++
++const unsigned char fsm_reg_flag[0xFF] = {
++	[0x00] = REG_RD_ACCESS,
++	[0x01] = REG_RD_ACCESS,
++	[0x03] = REG_RD_ACCESS,
++	[0x04] = REG_RD_ACCESS,
++	[0x10] = REG_RD_ACCESS,
++	[0x11] = REG_RD_ACCESS,
++	[0x18] = REG_RD_ACCESS,
++	[0x19] = REG_RD_ACCESS,
++	[0x1f] = REG_RD_ACCESS,
++	[0x21] = REG_RD_ACCESS,
++	[0x22] = REG_RD_ACCESS,
++	[0x23] = REG_RD_ACCESS,
++	[0x28] = REG_RD_ACCESS,
++	[0x3e] = REG_RD_ACCESS,
++	[0x3f] = REG_RD_ACCESS,
++	[0x58] = REG_RD_ACCESS,
++	[0x59] = REG_RD_ACCESS,
++	[0x5a] = REG_RD_ACCESS,
++	[0x5b] = REG_RD_ACCESS,
++	[0xbc] = REG_RD_ACCESS,
++};
++
++static ssize_t fsm_reg_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	fsm_dev_t *fsm_dev;
++	uint16_t reg, val;
++	ssize_t len;
++	int ret;
++
++	fsm_dev = dev_get_drvdata(dev);
++	if (fsm_dev == NULL) {
++		pr_err("Not found device\n");
++		return -EINVAL;
++	}
++
++	len = snprintf(buf, PAGE_SIZE,
++			"Device[0x%02x] Dump:\n", fsm_dev->addr);
++	for (reg = 0; reg < 0xF0; reg++) {
++		if (!(fsm_reg_flag[reg] & REG_RD_ACCESS))
++			continue;
++		fsm_mutex_lock();
++		ret = fsm_reg_read(fsm_dev, reg, &val);
++		fsm_mutex_unlock();
++		if (ret) {
++			pr_err("read reg: 0x%02x failed\n", reg);
++			return ret;
++		}
++		len += snprintf(buf + len, PAGE_SIZE - len,
++			"%02Xh:0x%04X\n", reg, val);
++	}
++
++	return len;
++}
++
++static ssize_t fsm_reg_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t len)
++{
++	fsm_dev_t *fsm_dev;
++	unsigned int databuf[2];
++	int ret;
++
++	fsm_dev = dev_get_drvdata(dev);
++	if (fsm_dev == NULL) {
++		pr_err("Not found device\n");
++		return -EINVAL;
++	}
++
++	if (sscanf(buf, "%x %x", &databuf[0], &databuf[1]) != 2) {
++		pr_err("Invalid input data!\n");
++		return -EINVAL;
++	}
++
++	fsm_mutex_lock();
++	ret = fsm_reg_write(fsm_dev, (uint8_t)databuf[0],
++			(uint16_t)databuf[1]);
++	fsm_mutex_unlock();
++	if (ret) {
++		pr_err("write 0x%04x to 0x%02x failed\n",
++				databuf[1], databuf[0]);
++		return ret;
++	}
++
++	return len;
++}
++
++static ssize_t fsm_info_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
++{
++	fsm_version_t version;
++	struct preset_file *pfile;
++	int dev_count;
++	int len = 0;
++
++	fsm_get_version(&version);
++	len  = scnprintf(buf + len, PAGE_SIZE, "version: %s\n",
++			version.code_version);
++	len += scnprintf(buf + len, PAGE_SIZE, "branch : %s\n",
++			version.git_branch);
++	len += scnprintf(buf + len, PAGE_SIZE, "commit : %s\n",
++			version.git_commit);
++	len += scnprintf(buf + len, PAGE_SIZE, "date   : %s\n",
++			version.code_date);
++	pfile = fsm_get_presets();
++	dev_count = (pfile ? pfile->hdr.ndev : 0);
++	len += scnprintf(buf + len, PAGE_SIZE, "device : [%d, %d]\n",
++			dev_count, fsm_dev_count());
++
++	return len;
++}
++
++static DEVICE_ATTR_RW(fsm_reg);
++static DEVICE_ATTR_RO(fsm_info);
++
++static struct attribute *fsm_attributes[] = {
++	&dev_attr_fsm_reg.attr,
++	&dev_attr_fsm_info.attr,
++	NULL,
++};
++
++static const struct attribute_group fsm_attr_group = {
++	.attrs = fsm_attributes,
++};
++
++int fsm_sysfs_init(struct device *dev)
++{
++	return sysfs_create_group(&dev->kobj, &fsm_attr_group);
++}
++
++void fsm_sysfs_deinit(struct device *dev)
++{
++	sysfs_remove_group(&dev->kobj, &fsm_attr_group);
++}
++#endif
+-- 
+2.53.0
+

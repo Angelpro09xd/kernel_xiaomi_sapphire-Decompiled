@@ -1,0 +1,133 @@
+From 63defd13054296cb655954aea1d7f066c7669848 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH 7/7] sapphire: mbhc USB-C analog adapter detection, machine
+ audio info sysfs
+
+mbhc: without an FSA4480 switch, listen to power_supply changes and
+report a USB-C analog audio adapter (typec mode 4 from Xiaomi qpnp-smb5)
+as an inserted headset, as the stock mbhc_dlkm.ko does.
+machine: create /sys/android_audio after the codec entry.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ asoc/bengal.c              | 11 ++++++++++-
+ asoc/codecs/wcd-mbhc-v2.c  | 39 ++++++++++++++++++++++++++++++++++++++
+ include/asoc/wcd-mbhc-v2.h |  1 +
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+
+diff --git a/asoc/bengal.c b/asoc/bengal.c
+index 9c58a41..271cc0a 100644
+--- a/asoc/bengal.c
++++ b/asoc/bengal.c
+@@ -987,7 +987,11 @@ extern int aw87xxx_add_codec_controls(void *codec);
+ #endif /*CONFIG_SND_SOC_AWINIC_AW87XXX*/
+ 
+ #if defined(CONFIG_SND_SOC_FS1815)
+-extern void fsm_add_codec_controls(struct snd_soc_component *codec);
++extern int fsm_add_codec_controls(struct snd_soc_component *codec);
++#endif /*CONFIG_SND_SOC_FS1815*/
++
++#if defined(CONFIG_SND_SOC_LCT_AUDIO_INFO)
++extern int lct_audio_info_create_sysfs(void);
+ #endif /*CONFIG_SND_SOC_FS1815*/
+ 
+ static int msm_audrx_stub_init(struct snd_soc_pcm_runtime *rtd)
+@@ -1282,6 +1286,11 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 			sm_port_map);
+ 	}
+ 
++#if defined(CONFIG_SND_SOC_LCT_AUDIO_INFO)
++	/* sapphire: /sys/android_audio/{audio_codec,audio_pa} */
++	lct_audio_info_create_sysfs();
++#endif
++
+ 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
+ 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
+ 	snd_soc_dapm_ignore_suspend(dapm, "LO");
+diff --git a/asoc/codecs/wcd-mbhc-v2.c b/asoc/codecs/wcd-mbhc-v2.c
+index 092e1a0..e3a5100 100644
+--- a/asoc/codecs/wcd-mbhc-v2.c
++++ b/asoc/codecs/wcd-mbhc-v2.c
+@@ -3,6 +3,7 @@
+  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ #include <linux/module.h>
++#include <linux/power_supply.h>
+ #include <linux/init.h>
+ #include <linux/slab.h>
+ #include <linux/of_gpio.h>
+@@ -1662,6 +1663,35 @@ static int wcd_mbhc_set_keycode(struct wcd_mbhc *mbhc)
+ 	return result;
+ }
+ 
++/*
++ * sapphire: no FSA4480 USB-C audio switch is fitted; Xiaomi's qpnp-smb5
++ * exports the current typec mode instead. A USB-C analog audio adapter
++ * (typec mode 4) is reported to userspace as an inserted headset.
++ * Reconstructed from the stock sapphire mbhc_dlkm.ko.
++ */
++extern int audio_get_prop_typec_mode(void);
++
++static int wcd_mbhc_non_usb_c_event_changed(struct notifier_block *nb,
++					    unsigned long evt, void *ptr)
++{
++	struct wcd_mbhc *mbhc = container_of(nb, struct wcd_mbhc, fsa_nb);
++	int typec_mode = audio_get_prop_typec_mode();
++
++	if (typec_mode == 0 && mbhc->usbc_mode != 0) {
++		pr_err("%s:typec_mode:%d, mbhc->usbc_mode:%d\n", __func__,
++		       typec_mode, mbhc->usbc_mode);
++		snd_soc_jack_report(&mbhc->headset_jack, 0, WCD_MBHC_JACK_MASK);
++		mbhc->usbc_mode = 0;
++	} else if (typec_mode == 4 && mbhc->usbc_mode != 4) {
++		pr_err("%s:typec_mode:%d, mbhc->usbc_mode:%d\n", __func__,
++		       typec_mode, mbhc->usbc_mode);
++		snd_soc_jack_report(&mbhc->headset_jack, SND_JACK_HEADSET,
++				    WCD_MBHC_JACK_MASK);
++		mbhc->usbc_mode = 4;
++	}
++	return NOTIFY_OK;
++}
++
+ #if IS_ENABLED(CONFIG_QCOM_FSA4480_I2C)
+ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
+ 					   unsigned long mode, void *ptr)
+@@ -1762,6 +1792,13 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
+ 		mbhc->fsa_nb.notifier_call = wcd_mbhc_usbc_ana_event_handler;
+ 		mbhc->fsa_nb.priority = 0;
+ 		rc = fsa4480_reg_notifier(&mbhc->fsa_nb, mbhc->fsa_np);
++	} else {
++		mbhc->fsa_nb.notifier_call = wcd_mbhc_non_usb_c_event_changed;
++		mbhc->fsa_nb.priority = 0;
++		rc = power_supply_reg_notifier(&mbhc->fsa_nb);
++		if (rc)
++			dev_err(mbhc->component->dev,
++				"%s: power supply registration failed\n", __func__);
+ 	}
+ 
+ 	return rc;
+@@ -1799,6 +1836,8 @@ void wcd_mbhc_stop(struct wcd_mbhc *mbhc)
+ 
+ 	if (mbhc->mbhc_cfg->enable_usbc_analog)
+ 		fsa4480_unreg_notifier(&mbhc->fsa_nb, mbhc->fsa_np);
++	else
++		power_supply_unreg_notifier(&mbhc->fsa_nb);
+ 
+ 	pr_debug("%s: leave\n", __func__);
+ }
+diff --git a/include/asoc/wcd-mbhc-v2.h b/include/asoc/wcd-mbhc-v2.h
+index 3880b77..5bb4983 100644
+--- a/include/asoc/wcd-mbhc-v2.h
++++ b/include/asoc/wcd-mbhc-v2.h
+@@ -620,6 +620,7 @@ struct wcd_mbhc {
+ 
+ 	struct wcd_mbhc_fn *mbhc_fn;
+ 	bool force_linein;
++	int usbc_mode;	/* sapphire: last USB-C typec mode seen via power_supply */
+ 	struct device_node *fsa_np;
+ 	struct notifier_block fsa_nb;
+ 
+-- 
+2.53.0
+

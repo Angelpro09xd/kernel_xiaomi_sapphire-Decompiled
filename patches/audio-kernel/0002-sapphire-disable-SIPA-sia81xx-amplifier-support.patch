@@ -1,0 +1,41 @@
+From 25a5b22457d916289e7972900f61447addb62c0a Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH 2/7] sapphire: disable SIPA (sia81xx) amplifier support
+
+topaz ships a sia81xx amp; sapphire uses aw87xxx + fs1815 only and stock
+machine_dlkm/wcd937x_dlkm do not depend on sipa_dlkm.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ config/bengalauto.conf  | 1 -
+ config/bengalautoconf.h | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/config/bengalauto.conf b/config/bengalauto.conf
+index bc3dbff..38743b3 100644
+--- a/config/bengalauto.conf
++++ b/config/bengalauto.conf
+@@ -4,7 +4,6 @@ CONFIG_SND_SOC_WCD9XXX_V2=m
+ CONFIG_SND_SOC_WCD_MBHC=m
+ CONFIG_SND_SOC_FS1815=m
+ CONFIG_SND_SOC_AW87XXX=m
+-CONFIG_SND_SOC_SIPA=m
+ CONFIG_SND_SOC_WSA881X_ANALOG=m
+ CONFIG_WCD9XXX_CODEC_CORE_V2=m
+ CONFIG_MSM_CDC_PINCTRL=m
+diff --git a/config/bengalautoconf.h b/config/bengalautoconf.h
+index d0a0411..09c2038 100644
+--- a/config/bengalautoconf.h
++++ b/config/bengalautoconf.h
+@@ -9,7 +9,6 @@
+ #define CONFIG_SND_SOC_WCD_MBHC 1
+ #define CONFIG_SND_SOC_FS1815 1
+ #define CONFIG_SND_SOC_AW87XXX 1
+-#define CONFIG_SND_SOC_SIPA 1
+ #define CONFIG_SND_SOC_WSA881X_ANALOG 1
+ #define CONFIG_WCD9XXX_CODEC_CORE_V2 1
+ #define CONFIG_MSM_CDC_PINCTRL 1
+-- 
+2.53.0
+

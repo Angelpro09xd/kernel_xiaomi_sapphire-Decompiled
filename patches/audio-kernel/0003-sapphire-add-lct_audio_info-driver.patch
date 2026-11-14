@@ -1,0 +1,307 @@
+From d0e28665e2ddc87062a8065d5670628ce60bbf2f Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH 3/7] sapphire: add lct_audio_info driver
+
+Longcheer /sys/android_audio/{audio_codec,audio_pa} helper, based on the
+Xiaomi-published Longcheer driver and trimmed to match the stock sapphire
+lct_audio_info_dlkm.ko (verified: same functions, exports, imports).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ Kbuild                                      |   2 +-
+ asoc/codecs/lct_audio_info/Kbuild           | 115 ++++++++++++++++++++
+ asoc/codecs/lct_audio_info/Makefile         |   6 +
+ asoc/codecs/lct_audio_info/lct_audio_info.c | 109 +++++++++++++++++++
+ config/bengalauto.conf                      |   1 +
+ config/bengalautoconf.h                     |   1 +
+ 6 files changed, 233 insertions(+), 1 deletion(-)
+ create mode 100644 asoc/codecs/lct_audio_info/Kbuild
+ create mode 100644 asoc/codecs/lct_audio_info/Makefile
+ create mode 100644 asoc/codecs/lct_audio_info/lct_audio_info.c
+
+diff --git a/Kbuild b/Kbuild
+index 45e208b..717d1dd 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -1,4 +1,4 @@
+ obj-y := dsp/ ipc/ soc/ asoc/ asoc/codecs/ asoc/codecs/lpass-cdc/ asoc/codecs/wcd934x/ asoc/codecs/bolero/ asoc/codecs/wsa884x/ asoc/codecs/wcd938x/ asoc/codecs/wsa883x/ asoc/codecs/wcd937x/
+ obj-y += asoc/codecs/besbev/
+ obj-y += asoc/codecs/cc/
+-obj-y += asoc/codecs/sipa/ asoc/codecs/fs1815/ asoc/codecs/aw87xxx/
++obj-y += asoc/codecs/sipa/ asoc/codecs/fs1815/ asoc/codecs/aw87xxx/ asoc/codecs/lct_audio_info/
+diff --git a/asoc/codecs/lct_audio_info/Kbuild b/asoc/codecs/lct_audio_info/Kbuild
+new file mode 100644
+index 0000000..e3b5d96
+--- /dev/null
++++ b/asoc/codecs/lct_audio_info/Kbuild
+@@ -0,0 +1,115 @@
++# We can build either as part of a standalone Kernel build or as
++# an external module.  Determine which mechanism is being used
++ifeq ($(MODNAME),)
++	KERNEL_BUILD := 1
++else
++	KERNEL_BUILD := 0
++endif
++
++
++
++ifeq ($(KERNEL_BUILD), 1)
++	# These are configurable via Kconfig for kernel-based builds
++	# Need to explicitly configure for Android-based builds
++	AUDIO_BLD_DIR := $(ANDROID_BUILD_TOP)/kernel/msm-5.4
++	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
++endif
++
++ifeq ($(KERNEL_BUILD), 0)
++	ifeq ($(CONFIG_ARCH_SM6150), y)
++		include $(AUDIO_ROOT)/config/sm6150auto.conf
++		export
++		INCS    +=  -include $(AUDIO_ROOT)/config/sm6150autoconf.h
++	endif
++	ifeq ($(CONFIG_ARCH_TRINKET), y)
++		include $(AUDIO_ROOT)/config/sm6150auto.conf
++		export
++		INCS    +=  -include $(AUDIO_ROOT)/config/sm6150autoconf.h
++	endif
++	ifeq ($(CONFIG_ARCH_KHAJE), y)
++		include $(AUDIO_ROOT)/config/bengalauto.conf
++		export
++		INCS    +=  -include $(AUDIO_ROOT)/config/bengalautoconf.h
++	endif
++	ifeq ($(CONFIG_ARCH_LITO), y)
++		include $(AUDIO_ROOT)/config/litoauto.conf
++		export
++		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
++	endif
++	ifeq ($(CONFIG_ARCH_WAIPIO), y)
++		include $(AUDIO_ROOT)/config/waipioauto.conf
++		INCS    +=  -include $(AUDIO_ROOT)/config/waipioautoconf.h
++	endif
++endif
++
++# As per target team, build is done as follows:
++# Defconfig : build with default flags
++# Slub      : defconfig  + CONFIG_SLUB_DEBUG := y +
++#	      CONFIG_SLUB_DEBUG_ON := y + CONFIG_PAGE_POISONING := y
++# Perf      : Using appropriate msmXXXX-perf_defconfig
++#
++# Shipment builds (user variants) should not have any debug feature
++# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
++# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
++# there is no other way to identify defconfig builds, QTI internal
++# representation of perf builds (identified using the string 'perf'),
++# is used to identify if the build is a slub or defconfig one. This
++# way no critical debug feature will be enabled for perf and shipment
++# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
++# config.
++
++############ UAPI ############
++UAPI_DIR :=	uapi/audio
++UAPI_INC :=	-I$(AUDIO_ROOT)/include/$(UAPI_DIR)
++
++############ COMMON ############
++COMMON_DIR :=	include
++COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
++
++############ FS1815 ############
++
++# for FS1815
++ifdef CONFIG_SND_SOC_LCT_AUDIO_INFO
++	LCT_AUDIO_INFO_OBJS += lct_audio_info.o
++endif
++
++LINUX_INC +=	-Iinclude/linux
++
++INCS +=		$(COMMON_INC) \
++		$(UAPI_INC)
++
++EXTRA_CFLAGS += $(INCS)
++
++
++CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
++		-DANI_LITTLE_BIT_ENDIAN \
++		-DDOT11F_LITTLE_ENDIAN_HOST \
++		-DANI_COMPILER_TYPE_GCC \
++		-DANI_OS_TYPE_ANDROID=6 \
++		-DPTT_SOCK_SVC_ENABLE \
++		-Wall\
++		-Werror\
++		-D__linux__
++
++KBUILD_CPPFLAGS += $(CDEFINES)
++
++# Currently, for versions of gcc which support it, the kernel Makefile
++# is disabling the maybe-uninitialized warning.  Re-enable it for the
++# AUDIO driver.  Note that we must use EXTRA_CFLAGS here so that it
++# will override the kernel settings.
++ifeq ($(call cc-option-yn, -Wmaybe-uninitialized),y)
++EXTRA_CFLAGS += -Wmaybe-uninitialized
++endif
++#EXTRA_CFLAGS += -Wmissing-prototypes
++
++ifeq ($(call cc-option-yn, -Wheader-guard),y)
++EXTRA_CFLAGS += -Wheader-guard
++endif
++
++
++# Module information used by KBuild framework
++obj-$(CONFIG_SND_SOC_LCT_AUDIO_INFO) += lct_audio_info_dlkm.o
++lct_audio_info_dlkm-y := $(LCT_AUDIO_INFO_OBJS)
++
++# inject some build related information
++DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
+diff --git a/asoc/codecs/lct_audio_info/Makefile b/asoc/codecs/lct_audio_info/Makefile
+new file mode 100644
+index 0000000..8c87649
+--- /dev/null
++++ b/asoc/codecs/lct_audio_info/Makefile
+@@ -0,0 +1,6 @@
++modules:
++	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS) VERBOSE=1
++modules_install:
++	$(MAKE) M=$(M) -C $(KERNEL_SRC) modules_install
++clean:
++	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+diff --git a/asoc/codecs/lct_audio_info/lct_audio_info.c b/asoc/codecs/lct_audio_info/lct_audio_info.c
+new file mode 100644
+index 0000000..f78d291
+--- /dev/null
++++ b/asoc/codecs/lct_audio_info/lct_audio_info.c
+@@ -0,0 +1,109 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Longcheer/Xiaomi audio info for Redmi Note 13 4G (sapphire).
++ *
++ * Exposes /sys/android_audio/{audio_codec,audio_pa} so userspace (factory
++ * tools, audio HAL) can tell which codec and which of the dual-sourced
++ * speaker amplifiers (FourSemi fs1815 / Awinic aw87xxx) is fitted.
++ *
++ * Based on the Longcheer driver published by Xiaomi (Copyright (c) 2022
++ * XiaoMi Inc.), trimmed to match the stock sapphire lct_audio_info_dlkm.ko
++ * (no bootargs/hwname helpers, no "already exists" check).
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/kobject.h>
++#include <linux/sysfs.h>
++#include <linux/mutex.h>
++#include <linux/string.h>
++
++#define AUDIO_INFO_NAME_MAX	(64)
++
++struct lct_audio_info {
++	char codec_name[AUDIO_INFO_NAME_MAX];
++	char pa_name[AUDIO_INFO_NAME_MAX];
++};
++
++static DEFINE_MUTEX(g_audio_info_mutex_lock);
++static struct lct_audio_info g_audio_info;
++static struct kobject *android_audio;
++
++static ssize_t audio_codec_show(struct kobject *kobj,
++				struct kobj_attribute *attr, char *buf)
++{
++	if (strlen(g_audio_info.codec_name) == 0)
++		return sprintf(buf, "%s\n", "WCD9370");
++	return sprintf(buf, "%s\n", g_audio_info.codec_name);
++}
++
++static ssize_t audio_pa_show(struct kobject *kobj,
++			     struct kobj_attribute *attr, char *buf)
++{
++	if (strlen(g_audio_info.pa_name) == 0)
++		return sprintf(buf, "%s\n", "unkonw_pa");
++	return sprintf(buf, "%s\n", g_audio_info.pa_name);
++}
++
++static struct kobj_attribute dev_attr_audio_codec =
++	__ATTR(audio_codec, 0644, audio_codec_show, NULL);
++static struct kobj_attribute dev_attr_audio_pa =
++	__ATTR(audio_pa, 0644, audio_pa_show, NULL);
++
++int lct_audio_info_create_sysfs(void)
++{
++	int ret;
++
++	android_audio = kobject_create_and_add("android_audio", NULL);
++	if (android_audio == NULL) {
++		pr_err(" android_audio_create_sysfs_ failed\n");
++		return -ENOMEM;
++	}
++
++	ret = sysfs_create_file(android_audio, &dev_attr_audio_codec.attr);
++	if (ret) {
++		pr_err("%s audio_codec failed \n", __func__);
++		kobject_del(android_audio);
++		return ret;
++	}
++
++	ret = sysfs_create_file(android_audio, &dev_attr_audio_pa.attr);
++	if (ret) {
++		pr_err("%s audio_pa failed \n", __func__);
++		kobject_del(android_audio);
++		return ret;
++	}
++
++	g_audio_info.codec_name[AUDIO_INFO_NAME_MAX - 1] = '\0';
++	g_audio_info.pa_name[AUDIO_INFO_NAME_MAX - 1] = '\0';
++
++	return 0;
++}
++EXPORT_SYMBOL(lct_audio_info_create_sysfs);
++
++int lct_audio_info_set_codec_name(const char *codec_name, int count)
++{
++	int max_count = count > AUDIO_INFO_NAME_MAX ? AUDIO_INFO_NAME_MAX : count;
++
++	mutex_lock(&g_audio_info_mutex_lock);
++	strncpy(g_audio_info.codec_name, codec_name, max_count);
++	mutex_unlock(&g_audio_info_mutex_lock);
++	return strlen(g_audio_info.codec_name);
++}
++EXPORT_SYMBOL(lct_audio_info_set_codec_name);
++
++/* appends: both amplifiers may report themselves */
++int lct_audio_info_set_pa_name(const char *pa_name, int count)
++{
++	int max_count = count > AUDIO_INFO_NAME_MAX ? AUDIO_INFO_NAME_MAX : count;
++
++	mutex_lock(&g_audio_info_mutex_lock);
++	strncat(g_audio_info.pa_name, pa_name, max_count);
++	g_audio_info.pa_name[AUDIO_INFO_NAME_MAX - 1] = '\0';
++	mutex_unlock(&g_audio_info_mutex_lock);
++	return strlen(g_audio_info.pa_name);
++}
++EXPORT_SYMBOL(lct_audio_info_set_pa_name);
++
++MODULE_DESCRIPTION("lct audio pa info driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/config/bengalauto.conf b/config/bengalauto.conf
+index 38743b3..91dab6e 100644
+--- a/config/bengalauto.conf
++++ b/config/bengalauto.conf
+@@ -3,6 +3,7 @@ CONFIG_AUDIO_EXT_CLK=m
+ CONFIG_SND_SOC_WCD9XXX_V2=m
+ CONFIG_SND_SOC_WCD_MBHC=m
+ CONFIG_SND_SOC_FS1815=m
++CONFIG_SND_SOC_LCT_AUDIO_INFO=m
+ CONFIG_SND_SOC_AW87XXX=m
+ CONFIG_SND_SOC_WSA881X_ANALOG=m
+ CONFIG_WCD9XXX_CODEC_CORE_V2=m
+diff --git a/config/bengalautoconf.h b/config/bengalautoconf.h
+index 09c2038..9089ecd 100644
+--- a/config/bengalautoconf.h
++++ b/config/bengalautoconf.h
+@@ -8,6 +8,7 @@
+ #define CONFIG_SND_SOC_WCD9XXX_V2 1
+ #define CONFIG_SND_SOC_WCD_MBHC 1
+ #define CONFIG_SND_SOC_FS1815 1
++#define CONFIG_SND_SOC_LCT_AUDIO_INFO 1
+ #define CONFIG_SND_SOC_AW87XXX 1
+ #define CONFIG_SND_SOC_WSA881X_ANALOG 1
+ #define CONFIG_WCD9XXX_CODEC_CORE_V2 1
+-- 
+2.53.0
+

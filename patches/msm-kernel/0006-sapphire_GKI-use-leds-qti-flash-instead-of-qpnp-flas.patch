@@ -1,0 +1,25 @@
+From 0d5de60655624affa17f5a30cee3353e3f5e47bd Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:01 +0100
+Subject: [PATCH 6/6] sapphire_GKI: use leds-qti-flash instead of qpnp-flash-v2
+
+Stock sapphire camera.ko depends on leds_qti_flash.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/configs/vendor/sapphire_GKI.config | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/configs/vendor/sapphire_GKI.config b/arch/arm64/configs/vendor/sapphire_GKI.config
+index eb607e9fb..827658fdc 100644
+--- a/arch/arm64/configs/vendor/sapphire_GKI.config
++++ b/arch/arm64/configs/vendor/sapphire_GKI.config
+@@ -299,3 +299,5 @@ CONFIG_MI_THERMAL_INTERFACE=m
+ CONFIG_LEDS_QPNP_VIBRATOR_LDO=m
+ CONFIG_QCOM_SYSMON=m
+ # CONFIG_ARCH_SCUBA is not set
++# CONFIG_LEDS_QPNP_FLASH_V2 is not set
++CONFIG_LEDS_QTI_FLASH=m
+-- 
+2.53.0
+

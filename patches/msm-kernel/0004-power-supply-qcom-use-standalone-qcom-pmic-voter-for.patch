@@ -1,0 +1,31 @@
+From 5f5451d3f7933c7403fd5db11f19b68a17017318 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 00:20:00 +0100
+Subject: [PATCH 4/6] power: supply: qcom: use standalone qcom-pmic-voter for
+ smb5
+
+Like stock sapphire, qpnp-smb5-main depends on the separate
+qcom-pmic-voter module instead of bundling pmic-voter.o (which
+otherwise exports lock_votable & co. twice).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/power/supply/qcom/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/qcom/Makefile b/drivers/power/supply/qcom/Makefile
+index dcaaac33f..025902b78 100644
+--- a/drivers/power/supply/qcom/Makefile
++++ b/drivers/power/supply/qcom/Makefile
+@@ -3,7 +3,7 @@
+ obj-$(CONFIG_QPNP_SMB2) += qpnp-smb2-main.o
+ qpnp-smb2-main-y += step-chg-jeita.o battery.o qpnp-smb2.o smb-lib.o pmic-voter.o storm-watch.o battery-profile-loader.o smb2-iio.o
+ obj-$(CONFIG_QPNP_SMB5) += qpnp-smb5-main.o
+-qpnp-smb5-main-y += step-chg-jeita.o battery.o qpnp-smb5.o smb5-lib.o pmic-voter.o storm-watch.o schgm-flash.o battery-profile-loader.o smb5-iio.o smbx-get-chan.o
++qpnp-smb5-main-y += step-chg-jeita.o battery.o qpnp-smb5.o smb5-lib.o storm-watch.o schgm-flash.o battery-profile-loader.o smb5-iio.o smbx-get-chan.o
+ obj-$(CONFIG_QPNP_QNOVO5) += qpnp-qnovo5-main.o
+ qpnp-qnovo5-main-y += qpnp-qnovo5.o battery.o smb5-lib.o smb5-iio.o schgm-flash.o storm-watch.o step-chg-jeita.o battery-profile-loader.o
+ obj-$(CONFIG_QPNP_FG_GEN3) += qpnp-fg-gen3-main.o
+-- 
+2.53.0
+
