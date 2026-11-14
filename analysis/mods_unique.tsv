@@ -1,0 +1,317 @@
+vdlkm	adsp_loader_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	ADSP Loader module
+vboot	altmode-glink	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Type-C Alt Mode over GLINK
+vboot	ant_check	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	ant_check_div	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	arm_smmu	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	IOMMU API for ARM architected SMMU implementations
+vdlkm	audio_pkt_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Audio Packet Driver
+vdlkm	audio_prm_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	audio prm
+vdlkm	audpkt_ion_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Audio ION module
+vboot	auth_battery	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	auth battery driver
+vdlkm	aw87xxx_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	awinic aw87xxx pa driver
+vboot	bam_dma	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM BAM DMA engine driver
+vboot	battery_auth_class	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	bcl_pmic5	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	bcl_soc	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	binder_gki	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vboot	binder_prio	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	bolero_cdc_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	Bolero driver
+vboot	boot_stats	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM boot stats info driver
+vboot	bootinfo	g9d833a42e53b	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	bq25960_charger	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	TI BQ25960 Driver
+vdlkm	bt_fm_slim	gbdcc58f970d9	5.15.94 SMP preempt mod_unload modversions aarch64	BTFM Slimbus Slave driver
+vdlkm	btpower	gbdcc58f970d9	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Bluetooth power control driver
+vboot	bwmon	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM BWMON driver
+vdlkm	camera	gb2b8b256534a	5.15.94 SMP preempt mod_unload modversions aarch64	Camera Request Manager
+vboot	cdsp-loader	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CDSP Loader module
+vboot	cdsprm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	cfg80211	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	wireless configuration support
+vboot	charger-ulog-glink	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI charger ulog glink driver
+vboot	clk-dummy	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Dummy Clock Driver
+vboot	clk-qcom	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Common QCOM clock control library
+vboot	clk-smd-rpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm RPM over SMD Clock Controller Driver
+vdlkm	cnss_nl	g6ab133819d1b	5.15.94 SMP preempt mod_unload modversions aarch64	CNSS generic netlink module
+vdlkm	cnss_prealloc	g6ab133819d1b	5.15.94 SMP preempt mod_unload modversions aarch64	CNSS prealloc driver
+vdlkm	cnss_utils	g6ab133819d1b	5.15.94 SMP preempt mod_unload modversions aarch64	CNSS Utilities Driver
+vboot	core_hang_detect	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Core Hang Detect Driver
+vboot	coresight	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight tracer driver
+vboot	coresight-csr	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CoreSight CSR driver
+vboot	coresight-cti	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight CTI Driver
+vboot	coresight-dummy	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CoreSight dummy source driver
+vboot	coresight-funnel	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight Funnel Driver
+vboot	coresight-hwevent	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CoreSight Hardware Event driver
+vboot	coresight-remote-etm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CoreSight Remote ETM driver
+vboot	coresight-replicator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight Replicator Driver
+vboot	coresight-stm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight System Trace Macrocell driver
+vboot	coresight-tgu	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CoreSight TGU driver
+vboot	coresight-tmc	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Arm CoreSight Trace Memory Controller driver
+vboot	coresight-tpda	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Trace, Profiling & Diagnostic Aggregator driver
+vboot	coresight-tpdm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Trace, Profiling & Diagnostic Monitor driver
+vboot	cp_qc30	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Xiaomi cp qc30
+vboot	cpu_hotplug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CPU Hotplug cooling device driver
+vboot	cpufreq_ondemand	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	'cpufreq_ondemand' - A dynamic cpufreq governor for Low Latency Frequency Transition capable processors
+vboot	cpufreq_userspace	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	CPUfreq policy governor 'userspace'
+vboot	cpumaxfreq	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Return the max freqency supported by any core of the processor
+vboot	cqhci	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Command Queue Host Controller Interface driver
+vboot	crypto-qti-common	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Common crypto library for storage encryption
+vboot	crypto-qti-tz	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Crypto TZ library for storage encryption
+vboot	cx_ipeak	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	cx_ipeak_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	dcc_v2	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM data capture and compare engine
+vboot	debug-regulator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Regulator debug control library
+vboot	debugcc-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI DEBUG CC KHAJE Driver
+vboot	dispcc-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI DISP_CC KHAJE Driver
+vboot	ds28e30_verify	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	dwc3-msm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	DesignWare USB3 MSM Glue Layer
+vboot	ehset	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB Driver for EHSET Test Fixture
+vboot	eud	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI EUD driver
+vboot	f_fs_ipc_log	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	focaltech_ts_i2c	gc3130bf798da	5.15.94 SMP preempt mod_unload modversions aarch64	FocalTech Touchscreen Driver
+vboot	frpc-adsprpc	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	fs1815_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	FourSemi Smart PA Driver
+vboot	fsa4480-i2c	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	FSA4480 I2C driver
+vboot	gcc-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI GCC KHAJE Driver
+vboot	gdsc-regulator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	GDSC regulator control library
+vboot	glink_pkt	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM G-Link Packet Port
+vboot	glink_probe	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. GLINK probe helper driver
+vdlkm	gpr_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	QTI GPR Bus
+vboot	gpucc-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI GPU_CC KHAJE Driver
+vdlkm	gsim	g4f2afc883a4c	5.15.94 SMP preempt mod_unload modversions aarch64	Generic Software Interface (GSI)
+vboot	guestvm_loader	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. GuestVM loader
+vboot	hdcp_qseecom_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	HDCP driver
+vboot	heap_mem_ext_v01	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	hung_task_enh	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Hung Task Enhancement
+vboot	i2c-msm-geni	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	icc-debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM ICC debug library
+vboot	icc-rpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	icc-test	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	icnss2	g6ab133819d1b	5.15.94 SMP preempt mod_unload modversions aarch64	iWCN CORE platform driver
+vboot	iommu-logger	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI IOMMU SUPPORT
+vdlkm	ipa_clientsm	g4f2afc883a4c	5.15.94 SMP preempt mod_unload modversions aarch64	IPA HW clients manager
+vboot	ipa_fmwk	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	IPA HW framework
+vdlkm	ipam	g4f2afc883a4c	5.15.94 SMP preempt mod_unload modversions aarch64	IPA HW device driver
+vdlkm	ipanetm	g4f2afc883a4c	5.15.94 SMP preempt mod_unload modversions aarch64	IPA late init module
+vdlkm	lct_audio_info_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	lct audio pa info driver
+vdlkm	lct_tp	gc3130bf798da	5.15.94 SMP preempt mod_unload modversions aarch64	Touchpad Information Driver
+vboot	leds-aw2016	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	AWINIC AW2016 LED driver
+vboot	leds-gpio	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	GPIO LED driver
+vboot	leds-qpnp-vibrator-ldo	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP Vibrator-LDO driver
+vboot	leds-qti-flash	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Flash LED driver
+vboot	leds-qti-tri-led	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI TRI_LED driver
+vboot	lmh_cpu_vdd_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	machine_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	ALSA SoC msm
+vdlkm	mbhc_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	wcd MBHC v2 module
+vboot	mdt_loader	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Firmware parser for Qualcomm MDT format
+vboot	mem-offline	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. Memory Offlining Driver
+vboot	mem_buf	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. Memory Buffer Sharing driver
+vboot	mem_buf_dev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. Memory Buffer Sharing driver
+vboot	memlat	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM MEMLAT Driver
+vboot	memory_dump_v2	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Memory Dump V2 Driver
+vboot	mi_memory	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Interface for xiaomi memory
+vboot	mi_thermal_interface	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Xiaomi thermal control  interface
+vboot	mi_wmark	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	A moudle to adjust kswapd watermark.
+vboot	microdump_collector	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Microdump Collector
+vboot	miev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	exception log transfer.
+vdlkm	millet_binder	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vdlkm	millet_core	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vdlkm	millet_hs	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vdlkm	millet_oem_cgroup	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vdlkm	millet_pkg	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vdlkm	millet_sig	g25fb969a38e4	5.15.74 SMP preempt mod_unload modversions aarch64	
+vboot	minidump	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Mini Dump Driver
+vdlkm	mmrm_test_module	g0bdd7546c541	5.15.94 SMP preempt mod_unload modversions aarch64	MMRM TEST
+vboot	msm-mmrm	g0bdd7546c541	5.15.94 SMP preempt mod_unload modversions aarch64	QTI MMRM Driver
+vboot	msm-poweroff	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Poweroff Driver
+vboot	msm-tsens-driver	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	msm_dma_iommu_mapping	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	msm_drm	g4c6a338038c7	5.15.94 SMP preempt mod_unload modversions aarch64	MSM DRM Driver
+vboot	msm_geni_serial	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Serial driver for GENI based QTI serial cores
+vboot	msm_gpi	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM GPI DMA engine driver
+vdlkm	msm_kgsl	g20f591711968	5.15.94 SMP preempt mod_unload modversions aarch64	3D Graphics driver
+vboot	msm_lmh_dcvs	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	msm_memshare	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Mem Share QMI Service Driver
+vboot	msm_performance	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	msm_qmp	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM QTI Mailbox Protocol
+vboot	msm_sharedmem	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	msm_sysstats	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	msm_video	g46a60396d65a	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	ns	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm IPC Router Nameservice
+vboot	nvmem_qcom-spmi-sdam	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM SPMI SDAM driver
+vboot	nvmem_qfprom	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm QFPROM driver
+vdlkm	nxp-nci	g8153e0501cdb	5.15.94 SMP preempt mod_unload modversions aarch64	NXP NFC I2C driver
+vboot	panel_event_notifier	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. Panel event notifier
+vboot	pd_policy_manager	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB Power Delivery Policy Driver
+vboot	pdr_interface	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Protection Domain Restart helpers
+vboot	perf_helper	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	phy-generic	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	NOP USB Transceiver driver
+vboot	phy-msm-snps-hs	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM USB HS PHY driver
+vboot	phy-msm-ssusb-qmp	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM USB SS QMP PHY driver
+vboot	phy-qcom-emu	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. USB Emulation PHY driver
+vboot	phy-qcom-ufs	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY
+vboot	phy-qcom-ufs-qmp-v4	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4
+vboot	phy-qcom-ufs-qmp-v4-crow	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 CROW
+vboot	phy-qcom-ufs-qmp-v4-kalama	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 KALAMA
+vboot	phy-qcom-ufs-qmp-v4-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 Khaje
+vboot	phy-qcom-ufs-qmp-v4-kona	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 KONA
+vboot	phy-qcom-ufs-qmp-v4-lahaina	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 LAHAINA
+vboot	phy-qcom-ufs-qmp-v4-waipio	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QMP v4 WAIPIO
+vboot	phy-qcom-ufs-qrbtc-sdm845	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Universal Flash Storage (UFS) QCOM PHY QRBTC SDM845
+vboot	phy-xgene	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	APM X-Gene Multi-Purpose PHY driver
+vboot	pinctrl-bengal	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI bengal pinctrl driver
+vboot	pinctrl-khaje	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI khaje pinctrl driver
+vboot	pinctrl-msm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. pinctrl-msm driver
+vboot	pinctrl-spmi-gpio	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm SPMI PMIC GPIO pin control driver
+vboot	pinctrl-spmi-mpp	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm SPMI PMIC MPP pin control driver
+vdlkm	pinctrl_lpi_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	QTI LPI GPIO pin control driver
+vboot	pm8941-pwrkey	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	PM8941 Power Key driver
+vboot	pmic-glink-debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	PMIC Glink Debug Driver
+vboot	pmic_glink	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI PMIC Glink driver
+vboot	proxy-consumer	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Regulator proxy consumer library
+vboot	pwm-qti-lpg	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI LPG driver
+vdlkm	q6_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	Q6 module
+vdlkm	q6_notifier_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	Audio notifier driver
+vdlkm	q6_pdr_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	PDR framework driver
+vdlkm	qca_cld3_wlan	g1630fb850036	5.15.94 SMP preempt mod_unload modversions aarch64	WLAN HOST DEVICE DRIVER
+vdlkm	qce50_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	Crypto Engine driver
+vdlkm	qcedev-mod_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	QTI DEV Crypto driver
+vboot	qcom-apcs-ipc-mailbox	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm APCS IPC driver
+vboot	qcom-cpufreq-hw	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM CPUFREQ HW Driver
+vboot	qcom-cpufreq-hw-debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI clock driver for CPUFREQ HW debug
+vboot	qcom-dcvs	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM DCVS Driver
+vboot	qcom-dload-mode	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM Download Mode Driver
+vboot	qcom-i2c-pmic	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qcom-mpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. (QTI) MPM Driver
+vboot	qcom-pmic-voter	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM PMIC Voter Driver
+vboot	qcom-pmu-lib	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM PMU Driver
+vboot	qcom-pon	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	pm8916 Power On driver
+vboot	qcom-qpnp-qg	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP QG Driver
+vboot	qcom-scm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. SCM driver
+vboot	qcom-spmi-adc-tm5	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	SPMI PMIC Thermal Monitor ADC driver
+vboot	qcom-spmi-adc5	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies Inc. PMIC5 ADC driver
+vboot	qcom-spmi-pmic	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm SPMI PMIC driver
+vboot	qcom-spmi-temp-alarm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP PMIC Temperature Alarm driver
+vboot	qcom-vadc-common	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm ADC common functionality
+vboot	qcom_aoss	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm AOSS QMP driver
+vboot	qcom_cpu_vendor_hooks	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM CPU Vendor Hooks Driver
+vboot	qcom_dma_heaps	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qcom_glink	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm GLINK driver
+vboot	qcom_glink_rpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm GLINK RPM driver
+vboot	qcom_glink_smem	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm GLINK SMEM driver
+vboot	qcom_glink_spss	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI GLINK SPSS driver
+vboot	qcom_hwspinlock	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Hardware spinlock driver for Qualcomm SoCs
+vboot	qcom_iommu_debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qcom_iommu_util	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qcom_ipc_logging	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	ipc logging
+vboot	qcom_logbuf_vh	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Logbuf Vendor Hooks Driver
+vboot	qcom_lpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. cpuidle LPM governor
+vboot	qcom_pil_info	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm PIL relocation info
+vboot	qcom_pm8008-regulator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP PM8008 PMIC Regulator Driver
+vboot	qcom_q6v5	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Peripheral Image Loader for Q6V5
+vboot	qcom_q6v5_pas	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Hexagon v5 Peripheral Authentication Service driver
+vboot	qcom_ramdump	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. Ramdump driver
+vboot	qcom_smd	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Shared Memory Driver
+vboot	qcom_soc_wdt	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Soc Watchdog Driver
+vboot	qcom_spss	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Peripheral Image Loader for Secure Subsystem
+vboot	qcom_sysmon	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm sysmon driver
+vboot	qcom_tsens	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Temperature Sensor driver
+vboot	qcom_va_minidump	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qcom VA Minidump Driver
+vboot	qcom_wdt_core	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Watchdog Driver Core
+vdlkm	qcrypto-msm_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Crypto driver
+vboot	qfprom-sys	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. QFPROM_SYS driver
+vboot	qmi_helpers	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QMI encoder/decoder helper
+vboot	qnoc-bengal	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Bengal NoC driver
+vboot	qnoc-qos-rpm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qpnp-pdphy	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP PD PHY Driver
+vboot	qpnp-power-on	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP PMIC Power-on driver
+vboot	qpnp-smb5-main	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QPNP SMB5 Charger Driver
+vboot	qrng_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	QTI MSM Random Number Driver
+vboot	qrtr	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm IPC-router driver
+vboot	qrtr-smd	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm IPC-Router SMD interface driver
+vboot	qseecom_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Secure Execution Environment Communicator
+vboot	qti-regmap-debugfs	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Regmap QTI debugfs library
+vboot	qti_battery_charger	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Glink battery charger driver
+vboot	qti_battery_debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI Glink battery debug driver
+vboot	qti_cpufreq_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. cpufreq cooling driver
+vboot	qti_devfreq_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. devfreq cooling device driver
+vboot	qti_qmi_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI QMI cooling device driver
+vboot	qti_qmi_sensor	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	qti_userspace_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Userspace cooling device driver
+vdlkm	radio-i2c-rtc6226-qca	gbdcc58f970d9	5.15.94 SMP preempt mod_unload modversions aarch64	I2C radio driver for rtc6226 FM Tuner
+vboot	rdbg	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	rdbg module
+vboot	reboot-mode	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	System reboot mode core library
+vboot	refgen	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	refgen regulator driver
+vboot	regmap-spmi	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	regulator_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	rmnet_core	gec9548905246	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	rmnet_ctl	gec9548905246	5.15.94 SMP preempt mod_unload modversions aarch64	RmNet control IPA Driver
+vdlkm	rmnet_wlan	gde8edc0ecd37	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	rndisipam	g4f2afc883a4c	5.15.94 SMP preempt mod_unload modversions aarch64	RNDIS_IPA network interface
+vboot	rpm-smd	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. RPM-SMD Driver
+vboot	rpm-smd-debug	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	RPM SMD Debug Driver
+vboot	rpm-smd-regulator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM RPM SMD regulator driver
+vboot	rpm_master_stat	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM RPM Master Statistics driver
+vboot	rpm_smd_cooling_device	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	rproc_qcom_common	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Remoteproc helper driver
+vboot	rq_stats	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QCOM Run Queue Stats
+vboot	rtc-pm8xxx	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	PMIC8xxx RTC driver
+vdlkm	rx_macro_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	RX macro driver
+vboot	sc8541_charger	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	SC SC8541 Driver
+vboot	sched-walt	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	sdhci-msm	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Secure Digital Host Controller Interface driver
+vboot	sdhci-msm-scaling	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. SDHCI Controller Support
+vboot	secure_buffer	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	serial_num	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	JTag Fuse driver
+vboot	sg	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	SCSI generic (sg) driver
+vboot	simtray	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Xiaomi SIM tray status
+vboot	slg_verify	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	slim-qcom-ngd-ctrl	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm SLIMBus NGD controller
+vboot	slimbus	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	SLIMbus core
+vboot	smcinvoke_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	SMC Invoke driver
+vboot	smem	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Shared Memory Manager
+vboot	smp2p	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Shared Memory Point to Point driver
+vboot	smp2p_sleepstate	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	SMP2P SLEEP STATE
+vboot	snd-usb-audio-qmi	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB AUDIO QMI Service Driver
+vdlkm	snd_event_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	SND event module
+vboot	soc_sleep_stats	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm Technologies, Inc. (QTI) SoC Sleep Stats driver
+vboot	socinfo	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Qualcomm SoCinfo driver
+vdlkm	spf_core_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	q6 core
+vboot	spi-msm-geni	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	spidev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	User mode SPI device interface
+vboot	spmi-pmic-arb	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vboot	sps_drv	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Smart Peripheral Switch (SPS)
+vboot	stick_verify	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	STICK ST1Wire driver
+vboot	stm_console	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	stm_console driver
+vboot	stm_core	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	System Trace Module device class
+vboot	stm_ftrace	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	stm_ftrace driver
+vdlkm	stm_nfc_i2c	g11103ba200c2	5.15.94 SMP preempt mod_unload modversions aarch64	NFC ST21NFC driver
+vboot	stm_p_basic	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Basic STM framing protocol driver
+vboot	stm_p_ost	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MIPI Open System Trace STM framing protocol driver
+vboot	stub-regulator	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	stub regulator driver
+vdlkm	stub_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	Generic MSM CODEC driver
+vboot	swinfo	gdd06e71a623b	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	swr_ctrl_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	SoundWire Master Controller
+vdlkm	swr_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	Soundwire module
+vboot	thermal_pause	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
+vdlkm	tx_macro_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	TX macro driver
+vboot	tz_log_dlkm	gb1fbc149be16	5.15.94 SMP preempt mod_unload modversions aarch64	TZ Log driver
+vboot	ucsi_glink	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	QTI UCSI Glink driver
+vboot	ufs_qcom	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	UFS host controller Platform bus based glue driver
+vboot	ufshcd-crypto-qti	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	UFS Crypto ops QTI implementation
+vboot	usb_bam	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	MSM USB BAM DRIVER
+vboot	usb_f_ccid	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB CCID function Driver
+vboot	usb_f_cdev	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB Serial Character Driver
+vboot	usb_f_diag	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Diag function driver
+vboot	usb_f_gsi	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	GSI function driver
+vboot	usb_f_qdss	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB QDSS Function Driver
+vboot	usbpd	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	USB Power Delivery Policy Engine
+vdlkm	va_macro_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	VA macro driver
+vdlkm	wcd937x_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	WCD937X Codec driver
+vdlkm	wcd937x_slave_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	WCD937X Swr Slave driver
+vdlkm	wcd9xxx_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	WCD Class-H Driver
+vdlkm	wcd_core_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	WCD9XXX CODEC core init driver
+vdlkm	wlan_firmware_service	g6ab133819d1b	5.15.94 SMP preempt mod_unload modversions aarch64	WLAN FW QMI service
+vdlkm	wsa881x_analog_dlkm	g16bcfd73a08c	5.15.94 SMP preempt mod_unload modversions aarch64	WSA881x Codec driver
+vboot	xiaomi_fp	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	xiaomi Fingerprint driver
+vdlkm	xiaomi_touch_game	gc3130bf798da	5.15.94 SMP preempt mod_unload modversions aarch64	TP touch game driver
+vboot	xm_smart_chg	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	XM SMART CHARGE Driver
+vboot	zram	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	Compressed RAM Block Device
+vboot	zsmalloc	g755a42d1c84f	5.15.94 SMP preempt mod_unload modversions aarch64	
