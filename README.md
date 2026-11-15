@@ -8,8 +8,8 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **270 of the 317 vendor modules** come from this tree: 214 from `msm-kernel` and 56 from the vendor repos.
-- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 219 modules) and `vendor_dlkm` (195 modules).
+- **295 of the 317 vendor modules** come from this tree: 220 from `msm-kernel`, 57 from the Qualcomm vendor repos and 18 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`).
+- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 233 modules) and `vendor_dlkm` (214 modules).
 - The phone boots normally.
 - Verified working:
   - display, with the GPU (`msm_kgsl`, Adreno 610);
@@ -19,7 +19,9 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
   - Bluetooth, including Bluetooth audio;
   - mobile data / IPA;
   - charging, with a correct battery temperature (`qti_battery_charger`, `bcl_pmic5`);
-  - power key, vibration and flashlight.
+  - power key, vibration and flashlight;
+  - USB to PC and USB-PD fast charging (`usbpd` with the Xiaomi adapter verification, `dwc3-msm`);
+  - NFC, touch and in-display fingerprint (stock `focaltech`/`xiaomi_fp` on top of our `lct_tp` / `xiaomi_touch_game`).
 
 | Area | What is ours |
 |---|---|
@@ -29,6 +31,8 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 | Audio (28) | ADSP core, bengal machine, `wcd937x` with the sapphire stereo speaker glue, bolero macros, soundwire, `mbhc`, **`fs1815`**, **`aw87xxx`**, **`lct_audio_info`** |
 | Connectivity | Wi-Fi (`qca_cld3_wlan`, `cfg80211`, `icnss2`, `cnss_*`), BT/FM, IPA (`ipam`, `ipa_clientsm`, `gsim`, …), rmnet |
 | Xiaomi | `mi_thermal_interface` (thermal_message sysfs + notifier, reconstructed), `zram` with writeback + Xiaomi ExtM memory extension, `panel_event_notifier` with Xiaomi client ids |
+| USB | `usbpd` (Xiaomi `Charging_Adapter` PD verification, SVID 0x2717 VDM auth, PPS limits, exports for the charger stack), `dwc3-msm` |
+| Xiaomi closed modules | `millet` (core, binder, hs, pkg, sig, oem_cgroup) + `binder_gki`, `binder_prio`, `perf_helper`, `mi_wmark`, `mi_memory`, `miev`, `bootinfo`, `swinfo`, NFC (`stm_nfc_i2c` ST21NFC, `nxp-nci` SN1xx), `lct_tp`, `xiaomi_touch_game` |
 | Platform | thermal and cooling, `bcl_pmic5`, `minidump`, PMIC ADC/GPIO/PON/RTC, USB gadget functions and PHYs, LEDs and vibrator, coresight/STM, DCVS (`qcom_dcvs`, `bwmon`, `memlat`), crypto, … |
 
 The full list, with the built path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
@@ -48,13 +52,12 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 - modules Xiaomi modified heavily:
   - display `msm_drm`;
   - charger `qpnp-smb5` and fuel gauge `qpnp-qg`;
-  - `dwc3-msm`, `usbpd`, `ufs_qcom`;
+  - `ufs_qcom` (its Xiaomi build also exports `get_ufs_data`, used by `mi_memory`);
 - the UFS crypto chain tied to `ufs_qcom`: `phy-qcom-ufs`, `ufshcd-crypto-qti`, `crypto-qti-*`, `cqhci`;
 - the Xiaomi-only closed drivers:
   - charge pumps and PD policy;
   - battery authentication;
-  - fingerprint, touch and NFC;
-  - `mi_memory`, `miev`, `millet`, `bootinfo`, `swinfo`, `perf_helper`;
+  - fingerprint (`xiaomi_fp`) and touch (`focaltech_ts_i2c`);
 - the camera.
 
 ## Layout
@@ -63,6 +66,7 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 kernel_platform/msm-kernel     CLO KERNEL.PLATFORM.2.0.r1-22800 (5.15.194) + sapphire changes
 kernel_platform/gki-stock      vmlinux.symvers + System.map of the stock GKI boot.img (mixed build)
 vendor/qcom/opensource/...     CLO LA.VENDOR.13.2.1.r1 (DIVAR) module repos + sapphire changes
+vendor/xiaomi/opensource/...   Xiaomi closed modules rebuilt from MiCode/community sources
 build/build.sh                 builds msm-kernel + vendor modules and collects the tested .ko files
 build/TESTED_MODULES.txt       device-tested modules
 build/VERSIONS.txt             source revision of every component

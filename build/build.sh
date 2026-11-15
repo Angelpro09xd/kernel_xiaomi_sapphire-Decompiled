@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build the tested sapphire vendor modules.
 #
-# Usage: build/build.sh [step ...]     steps: kernel vendor collect (default: all)
+# Usage: build/build.sh [step ...]     steps: kernel vendor xiaomi collect (default: all)
 #
 # Requirements (see README.md):
 #   CLANG_DIR   AOSP clang-r450784e (prebuilts/clang/host/linux-x86/clang-r450784e)
@@ -74,6 +74,17 @@ vendor() {
 	b bt        bt-kernel BT_ROOT=$V/bt-kernel BT_KERNEL_ROOT=$V/bt-kernel CONFIG_MSM_BT_POWER=m CONFIG_BTFM_SLIM=m CONFIG_I2C_RTC6226_QCA=m KBUILD_EXTRA_SYMBOLS="$(sym wlan/platform)"
 }
 
+xiaomi() {
+	# Xiaomi closed modules rebuilt from source (vendor/xiaomi/opensource)
+	X=$ROOT/vendor/xiaomi/opensource
+	xb() { local d=$1; shift; echo ">> xiaomi/$d"; $VMK M=$X/$d modules "$@"; }
+	for d in bootinfo swinfo perf_helper mi_wmark binder_prio millet st21nfc lct_tp; do xb $d; done
+	xb miev
+	xb xiaomi_touch KBUILD_EXTRA_SYMBOLS=$X/miev/Module.symvers
+	xb mi_memory          # Kbuild adds ufs_qcom_xiaomi.symvers (stock Xiaomi ufs_qcom exports)
+	xb nxp-nci KBUILD_EXTRA_SYMBOLS=$V/securemsm-kernel/Module.symvers
+}
+
 collect() {
 	# copy only the device-tested modules (build/TESTED_MODULES.txt, paths relative to the tree root), stripped like stock
 	mkdir -p $OUT
@@ -86,4 +97,4 @@ collect() {
 	echo ">> $n tested modules in $OUT"
 }
 
-for s in ${@:-kernel vendor collect}; do $s; done
+for s in ${@:-kernel vendor xiaomi collect}; do $s; done
