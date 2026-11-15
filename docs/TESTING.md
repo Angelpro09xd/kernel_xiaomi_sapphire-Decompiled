@@ -224,3 +224,17 @@ Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modul
   - `sde_conn` nulo en el kickoff.
 
 Resultado: la pantalla funciona perfectamente (brillo, refresco y huella), confirmado por el usuario. Quedan de stock `ufs_qcom` + `ufshcd-crypto-qti` (por seguridad) y la cámara.
+
+### Plan O: 316 de 317 (UFS)
+
+- **Investigación** del `ufs_qcom` de Xiaomi en el log de arranque de stock. El teléfono lleva UFS **YMTC YMUS8B2TE2A2C1, firmware 3.a**:
+  - **Reflasheo de firmware (FFU):** `ufs_flag is not FFU`, `firmware is already the newest now`. No hace nada.
+  - **CLD:** `ufscld_init: CLD get cld ops fail`. No se activa con este chip.
+  - **Tabla `ufs_fixups` de Xiaomi:** idéntica a la del GKI (Micron, Samsung, SK hynix, Toshiba). Ninguna entrada para YMTC.
+  - Topaz y creek (bengal 5.15) no publican el `mi_ufs`; solo socrates y sky lo tienen.
+- **Solución** (`patches/msm-kernel/0017`): el `ufs_qcom` de CLO `r1-22800` sobre el núcleo UFS del GKI, más solo lo que usa `mi_memory`:
+  - `ufs_stats` en el desplazamiento 0x6c, como en stock;
+  - `get_ufs_data()` con el CRC de stock `0xd45d0297`.
+- **Resultado:** arranca desde UFS, el almacenamiento y las fotos funcionan (confirmado por el usuario), y `/proc/modules` muestra que `ufs_qcom` ya no depende de `miev`, es decir, que es el nuestro.
+
+**Solo la cámara sigue de stock.**
