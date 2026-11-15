@@ -68,6 +68,9 @@ vendor() {
 	# stock-closed.symvers: CRCs of the closed stock qpnp-smb5 exports used by mbhc
 	b audio     audio-kernel AUDIO_ROOT=$V/audio-kernel MODNAME=audio_dlkm BOARD_PLATFORM=bengal KBUILD_EXTRA_SYMBOLS=$ROOT/build/stock-closed.symvers
 	b wlanplat  wlan/platform WLAN_PLATFORM_ROOT=$V/wlan/platform CONFIG_CNSS_OUT_OF_TREE=y CONFIG_ICNSS2=m CONFIG_ICNSS2_QMI=y CONFIG_CNSS_GENL=m CONFIG_WCNSS_MEM_PRE_ALLOC=m CONFIG_CNSS_UTILS=m CONFIG_CNSS_QMI_SVC=m KBUILD_EXTRA_SYMBOLS="$(sym securemsm-kernel)"
+	b kgsl      graphics-kernel KERNEL_SRC=$K KGSL_PATH=$V/graphics-kernel MODNAME=msm_kgsl BOARD_PLATFORM=bengal
+	# Android build options of the stock driver: /dev/wlan state control + cld80211 (CNSS_GENL)
+	b qcacld    wlan/qcacld-3.0 KCFLAGS=-DCFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT CONFIG_CNSS_GENL=m WLAN_CTRL_NAME=wlan WLAN_ROOT=$V/wlan/qcacld-3.0 WLAN_COMMON_ROOT=cmn WLAN_COMMON_INC=$V/wlan/qca-wifi-host-cmn WLAN_FW_API=$V/wlan/fw-api WLAN_PROFILE=adrastea MODNAME=wlan DEVNAME=wlan CONFIG_QCA_CLD_WLAN=m CONFIG_ICNSS2=m CONFIG_CNSS_OUT_OF_TREE=y WLAN_PLATFORM_INC=$V/wlan/platform/inc KBUILD_EXTRA_SYMBOLS="$(sym wlan/platform datarmnet-ext/wlan)"
 	b bt        bt-kernel BT_ROOT=$V/bt-kernel BT_KERNEL_ROOT=$V/bt-kernel CONFIG_MSM_BT_POWER=m CONFIG_BTFM_SLIM=m CONFIG_I2C_RTC6226_QCA=m KBUILD_EXTRA_SYMBOLS="$(sym wlan/platform)"
 }
 
