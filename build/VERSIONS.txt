@@ -1,4 +1,4 @@
-kernel_platform/msm-kernel f5092aaf9 sapphire: qrtr: build the nameservice as ns.ko like stock
+kernel_platform/msm-kernel e6e68cbca sapphire: mi_thermal_interface: reconstruct the stock sapphire driver
 vendor/qcom/opensource/audio-kernel a673b7f dsp: spf-core: match sapphire close-all timeout (1000 ms)
 vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df037061f on remote branch
 vendor/qcom/opensource/dataipa d31308d sapphire: ipahal: rule prefetch buffer size 128 like stock

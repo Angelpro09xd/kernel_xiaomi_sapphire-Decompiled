@@ -8,8 +8,8 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **264 of the 317 vendor modules** come from this tree: 208 from `msm-kernel` and 56 from the vendor repos.
-- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 213 modules) and `vendor_dlkm` (191 modules).
+- **270 of the 317 vendor modules** come from this tree: 214 from `msm-kernel` and 56 from the vendor repos.
+- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 219 modules) and `vendor_dlkm` (195 modules).
 - The phone boots normally.
 - Verified working:
   - display, with the GPU (`msm_kgsl`, Adreno 610);
@@ -18,7 +18,7 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
   - Wi-Fi (`qca_cld3_wlan` + `cfg80211`);
   - Bluetooth, including Bluetooth audio;
   - mobile data / IPA;
-  - charging, with a correct battery temperature;
+  - charging, with a correct battery temperature (`qti_battery_charger`, `bcl_pmic5`);
   - power key, vibration and flashlight.
 
 | Area | What is ours |
@@ -28,7 +28,8 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 | Display / GPU / video | `dispcc-khaje`, `gpucc-khaje`, `msm_kgsl`, `msm_video`, `msm-mmrm` |
 | Audio (28) | ADSP core, bengal machine, `wcd937x` with the sapphire stereo speaker glue, bolero macros, soundwire, `mbhc`, **`fs1815`**, **`aw87xxx`**, **`lct_audio_info`** |
 | Connectivity | Wi-Fi (`qca_cld3_wlan`, `cfg80211`, `icnss2`, `cnss_*`), BT/FM, IPA (`ipam`, `ipa_clientsm`, `gsim`, …), rmnet |
-| Platform | thermal and cooling, PMIC ADC/GPIO/PON/RTC, USB gadget functions and PHYs, LEDs and vibrator, coresight/STM, DCVS (`qcom_dcvs`, `bwmon`, `memlat`), crypto, … |
+| Xiaomi | `mi_thermal_interface` (thermal_message sysfs + notifier, reconstructed), `zram` with writeback + Xiaomi ExtM memory extension, `panel_event_notifier` with Xiaomi client ids |
+| Platform | thermal and cooling, `bcl_pmic5`, `minidump`, PMIC ADC/GPIO/PON/RTC, USB gadget functions and PHYs, LEDs and vibrator, coresight/STM, DCVS (`qcom_dcvs`, `bwmon`, `memlat`), crypto, … |
 
 The full list, with the built path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
 
@@ -40,6 +41,7 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 - the qcacld `/dev/wlan` control node and `cld80211` (`WLAN_CTRL_NAME=wlan`, `CONFIG_CNSS_GENL`);
 - `q6v5_pas` without the xo proxy clock on khaje;
 - the `spf_core` close-all timeout;
+- the Xiaomi `panel_event_notifier` client enum (`FINGERPRINT`, `XM_SMART_CHG`), which restores the stock CRC of `panel_event_notifier_register`;
 - the qrtr nameservice built as a separate `ns.ko`. Built into `qrtr.ko`, its exports collided with the stock `ns.ko` and first-stage init rebooted the phone.
 
 **Not yet covered** (they stay stock until they are verified on a device):
@@ -47,7 +49,6 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
   - display `msm_drm`;
   - charger `qpnp-smb5` and fuel gauge `qpnp-qg`;
   - `dwc3-msm`, `usbpd`, `ufs_qcom`;
-  - `zram`, `minidump`, `mi_thermal_interface`, `bcl_pmic5`;
 - the UFS crypto chain tied to `ufs_qcom`: `phy-qcom-ufs`, `ufshcd-crypto-qti`, `crypto-qti-*`, `cqhci`;
 - the Xiaomi-only closed drivers:
   - charge pumps and PD policy;
