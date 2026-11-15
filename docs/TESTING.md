@@ -256,3 +256,24 @@ Resultado: la pantalla funciona perfectamente (brillo, refresco y huella), confi
 **Pendiente para un build 100 % abierto:**
 - el Device Tree de sapphire en fuente;
 - que `build.sh` genere las imágenes.
+
+### Plan Q: Device Tree desde fuente. Kernel completamente OSS
+
+- **Fuente del DT:**
+  - CodeLinaro no publica el devicetree de KERNEL.PLATFORM 2.0 (khaje): Qualcomm lo guarda en un repo propietario.
+  - **Base usada:** los DT GPL que publicó Xiaomi para **creek** (otro Xiaomi con khaje/SM6225): `MiCode/kernel_devicetree`, `vendor_qcom_proprietary_display-devicetree` y `vendor_qcom_proprietary_camera-devicetree`, rama `creek-v-oss`.
+  - **Encima:** la placa sapphire/sapphiren reconstruida desde el DTBO de stock.
+  - No se ha usado ningún código filtrado de Qualcomm.
+- **Comprobación:**
+  - el comparador semántico (`devicetree/tools/dtcompare.py`, `make verify`) resuelve los *phandles* a rutas de nodo;
+  - **0 diferencias** en los 6 DTB base, en las 47 entradas del `dtbo.img` y en la vista del bootloader (overlay aplicado sobre su base);
+  - 22 entradas son además idénticas byte a byte.
+- **En el teléfono:**
+  - `vendor_boot` = ramdisk del plan O + nuestro DTB;
+  - `dtbo` = el nuestro;
+  - arranca y funciona, con `ro.boot.dtbo_idx=46` (sapphiren).
+
+**El teléfono funciona íntegramente con un kernel compilado desde código fuente:**
+- GKI **FirstKernel** (`build/build_gki.sh` en la rama `FirstKernel`);
+- los 317 módulos de vendor;
+- el Device Tree (`devicetree/` en `FirstKernel`).
