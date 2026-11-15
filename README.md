@@ -6,7 +6,7 @@ Xiaomi never published the kernel source for the Redmi Note 13 4G (`sapphire`/`s
 - the reconstructed sources, as **patches** on top of CodeLinaro;
 - the analysis and tools used.
 
-> **Status:** 47 vendor modules built from this work replace every stock `vendor_dlkm` module except camera. A Redmi Note 13 4G (Lunaris 3.13, stock GKI) boots and runs with them. Verified working: stereo speakers, headset, mic, Wi-Fi, Bluetooth and BT audio.
+> **Status:** 173 modules built from this work (50 vendor, 123 msm-kernel) run on a Redmi Note 13 4G (Lunaris 3.13, stock GKI), loaded from `vendor_dlkm`. Verified working: stereo speakers, headset, mic, Wi-Fi, Bluetooth and BT audio, charging, power key, vibration and flashlight.
 >
 > - **Build tree:** the [`FirstPlace`](../../tree/FirstPlace) branch has the buildable kernel tree with only device-tested modules.
 > - **Details:** see [docs/TESTING.md](docs/TESTING.md).

@@ -86,3 +86,21 @@ Pruebas sobre `vendor_dlkm` (ramdisk de `vendor_boot` intacto):
 El "bootloop" que se vio antes con C2 **no venía de los módulos**: los 6 del núcleo ADSP son iguales a stock función a función y byte a byte en datos. Venía de `recovery_a`, que contenía una recovery que no arranca en el slot a: cuando Android pide reiniciar a recovery, el teléfono queda en bucle. **Antes de probar, deja en el slot de prueba una recovery que arranque.**
 
 Lista exacta de módulos probados y árbol compilable: rama [`FirstPlace`](../../../tree/FirstPlace).
+
+### Plan D: módulos de segunda etapa duplicados en `vendor_boot` y `vendor_dlkm`
+
+- De los 253 módulos del ramdisk de `vendor_boot`, solo 90 están en `modules.load` y se cargan en primera etapa.
+- 164 están también en `vendor_dlkm`. En un arranque normal se cargan desde ahí (el ramdisk los lista solo en `modules.load.recovery`).
+- Por eso se pueden sustituir **sin tocar `vendor_boot`**, y la recovery sigue intacta.
+
+| Intento | Módulos nuestros | Resultado |
+|---|---|---|
+| D (1) | 174 | llega al logo, vibra y se apaga; después arranca en carga offline |
+| D (2) | 173 (+ tablas de stock portadas, `bcl_pmic5` de stock) | arranca y todo funciona; batería a 27,9 °C |
+
+Diagnóstico de D (1), leyendo los datos de Android desde OrangeFox (slot b, `/data` descifrado):
+- `persist.sys.boot.reason = shutdown,thermal,battery`.
+- `/data/system/shutdown-checkpoints/*` muestra `BatteryService.shutdownIfOverTempLocked`.
+- **Causa:** Xiaomi recalibró la tabla del termistor de 30k de la batería (`adcmap_batt_therm_30k` en `qcom-vadc-common`). Con la tabla de CLO, la temperatura sale disparada.
+- **Cómo se encontró:** comparando todos los objetos de datos, no solo las funciones, de cada módulo con el de stock. Así apareció también el ajuste de tiempos del I2C GENI.
+- **Arreglo:** `patches/msm-kernel/0007`.
