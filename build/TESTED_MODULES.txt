@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan O
+# module  built path (relative to the tree root) - tested on device, plan P
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -22,6 +22,7 @@ bq25960_charger vendor/xiaomi/opensource/bq25960/bq25960_charger.ko
 bt_fm_slim vendor/qcom/opensource/bt-kernel/slimbus/bt_fm_slim.ko
 btpower vendor/qcom/opensource/bt-kernel/pwr/btpower.ko
 bwmon kernel_platform/msm-kernel/out/drivers/soc/qcom/dcvs/bwmon.ko
+camera vendor/qcom/opensource/camera-kernel/camera.ko
 cdsp-loader kernel_platform/msm-kernel/out/drivers/soc/qcom/qdsp6v2/cdsp-loader.ko
 cdsprm kernel_platform/msm-kernel/out/drivers/soc/qcom/cdsprm.ko
 cfg80211 kernel_platform/msm-kernel/out/net/wireless/cfg80211.ko

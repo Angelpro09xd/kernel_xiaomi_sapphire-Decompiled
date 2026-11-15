@@ -1,6 +1,7 @@
 kernel_platform/msm-kernel a4a6dfc1d sapphire: ufs-qcom: Xiaomi UFS diagnostics for mi_memory
 vendor/qcom/opensource/audio-kernel a673b7f dsp: spf-core: match sapphire close-all timeout (1000 ms)
 vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df037061f on remote branch
+vendor/qcom/opensource/camera-kernel b9900f5 sapphire: camera: match the stock sapphire camera module
 vendor/qcom/opensource/dataipa d31308d sapphire: ipahal: rule prefetch buffer size 128 like stock
 vendor/qcom/opensource/datarmnet ec95489 Merge ee54d2fd87b05169f2dfb7d450ec09ecaaca6e17 on remote branch
 vendor/qcom/opensource/datarmnet-ext de8edc0 Merge ce01d67a9685d7f941a68d5379e665be3cbabe74 on remote branch
