@@ -182,3 +182,17 @@ Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modul
   - uso de memoria liberada en `tp_data_dump`;
   - notifier de la huella sin desregistrar;
   - fuga de skb en `millet`.
+
+### Planes K y L: 311 de 317 (carga rápida de Xiaomi, UFS)
+
+- **K, lógica de carga rápida**, en la rama `FirstKernel` (`vendor/xiaomi/opensource`):
+  - `cp_qc30` (QC3.0);
+  - `pd_policy_manager` (PD/PPS con la capa "N7" de sapphire: bomba de carga 2:1/1:1, votable `LOW_FAST`, retención por carga inteligente o nocturna);
+  - `xm_smart_chg`.
+
+  Tablas y structs iguales a stock. Arranca y carga; falta probar con cargador rápido.
+- **L, UFS:** `phy-qcom-ufs`, `crypto-qti-common`, `crypto-qti-tz` y `cqhci` recompilados desde CLO `r1-12800` (la base de stock). Idénticos a stock (`patches/msm-kernel/0014`). Almacenamiento y cámara bien.
+- **`ufs_qcom` + `ufshcd-crypto-qti` siguen de stock.**
+  - El `ufs_qcom` de Xiaomi es una copia completa del núcleo UFS (`mi_ufs` + CLD), con 3 firmwares de UFS incrustados que puede flashear al arrancar.
+  - Solo hay fuentes públicas de `mi_ufs` para socrates y sky. Topaz y creek (bengal 5.15) no lo tienen.
+- **Numeración IIO:** la cabecera `qti_power_supply_iio.h` de la importación de topaz desplaza 0x15 el bloque de Xiaomi respecto a stock. Los módulos probados usan los números de stock; la cabecera se corregirá con el parche de `smb5`/`qg`.

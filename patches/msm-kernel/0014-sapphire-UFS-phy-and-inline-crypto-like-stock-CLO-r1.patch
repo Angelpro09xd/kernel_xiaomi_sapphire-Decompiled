@@ -1,0 +1,617 @@
+From 8e5a7de7c99b2572157847ba1f505c9657d97d7a Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 15:44:02 +0100
+Subject: [PATCH] sapphire: UFS phy and inline crypto like stock (CLO r1-12800)
+
+Stock sapphire builds phy-qcom-ufs, crypto-qti-common/tz, cqhci-crypto
+and ufshcd-crypto-qti from CLO KERNEL.PLATFORM.2.0.r1-12800: back to the
+void ufs_qcom_phy_save_controller_version() and is_boot_dev_type_emmc()
+crypto API, so their export CRCs match the stock (Xiaomi) ufs_qcom.ko.
+cqhci keeps the current core with upstream stable fixes.
+
+ufs_qcom itself stays stock: it is Xiaomi's own copy of the UFS core and
+embeds UFS firmware images it can flash at boot.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/mmc/host/cqhci-crypto-qti.c    |   4 +-
+ drivers/phy/qualcomm/phy-qcom-ufs.c    |  22 ++--
+ drivers/scsi/ufs/ufs-qcom.c            |   7 +-
+ drivers/scsi/ufs/ufshcd-crypto-qti.c   |  29 +----
+ drivers/soc/qcom/crypto-qti-common.c   | 152 ++++---------------------
+ drivers/soc/qcom/crypto-qti-platform.h |   8 +-
+ drivers/soc/qcom/crypto-qti-tz.c       |  56 +++++----
+ include/linux/crypto-qti-common.h      |   8 +-
+ include/linux/phy/phy-qcom-ufs.h       |   2 +-
+ 9 files changed, 84 insertions(+), 204 deletions(-)
+
+diff --git a/drivers/mmc/host/cqhci-crypto-qti.c b/drivers/mmc/host/cqhci-crypto-qti.c
+index 13555e1df..59a7dcece 100644
+--- a/drivers/mmc/host/cqhci-crypto-qti.c
++++ b/drivers/mmc/host/cqhci-crypto-qti.c
+@@ -88,7 +88,7 @@ static int cqhci_crypto_qti_keyslot_program(struct blk_keyslot_manager *ksm,
+ 	get_mmio_data(&mmio_data, cq_host);
+ 
+ 	err = crypto_qti_keyslot_program(&mmio_data, key,
+-					 slot, data_unit_mask, cap_idx, SDCC_CE);
++					 slot, data_unit_mask, cap_idx);
+ 	if (err)
+ 		pr_err("%s: failed with error %d\n", __func__, err);
+ 
+@@ -105,7 +105,7 @@ static int cqhci_crypto_qti_keyslot_evict(struct blk_keyslot_manager *ksm,
+ 
+ 	get_mmio_data(&mmio_data, host);
+ 
+-	err = crypto_qti_keyslot_evict(&mmio_data, slot, SDCC_CE);
++	err = crypto_qti_keyslot_evict(&mmio_data, slot);
+ 	if (err)
+ 		pr_err("%s: failed with error %d\n", __func__, err);
+ 
+diff --git a/drivers/phy/qualcomm/phy-qcom-ufs.c b/drivers/phy/qualcomm/phy-qcom-ufs.c
+index 039d222d1..0c74877dd 100644
+--- a/drivers/phy/qualcomm/phy-qcom-ufs.c
++++ b/drivers/phy/qualcomm/phy-qcom-ufs.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2013-2021, Linux Foundation. All rights reserved.
+- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include "phy-qcom-ufs-i.h"
+@@ -156,6 +156,13 @@ struct phy *ufs_qcom_phy_generic_probe(struct platform_device *pdev,
+ 		goto out;
+ 	}
+ 
++	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
++	if (IS_ERR(phy_provider)) {
++		err = PTR_ERR(phy_provider);
++		dev_err(dev, "%s: failed to register phy %d\n", __func__, err);
++		goto out;
++	}
++
+ 	generic_phy = devm_phy_create(dev, NULL, ufs_qcom_phy_gen_ops);
+ 	if (IS_ERR(generic_phy)) {
+ 		err =  PTR_ERR(generic_phy);
+@@ -164,13 +171,6 @@ struct phy *ufs_qcom_phy_generic_probe(struct platform_device *pdev,
+ 		goto out;
+ 	}
+ 
+-	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+-	if (IS_ERR(phy_provider)) {
+-		err = PTR_ERR(phy_provider);
+-		dev_err(dev, "%s: failed to register phy %d\n", __func__, err);
+-		goto out;
+-	}
+-
+ 	if (of_property_read_u32(dev->of_node, "lanes-per-direction",
+ 				 &common_cfg->lanes_per_direction))
+ 		common_cfg->lanes_per_direction =
+@@ -684,18 +684,14 @@ void ufs_qcom_phy_set_tx_lane_enable(struct phy *generic_phy, u32 tx_lanes)
+ }
+ EXPORT_SYMBOL(ufs_qcom_phy_set_tx_lane_enable);
+ 
+-int ufs_qcom_phy_save_controller_version(struct phy *generic_phy,
++void ufs_qcom_phy_save_controller_version(struct phy *generic_phy,
+ 					  u8 major, u16 minor, u16 step)
+ {
+ 	struct ufs_qcom_phy *ufs_qcom_phy = get_ufs_qcom_phy(generic_phy);
+ 
+-	if (!ufs_qcom_phy)
+-		return -EPROBE_DEFER;
+-
+ 	ufs_qcom_phy->host_ctrl_rev_major = major;
+ 	ufs_qcom_phy->host_ctrl_rev_minor = minor;
+ 	ufs_qcom_phy->host_ctrl_rev_step = step;
+-	return 0;
+ }
+ EXPORT_SYMBOL(ufs_qcom_phy_save_controller_version);
+ 
+diff --git a/drivers/scsi/ufs/ufs-qcom.c b/drivers/scsi/ufs/ufs-qcom.c
+index b13eab599..a7d2adf8e 100644
+--- a/drivers/scsi/ufs/ufs-qcom.c
++++ b/drivers/scsi/ufs/ufs-qcom.c
+@@ -3929,14 +3929,9 @@ static int ufs_qcom_init(struct ufs_hba *hba)
+ 					 &host->vdd_hba_reg_nb);
+ 
+ 	/* update phy revision information before calling phy_init() */
+-	err = ufs_qcom_phy_save_controller_version(host->generic_phy,
++	ufs_qcom_phy_save_controller_version(host->generic_phy,
+ 			host->hw_ver.major, host->hw_ver.minor, host->hw_ver.step);
+ 
+-	if (err == -EPROBE_DEFER) {
+-		pr_err("%s: phy device probe is not completed yet\n", __func__);
+-		goto out_variant_clear;
+-	}
+-
+ 	err = ufs_qcom_parse_reg_info(host, "qcom,vddp-ref-clk",
+ 				      &host->vddp_ref_clk);
+ 
+diff --git a/drivers/scsi/ufs/ufshcd-crypto-qti.c b/drivers/scsi/ufs/ufshcd-crypto-qti.c
+index 1654ebe43..81db691ef 100644
+--- a/drivers/scsi/ufs/ufshcd-crypto-qti.c
++++ b/drivers/scsi/ufs/ufshcd-crypto-qti.c
+@@ -2,7 +2,7 @@
+ /*
+  * UFS Crypto ops QTI implementation.
+  *
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <crypto/algapi.h>
+@@ -83,7 +83,7 @@ static int ufshcd_crypto_qti_keyslot_program(struct blk_keyslot_manager *ksm,
+ 
+ 	get_mmio_data(&mmio_data, host);
+ 	err = crypto_qti_keyslot_program(&mmio_data, key, slot,
+-					data_unit_mask, cap_idx, UFS_CE);
++					data_unit_mask, cap_idx);
+ 	if (err)
+ 		pr_err("%s: failed with error %d\n", __func__, err);
+ 
+@@ -115,7 +115,7 @@ static int ufshcd_crypto_qti_keyslot_evict(struct blk_keyslot_manager *ksm,
+ 	}
+ 
+ 	get_mmio_data(&mmio_data, host);
+-	err = crypto_qti_keyslot_evict(&mmio_data, slot, UFS_CE);
++	err = crypto_qti_keyslot_evict(&mmio_data, slot);
+ 	if (err)
+ 		pr_err("%s: failed with error %d\n", __func__, err);
+ 
+@@ -186,7 +186,6 @@ int ufshcd_qti_hba_init_crypto_capabilities(struct ufs_hba *hba)
+ {
+ 	int cap_idx;
+ 	int err = 0;
+-	unsigned int max_slots = 0;
+ 	enum blk_crypto_mode_num blk_mode_num;
+ 
+ 	/*
+@@ -213,27 +212,9 @@ int ufshcd_qti_hba_init_crypto_capabilities(struct ufs_hba *hba)
+ 		goto out;
+ 	}
+ 
+-	max_slots = hba->crypto_capabilities.config_count + 1;
+-#if IS_ENABLED(CONFIG_QTI_CRYPTO_FDE)
+-	if (max_slots > crypto_qti_ice_get_num_fde_slots()) {
+-		/*
+-		 * Reduce the total number of slots available to FBE
+-		 * (by the number reserved for the FDE)
+-		 * Check at least one slot for backward compatibility,
+-		 * otherwise return failure
+-		 */
+-		if (max_slots - crypto_qti_ice_get_num_fde_slots() < 1) {
+-			pr_err("%s: Too much slots allocated to fde\n", __func__);
+-			err = -EINVAL;
+-			goto out;
+-		} else {
+-			max_slots = max_slots - crypto_qti_ice_get_num_fde_slots();
+-		}
+-	}
+-#endif
+-
+ 	/* The actual number of configurations supported is (CFGC+1) */
+-	err = devm_blk_ksm_init(hba->dev, &hba->ksm, max_slots);
++	err = devm_blk_ksm_init(hba->dev, &hba->ksm,
++			hba->crypto_capabilities.config_count + 1);
+ 	if (err)
+ 		goto out;
+ 
+diff --git a/drivers/soc/qcom/crypto-qti-common.c b/drivers/soc/qcom/crypto-qti-common.c
+index db72a1606..11b63848b 100644
+--- a/drivers/soc/qcom/crypto-qti-common.c
++++ b/drivers/soc/qcom/crypto-qti-common.c
+@@ -32,16 +32,8 @@
+ 
+ #define CRYPTO_ICE_FDE_KEY_INDEX        31
+ #define CRYPTO_UD_VOLNAME               "userdata"
+-#define CRYPTO_ICE_HASH_SIZE            32
+-#define CRYPTO_ICE_KEY_ID_SIZE          32
+-
+-#define CRYPTO_ICE_FDE_UFS_KEYID       "UFS ICE Full Disk Encryption    "
+-#define CRYPTO_ICE_FDE_EMMC_KEYID      "SDCC ICE Full Disk Encryption   "
+-
+-/* add the legacy key_id to support ICE OTA */
+-#define CRYPTO_ICE_FDE_UFS_LEGACY_KEYID       "UFS ICE Full Disk Encryption"
+-#define CRYPTO_ICE_FDE_EMMC_LEGACY_KEYID      "SDCC ICE Full Disk Encryption"
+-
++#define CRYPTO_ICE_FDE_LEGACY_UFS       "UFS ICE Full Disk Encryption    "
++#define CRYPTO_ICE_FDE_LEGACY_EMMC      "SDCC ICE Full Disk Encryption   "
+ #define CRYPTO_ICE_UFS_DEV_NAME         "ufshcd-qcom"
+ #define CRYPTO_ICE_EMMC_DEV_NAME        "sdhci_msm"
+ #define QSEECOM_KEY_ID_EXISTS           -65
+@@ -412,15 +404,15 @@ EXPORT_SYMBOL(crypto_qti_debug);
+ int crypto_qti_keyslot_program(const struct ice_mmio_data *mmio_data,
+ 			       const struct blk_crypto_key *key,
+ 			       unsigned int slot,
+-			       u8 data_unit_mask, int capid, int storage_type)
++			       u8 data_unit_mask, int capid)
+ {
+ 	int err = 0;
+ 
+ 	err = crypto_qti_program_key(mmio_data, key, slot,
+-				data_unit_mask, capid, storage_type);
++				data_unit_mask, capid);
+ 	if (err) {
+ 		pr_err("%s: program key failed with error %d\n", __func__, err);
+-		err = crypto_qti_invalidate_key(mmio_data, slot, storage_type);
++		err = crypto_qti_invalidate_key(mmio_data, slot);
+ 		if (err) {
+ 			pr_err("%s: invalidate key failed with error %d\n", __func__, err);
+ 			return err;
+@@ -432,11 +424,11 @@ int crypto_qti_keyslot_program(const struct ice_mmio_data *mmio_data,
+ EXPORT_SYMBOL(crypto_qti_keyslot_program);
+ 
+ int crypto_qti_keyslot_evict(const struct ice_mmio_data *mmio_data,
+-						unsigned int slot, int storage_type)
++							 unsigned int slot)
+ {
+ 	int err = 0;
+ 
+-	err = crypto_qti_invalidate_key(mmio_data, slot, storage_type);
++	err = crypto_qti_invalidate_key(mmio_data, slot);
+ 	if (err) {
+ 		pr_err("%s: invalidate key failed with error %d\n",
+ 			__func__, err);
+@@ -475,42 +467,6 @@ int crypto_qti_derive_raw_secret(const u8 *wrapped_key,
+ EXPORT_SYMBOL(crypto_qti_derive_raw_secret);
+ 
+ #if IS_ENABLED(CONFIG_QTI_CRYPTO_FDE)
+-static int get_key_id(char *key_id, uint32_t usage, bool hash_enable)
+-{
+-	/* only legacy hash will get the legacy key id, otherwise return new key id */
+-	if (hash_enable) {
+-		switch (usage) {
+-		case QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION:
+-			memcpy((void *)key_id,	(void *)CRYPTO_ICE_FDE_UFS_LEGACY_KEYID,
+-						strlen(CRYPTO_ICE_FDE_UFS_LEGACY_KEYID));
+-			break;
+-		case QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION:
+-			memcpy((void *)key_id,	(void *)CRYPTO_ICE_FDE_EMMC_LEGACY_KEYID,
+-						strlen(CRYPTO_ICE_FDE_EMMC_LEGACY_KEYID));
+-			break;
+-		default:
+-			pr_err("unsupported usage %d\n", usage);
+-			return -EINVAL;
+-		}
+-	} else {
+-		switch (usage) {
+-		case QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION:
+-			memcpy((void *)key_id,	(void *)CRYPTO_ICE_FDE_UFS_KEYID,
+-						strlen(CRYPTO_ICE_FDE_UFS_KEYID));
+-			break;
+-		case QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION:
+-			memcpy((void *)key_id,	(void *)CRYPTO_ICE_FDE_EMMC_KEYID,
+-						strlen(CRYPTO_ICE_FDE_EMMC_KEYID));
+-			break;
+-		default:
+-			pr_err("unsupported usage %d\n", usage);
+-			return -EINVAL;
+-		}
+-	}
+-
+-	return 0;
+-}
+-
+ static struct ice_part_cfg *crypto_qti_ice_get_part_cfg(struct ice_device *ice_dev,
+ 							char const * const volname)
+ {
+@@ -719,11 +675,6 @@ static ssize_t add_partition_store(struct device *dev,
+ 	struct ice_device *ice_dev = dev_get_drvdata(dev);
+ 	ssize_t ret = count;
+ 	char label[PARTITION_META_INFO_VOLNAMELTH + 1] = {0};
+-	char key_id[CRYPTO_ICE_KEY_ID_SIZE] = {0};
+-	char *flag = "-hash";
+-	char *hash_index = NULL;
+-	bool hash_enable = false;
+-	size_t partition_count = count;
+ 	int rc = 0;
+ 	struct list_head *new_pos = NULL;
+ 	struct ice_part_cfg *elem = NULL;
+@@ -731,62 +682,26 @@ static ssize_t add_partition_store(struct device *dev,
+ 	bool new_key_generated = false;
+ 	int key_res = 0;
+ 
+-	/* The count of the buf include hash size and flag size */
+-	if (count > PARTITION_META_INFO_VOLNAMELTH + CRYPTO_ICE_HASH_SIZE + strlen(flag)) {
++	if (count > PARTITION_META_INFO_VOLNAMELTH) {
+ 		dev_err(dev, "Invalid partition '%s' (%u)\n", buf, count);
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!buf) {
+-		dev_err(dev, "Invalid buf\n");
+-		return -EINVAL;
+-	}
+-
+ 	if (!ice_dev) {
+ 		dev_err(dev, "Invalid ICE device!\n");
+ 		return -ENODEV;
+ 	}
+ 
+-	/*
+-	 * check if the userspace input the hash to generate ICE key
+-	 * -hash means input hash with legacy key id
+-	 */
+-	hash_index = strnstr(buf, flag, count);
+-	if (hash_index) {
+-		/*
+-		 * It must follow the right format to input partition name and hash,
+-		 * partition name can't be null.
+-		 */
+-		if (hash_index > buf + 1) {
+-			hash_enable = true;
+-			/* skip the blank and get the partition name count */
+-			partition_count = hash_index - buf - 1;
+-			/* skip to the header pointer of hash */
+-			hash_index += strlen(flag) + 1;
+-			/* exclude "\r" that in the end of input buf, and check hash size */
+-			if (strlen(hash_index) - 1 != CRYPTO_ICE_HASH_SIZE) {
+-				dev_err(dev, "Invalid hash\n");
+-				return -EINVAL;
+-			}
+-		} else {
+-			dev_err(dev, "Invalid partition\n");
+-			return -EINVAL;
+-		}
+-	}
++	/* Copy into a temporary buffer, stripping out newlines */
++	count = strcspn(buf, "\n\r");
++	memcpy(label, buf, count);
++	label[count] = '\0';
+ 
+-	if (!hash_enable) {
+-		/* Copy into a temporary buffer, stripping out newlines */
+-		partition_count = strcspn(buf, "\n\r");
+-		if (!partition_count) {
+-			dev_err(dev, "Invalid partition '%s' (%u)\n", buf, partition_count);
+-			return -EINVAL;
+-		}
++	if (!count) {
++		dev_err(dev, "Invalid partition '%s' (%u)\n", buf, count);
++		return -EINVAL;
+ 	}
+ 
+-	/* copy the partition name */
+-	memcpy(label, buf, partition_count);
+-	label[partition_count] = '\0';
+-
+ 	mutex_lock(&ice_dev->mutex);
+ 	/* Check if the partition is already in the list */
+ 	list_for_each(new_pos, &ice_dev->part_cfg_list)
+@@ -822,50 +737,25 @@ static ssize_t add_partition_store(struct device *dev,
+ 	 */
+ 	if (strcmp(ice_dev->ice_instance_type, "ufs") == 0) {
+ #if IS_ENABLED(CONFIG_QTI_CRYPTO_LEGACY_KEY_FDE)
+-		/* In legacy mode, only one common key is needed */
+ 		if (list_empty(&ice_dev->part_cfg_list)) {
+-			/* get the key_id that depends on if inhash_enable or not */
+-			if (get_key_id(key_id, QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION,
+-					hash_enable)) {
+-				dev_err(dev, "Fail to get the ice key_id\n");
+-				ret = -EINVAL;
+-				goto out;
+-			}
+-
++			/* In legacy mode, only one common key is needed */
+ 			key_res = qseecom_create_key_in_slot(
+ 				QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION,
+-				slot, key_id, hash_index);
++				slot, CRYPTO_ICE_FDE_LEGACY_UFS, NULL);
+ 		} else {
+ 			/* Key is already generated and set,contune */
+ 			key_res = QSEECOM_KEY_ID_EXISTS;
+ 		}
+ #else
+-		key_res = qseecom_create_key_in_slot(
+-			QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION,
++		key_res = qseecom_create_key_in_slot(QSEECOM_KM_USAGE_UFS_ICE_DISK_ENCRYPTION,
+ 			slot, label, NULL);
+ #endif
+ 	} else if (strcmp(ice_dev->ice_instance_type, "sdcc") == 0) {
+ #if IS_ENABLED(CONFIG_QTI_CRYPTO_LEGACY_KEY_FDE)
+-		/* In legacy mode, only one common key is needed */
+-		if (list_empty(&ice_dev->part_cfg_list)) {
+-			/* get the key_id that depends on if inhash_enable or not */
+-			if (get_key_id(key_id, QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION,
+-					hash_enable)) {
+-				dev_err(dev, "Fail to get the ice key_id\n");
+-				ret = -EINVAL;
+-				goto out;
+-			}
+-
+-			key_res = qseecom_create_key_in_slot(
+-				QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION,
+-				slot, key_id, hash_index);
+-		} else {
+-			/* Key is already generated and set,contune */
+-			key_res = QSEECOM_KEY_ID_EXISTS;
+-		}
++		key_res = qseecom_create_key_in_slot(QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION,
++			slot, CRYPTO_ICE_FDE_LEGACY_EMMC, NULL);
+ #else
+-		key_res = qseecom_create_key_in_slot(
+-			QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION,
++		key_res = qseecom_create_key_in_slot(QSEECOM_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION,
+ 			slot, label, NULL);
+ #endif
+ 	} else {
+diff --git a/drivers/soc/qcom/crypto-qti-platform.h b/drivers/soc/qcom/crypto-qti-platform.h
+index ed7aac7f5..addc8f996 100644
+--- a/drivers/soc/qcom/crypto-qti-platform.h
++++ b/drivers/soc/qcom/crypto-qti-platform.h
+@@ -15,9 +15,9 @@
+ int crypto_qti_program_key(const struct ice_mmio_data *mmio_data,
+ 			   const struct blk_crypto_key *key,
+ 			   unsigned int slot,
+-			   unsigned int data_unit_mask, int capid, int storage_type);
++			   unsigned int data_unit_mask, int capid);
+ int crypto_qti_invalidate_key(const struct ice_mmio_data *mmio_data,
+-			      unsigned int slot, int storage_type);
++			      unsigned int slot);
+ int crypto_qti_derive_raw_secret_platform(
+ 				const u8 *wrapped_key,
+ 				unsigned int wrapped_key_size, u8 *secret,
+@@ -34,12 +34,12 @@ static inline int crypto_qti_program_key(
+ 				const struct ice_mmio_data *mmio_data,
+ 				const struct blk_crypto_key *key,
+ 				unsigned int slot,
+-				unsigned int data_unit_mask, int capid, int storage_type)
++				unsigned int data_unit_mask, int capid)
+ {
+ 	return -EOPNOTSUPP;
+ }
+ static inline int crypto_qti_invalidate_key(
+-		const struct ice_mmio_data *mmio_data, unsigned int slot, int storage_type)
++		const struct ice_mmio_data *mmio_data, unsigned int slot)
+ {
+ 	return -EOPNOTSUPP;
+ }
+diff --git a/drivers/soc/qcom/crypto-qti-tz.c b/drivers/soc/qcom/crypto-qti-tz.c
+index 380165764..5ae228b77 100644
+--- a/drivers/soc/qcom/crypto-qti-tz.c
++++ b/drivers/soc/qcom/crypto-qti-tz.c
+@@ -2,7 +2,7 @@
+ /*
+  * Crypto TZ library for storage encryption.
+  *
+- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <asm/cacheflush.h>
+@@ -10,39 +10,54 @@
+ #include <linux/qtee_shmbridge.h>
+ #include <linux/crypto-qti-common.h>
+ #include <linux/module.h>
++#include <linux/of.h>
+ #include "crypto-qti-platform.h"
+ 
+ #define ICE_CIPHER_MODE_XTS_256 3
++#define UFS_CE 10
++#define SDCC_CE 20
++#define UFS_CARD_CE 30
++
++static bool is_boot_dev_type_emmc(void)
++{
++	struct device_node *np;
++	const char *bootparams;
++
++	np = of_find_node_by_path("/chosen");
++	of_property_read_string(np, "bootargs", &bootparams);
++	if (!bootparams)
++		pr_err("%s: failed to get bootargs property\n", __func__);
++	else if (strnstr(bootparams, "androidboot.bootdevice",
++			strlen(bootparams)) &&
++			strnstr(bootparams, "sdhci", strlen(bootparams)))
++		return true;
++
++	return false;
++
++}
+ 
+ int crypto_qti_program_key(const struct ice_mmio_data *mmio_data,
+ 			   const struct blk_crypto_key *key, unsigned int slot,
+-			   unsigned int data_unit_mask, int capid, int storage_type)
++			   unsigned int data_unit_mask, int capid)
+ {
+ 	int err = 0;
+ 	struct qtee_shm shm;
+-	int i;
+-	union {
+-		u8 bytes[BLK_CRYPTO_MAX_WRAPPED_KEY_SIZE];
+-		u32 words[BLK_CRYPTO_MAX_WRAPPED_KEY_SIZE / sizeof(u32)];
+-	} key_new;
+ 
+ 	err = qtee_shmbridge_allocate_shm(key->size, &shm);
+ 	if (err)
+ 		return -ENOMEM;
+ 
+-	memcpy(key_new.bytes, key->raw, key->size);
+-	if (!key->crypto_cfg.is_hw_wrapped) {
+-		for (i = 0; i < ARRAY_SIZE(key_new.words); i++)
+-			__cpu_to_be32s(&key_new.words[i]);
+-	}
+-
+-	memcpy(shm.vaddr, key_new.bytes, key->size);
++	memcpy(shm.vaddr, key->raw, key->size);
+ 	qtee_shmbridge_flush_shm_buf(&shm);
+ 
+-	err = qcom_scm_config_set_ice_key(slot, shm.paddr, key->size,
++	if (is_boot_dev_type_emmc())
++		err = qcom_scm_config_set_ice_key(slot, shm.paddr, key->size,
+ 						ICE_CIPHER_MODE_XTS_256,
+-						data_unit_mask, storage_type);
+-
++						data_unit_mask, SDCC_CE);
++	else
++		err = qcom_scm_config_set_ice_key(slot, shm.paddr, key->size,
++						ICE_CIPHER_MODE_XTS_256,
++						data_unit_mask, UFS_CE);
+ 	if (err)
+ 		pr_err("%s:SCM call Error: 0x%x slot %d\n",
+ 				__func__, err, slot);
+@@ -55,11 +70,14 @@ int crypto_qti_program_key(const struct ice_mmio_data *mmio_data,
+ EXPORT_SYMBOL(crypto_qti_program_key);
+ 
+ int crypto_qti_invalidate_key(const struct ice_mmio_data *mmio_data,
+-			      unsigned int slot, int storage_type)
++			      unsigned int slot)
+ {
+ 	int err = 0;
+ 
+-	err = qcom_scm_clear_ice_key(slot, storage_type);
++	if (is_boot_dev_type_emmc())
++		err = qcom_scm_clear_ice_key(slot, SDCC_CE);
++	else
++		err = qcom_scm_clear_ice_key(slot, UFS_CE);
+ 
+ 	if (err)
+ 		pr_err("%s:SCM call Error: 0x%x\n", __func__, err);
+diff --git a/include/linux/crypto-qti-common.h b/include/linux/crypto-qti-common.h
+index 2d9a671a6..1ba9199e5 100644
+--- a/include/linux/crypto-qti-common.h
++++ b/include/linux/crypto-qti-common.h
+@@ -53,9 +53,9 @@ int crypto_qti_debug(const struct ice_mmio_data *mmio_data);
+ int crypto_qti_keyslot_program(const struct ice_mmio_data *mmio_data,
+ 			       const struct blk_crypto_key *key,
+ 			       unsigned int slot, u8 data_unit_mask,
+-			       int capid, int storage_type);
++			       int capid);
+ int crypto_qti_keyslot_evict(const struct ice_mmio_data *mmio_data,
+-						unsigned int slot, int storage_type);
++							unsigned int slot);
+ int crypto_qti_derive_raw_secret(const u8 *wrapped_key,
+ 				 unsigned int wrapped_key_size, u8 *secret,
+ 				 unsigned int secret_size);
+@@ -128,12 +128,12 @@ static inline int crypto_qti_keyslot_program(
+ 					    const struct blk_crypto_key *key,
+ 					    unsigned int slot,
+ 					    u8 data_unit_mask,
+-					    int capid, int storage_type)
++					    int capid)
+ {
+ 	return -EOPNOTSUPP;
+ }
+ static inline int crypto_qti_keyslot_evict(const struct ice_mmio_data *mmio_data,
+-						unsigned int slot, int storage_type)
++						unsigned int slot)
+ {
+ 	return -EOPNOTSUPP;
+ }
+diff --git a/include/linux/phy/phy-qcom-ufs.h b/include/linux/phy/phy-qcom-ufs.h
+index 707609590..75e85cad2 100644
+--- a/include/linux/phy/phy-qcom-ufs.h
++++ b/include/linux/phy/phy-qcom-ufs.h
+@@ -14,7 +14,7 @@ void ufs_qcom_phy_dbg_register_dump(struct phy *generic_phy);
+ void ufs_qcom_phy_dbg_register_save(struct phy *generic_phy);
+ void ufs_qcom_phy_set_src_clk_h8_enter(struct phy *generic_phy);
+ void ufs_qcom_phy_set_src_clk_h8_exit(struct phy *generic_phy);
+-int ufs_qcom_phy_save_controller_version(struct phy *generic_phy,
++void ufs_qcom_phy_save_controller_version(struct phy *generic_phy,
+ 					u8 major, u16 minor, u16 step);
+ 
+ #endif /* PHY_QCOM_UFS_H_ */
+-- 
+2.53.0
+
