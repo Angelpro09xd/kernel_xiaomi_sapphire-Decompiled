@@ -1,15 +1,16 @@
 # sapphire kernel — FirstKernel
 
-Open-source kernel tree for the **Redmi Note 13 4G** (`sapphire` / `sapphiren`, Qualcomm SM6225 "khaje", Android 13-5.15 GKI). It contains **only modules that have been tested and work on a real device**. The branch grows as more modules are verified.
+Open-source kernel tree for the **Redmi Note 13 4G** (`sapphire` / `sapphiren`, Qualcomm SM6225 "khaje", Android 13-5.15 GKI). Everything here has been **tested and works on a real device**. The phone runs entirely on a kernel built from this source: the GKI kernel (**FirstKernel**), all 317 vendor modules and the device tree.
 
 The reverse-engineering work behind it (decompiled stock modules, analysis, patches, tools) is on the [`main`](../../tree/main) branch.
 
 ## Status
 
-Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
+Tested on sapphiren with Lunaris AOSP 3.13, running **`5.15.194-android13-8-FirstKernel`** (our GKI build, `build/build_gki.sh`):
 
 - **All 317 of the 317 vendor modules** come from this tree: 228 from `msm-kernel`, 59 from the Qualcomm vendor repos and 30 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`). No stock module is left.
 - They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 253 modules) and `vendor_dlkm` (230 modules).
+- The device tree comes from source too: `devicetree/` builds the vendor_boot DTB (6 khaje DTBs) and `dtbo.img` (47 entries), semantically identical to stock (`make verify`); the phone boots with both (`ro.boot.dtbo_idx=46`, sapphiren).
 - The phone boots normally.
 - Verified working:
   - display (`msm_drm` with the Xiaomi `mi_disp` layer: brightness, 60/90/120 Hz, AOD, FOD/HBM for the fingerprint) and the GPU (`msm_kgsl`, Adreno 610);
@@ -57,9 +58,8 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 
 Where the stock Xiaomi modules have real bugs, they are fixed here instead of copied (uninitialised mutexes, OF match tables without sentinel, focaltech `BLANK_LP` work never initialised, `tp_data_dump` use-after-free, fingerprint notifier never unregistered, millet skb leak, sc8541 slave-mode overrun). Each fix is commented in the source.
 
-**Still to do** for a complete open-source build:
-- the sapphire device tree in source form (the DTB in `vendor_boot` and the `dtbo` image are still the stock binaries);
-- have `build.sh` produce the `vendor_boot` / `vendor_dlkm` / `dtbo` images directly.
+**Still to do:**
+- have `build.sh` also pack the final `vendor_boot.img` / `vendor_dlkm.img` (today the `.ko` files and DTBs are packed into the stock images with the repack tools on `main`).
 
 ## Layout
 
@@ -68,7 +68,9 @@ kernel_platform/msm-kernel     CLO KERNEL.PLATFORM.2.0.r1-22800 (5.15.194) + sap
 kernel_platform/gki-stock      vmlinux.symvers + System.map of the stock GKI boot.img (mixed build)
 vendor/qcom/opensource/...     CLO LA.VENDOR.13.2.1.r1 (DIVAR) module repos + sapphire changes
 vendor/xiaomi/opensource/...   Xiaomi closed modules rebuilt from MiCode/community sources
-build/build.sh                 builds msm-kernel + vendor modules and collects the tested .ko files
+build/build.sh                 builds msm-kernel + vendor/Xiaomi modules, collects the .ko files, builds the DT
+build/build_gki.sh             builds the GKI kernel Image (FirstKernel) from ACK at the stock tag
+devicetree/                    sapphire/sapphiren device tree source (MiCode creek GPL base + reconstructed sapphire board)
 build/TESTED_MODULES.txt       device-tested modules
 build/VERSIONS.txt             source revision of every component
 build/stock_defconfig          GKI config extracted from the stock boot.img
@@ -78,6 +80,17 @@ build/stock-closed.symvers     CRCs of closed stock exports used by our modules 
 The `msm-kernel` and `audio-kernel` changes are also published as patch series on top of the exact CLO revisions on [`main`](../../tree/main/patches).
 
 ## Building
+
+```sh
+# GKI kernel (boot.img kernel): ACK android13-5.15-2025-12_r9 + stock GKI config
+CLANG_DIR=/path/to/clang-r450784e build/build_gki.sh          # -> out-gki/arch/arm64/boot/Image
+# vendor modules + device tree
+CLANG_DIR=/path/to/clang-r450784e QDTC=/path/to/clo-dtc build/build.sh   # -> out/*.ko, out/dtb.img, out/dtbo.img
+```
+
+The GKI full-LTO link needs more than 20 GB of RAM (`LTO=thin` builds the same ABI with less).
+The device tree build needs the CLO dtc fork (`fdtoverlaymerge`) and AOSP `mkdtboimg.py`, see `devicetree/README.md`.
+
 
 You need:
 - AOSP clang `clang-r450784e`;

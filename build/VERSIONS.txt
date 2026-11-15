@@ -15,3 +15,4 @@ vendor/qcom/opensource/wlan/qcacld-3.0 694cefc xiaomi: import topaz-t-oss qcacld
 vendor/qcom/opensource/wlan/qca-wifi-host-cmn db3a22e Merge 21ff39ad64d57f1869b122a007385d7a1d89bdc0 on remote branch
 vendor/qcom/opensource/wlan/fw-api 8d871e1 Merge 7b7d8fcd8c62ffc4e2ad734ac8fd206077b48a54 on remote branch
 vendor/xiaomi/opensource   df2cf9b mi_memory: use the UFS diagnostics from our ufs-qcom.h
+devicetree                 1a496d0 Make the tree relocatable: no host paths in Makefile/tools

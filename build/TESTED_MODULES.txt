@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan P
+# module  built path (relative to the tree root) - tested on device, plan Q
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build the tested sapphire vendor modules.
 #
-# Usage: build/build.sh [step ...]     steps: kernel vendor xiaomi display collect (default: all)
+# Usage: build/build.sh [step ...]     steps: kernel vendor xiaomi display collect dt (default: all); GKI kernel: build/build_gki.sh
 #
 # Requirements (see README.md):
 #   CLANG_DIR   AOSP clang-r450784e (prebuilts/clang/host/linux-x86/clang-r450784e)
@@ -98,6 +98,13 @@ xiaomi() {
 	xb focaltech "KBUILD_EXTRA_SYMBOLS=$X/lct_tp/Module.symvers $X/xiaomi_touch/Module.symvers $X/focaltech/qpnp-smb5-stock.symvers"
 }
 
+dt() {
+	# sapphire device tree from source: out/dtb.img (vendor_boot dtb, 6 DTBs) + out/dtbo.img (47 entries)
+	# needs the CLO dtc fork tools (QDTC=<dir> or PATH) and AOSP mkdtboimg.py
+	KERNEL_DIR=$K bash $ROOT/devicetree/build.sh
+	cp $ROOT/devicetree/out/dtb.img $ROOT/devicetree/out/dtbo.img $OUT/ 2>/dev/null || { mkdir -p $OUT; cp $ROOT/devicetree/out/dtb.img $ROOT/devicetree/out/dtbo.img $OUT/; }
+}
+
 collect() {
 	# copy only the device-tested modules (build/TESTED_MODULES.txt, paths relative to the tree root), stripped like stock
 	mkdir -p $OUT
@@ -110,4 +117,4 @@ collect() {
 	echo ">> $n tested modules in $OUT"
 }
 
-for s in ${@:-kernel vendor xiaomi display collect}; do $s; done
+for s in ${@:-kernel vendor xiaomi display collect dt}; do $s; done
