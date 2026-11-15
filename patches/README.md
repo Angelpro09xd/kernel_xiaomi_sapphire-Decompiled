@@ -13,4 +13,4 @@ Apply with `git am` on top of the listed CodeLinaro base revision.
 
 Build options that are not patches but must match stock:
 - `qcacld-3.0`: build with `CONFIG_CNSS_GENL=m WLAN_CTRL_NAME=wlan`, as the Android build does. Without them there is no `/dev/wlan` and no `cld80211`.
-- The vendor build recipe for every repo is `build/build.sh` on the `FirstPlace` branch.
+- The vendor build recipe for every repo is `build/build.sh` on the `FirstKernel` branch.
