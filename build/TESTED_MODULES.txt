@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan M
+# module  built path (relative to the tree root) - tested on device, plan N
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -120,6 +120,7 @@ millet_sig vendor/xiaomi/opensource/millet/millet_sig.ko
 minidump kernel_platform/msm-kernel/out/drivers/soc/qcom/minidump.ko
 mmrm_test_module vendor/qcom/opensource/mmrm-driver/test/mmrm_test_module.ko
 msm_dma_iommu_mapping kernel_platform/msm-kernel/out/drivers/iommu/msm_dma_iommu_mapping.ko
+msm_drm vendor/qcom/opensource/display-drivers/msm/msm_drm.ko
 msm_geni_serial kernel_platform/msm-kernel/out/drivers/tty/serial/msm_geni_serial.ko
 msm_gpi kernel_platform/msm-kernel/out/drivers/dma/qcom/msm_gpi.ko
 msm_kgsl vendor/qcom/opensource/graphics-kernel/msm_kgsl.ko

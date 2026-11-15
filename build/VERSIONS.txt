@@ -4,6 +4,7 @@ vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df
 vendor/qcom/opensource/dataipa d31308d sapphire: ipahal: rule prefetch buffer size 128 like stock
 vendor/qcom/opensource/datarmnet ec95489 Merge ee54d2fd87b05169f2dfb7d450ec09ecaaca6e17 on remote branch
 vendor/qcom/opensource/datarmnet-ext de8edc0 Merge ce01d67a9685d7f941a68d5379e665be3cbabe74 on remote branch
+vendor/qcom/opensource/display-drivers 9155b81 sapphire: msm_drm: Xiaomi mi_disp display layer like stock
 vendor/qcom/opensource/graphics-kernel f6d50c5 sapphire: kgsl: khaje uses page pools like stock
 vendor/qcom/opensource/mmrm-driver 0bdd754 Merge commit '1b16586dc771564229dc27a588b5a297c14c31f2' into mmrm-kernel-waipio.ln
 vendor/qcom/opensource/securemsm-kernel f70a1a7 Merge 95e3302e7957a143fb64eed5e364d74cbd0810df on remote branch

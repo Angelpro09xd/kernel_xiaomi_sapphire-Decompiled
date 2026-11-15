@@ -8,11 +8,11 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **313 of the 317 vendor modules** come from this tree: 226 from `msm-kernel`, 57 from the Qualcomm vendor repos and 30 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`). Only `msm_drm` (display), the Xiaomi `ufs_qcom` + `ufshcd-crypto-qti` pair and the camera are still stock.
-- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 250 modules) and `vendor_dlkm` (228 modules).
+- **314 of the 317 vendor modules** come from this tree: 226 from `msm-kernel`, 58 from the Qualcomm vendor repos and 30 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`). Only the Xiaomi `ufs_qcom` + `ufshcd-crypto-qti` pair and the camera are still stock.
+- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 251 modules) and `vendor_dlkm` (229 modules).
 - The phone boots normally.
 - Verified working:
-  - display, with the GPU (`msm_kgsl`, Adreno 610);
+  - display (`msm_drm` with the Xiaomi `mi_disp` layer: brightness, 60/90/120 Hz, AOD, FOD/HBM for the fingerprint) and the GPU (`msm_kgsl`, Adreno 610);
   - speakers: stereo, top and bottom (FourSemi fs1815 x2);
   - headset and microphone;
   - Wi-Fi (`qca_cld3_wlan` + `cfg80211`);
@@ -29,7 +29,7 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 |---|---|
 | First stage (vendor_boot) | clocks (`clk-qcom`, `gcc-khaje`, `clk-smd-rpm`), pinctrl (`pinctrl-msm`, `pinctrl-khaje`), RPM/regulators, interconnect, SPMI/PMIC, SMEM/SMP2P/GLINK/QRTR (+`ns`), IOMMU (`arm_smmu`), SCM/QSEECOM, `sched-walt`, CPU vendor hooks, cpufreq-hw, watchdog, eMMC (`sdhci-msm`), DMA heaps, … |
 | Remote processors | `qcom_q6v5`, `qcom_q6v5_pas` (ADSP/CDSP/modem), `qcom_aoss`, `rproc_qcom_common`, `pdr_interface` |
-| Display / GPU / video | `dispcc-khaje`, `gpucc-khaje`, `msm_kgsl`, `msm_video`, `msm-mmrm` |
+| Display / GPU / video | `msm_drm` (+ Xiaomi `mi_disp`, from MiCode xun-t-oss khaje + stock decompile), `dispcc-khaje`, `gpucc-khaje`, `msm_kgsl`, `msm_video`, `msm-mmrm` |
 | Audio (28) | ADSP core, bengal machine, `wcd937x` with the sapphire stereo speaker glue, bolero macros, soundwire, `mbhc`, **`fs1815`**, **`aw87xxx`**, **`lct_audio_info`** |
 | Connectivity | Wi-Fi (`qca_cld3_wlan`, `cfg80211`, `icnss2`, `cnss_*`), BT/FM, IPA (`ipam`, `ipa_clientsm`, `gsim`, …), rmnet |
 | Xiaomi | `mi_thermal_interface` (thermal_message sysfs + notifier, reconstructed), `zram` with writeback + Xiaomi ExtM memory extension, `panel_event_notifier` with Xiaomi client ids |
@@ -55,9 +55,8 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 Where the stock Xiaomi modules have real bugs, they are fixed here instead of copied (uninitialised mutexes, OF match tables without sentinel, focaltech `BLANK_LP` work never initialised, `tp_data_dump` use-after-free, fingerprint notifier never unregistered, millet skb leak, sc8541 slave-mode overrun). Each fix is commented in the source.
 
 **Not yet covered** (they stay stock until they are verified on a device):
-- display `msm_drm` (Xiaomi `mi_disp` layer: backlight curves, DC dimming, HBM/FOD, AOD) — in progress;
 - `ufs_qcom` + `ufshcd-crypto-qti`: the Xiaomi `ufs_qcom` is a private copy of the whole UFS core (mi_ufs + CLD) that embeds UFS firmware images and can reflash the UFS chip at boot, so the pair stays stock for safety (public mi_ufs sources exist only for socrates/sky);
-- the camera.
+- the camera (`camera`: CLO `notify_frame_skip` and the bundled `led_gpio_flash` driver still to port) — in progress.
 
 ## Layout
 

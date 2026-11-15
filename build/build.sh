@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build the tested sapphire vendor modules.
 #
-# Usage: build/build.sh [step ...]     steps: kernel vendor xiaomi collect (default: all)
+# Usage: build/build.sh [step ...]     steps: kernel vendor xiaomi display collect (default: all)
 #
 # Requirements (see README.md):
 #   CLANG_DIR   AOSP clang-r450784e (prebuilts/clang/host/linux-x86/clang-r450784e)
@@ -74,6 +74,12 @@ vendor() {
 	b bt        bt-kernel BT_ROOT=$V/bt-kernel BT_KERNEL_ROOT=$V/bt-kernel CONFIG_MSM_BT_POWER=m CONFIG_BTFM_SLIM=m CONFIG_I2C_RTC6226_QCA=m KBUILD_EXTRA_SYMBOLS="$(sym wlan/platform)"
 }
 
+display() {
+	# msm_drm with the Xiaomi mi_disp layer; needs mmrm and our miev (vendor/xiaomi/opensource/miev)
+	b display display-drivers CONFIG_DRM_MSM=m DISPLAY_ROOT=$V/display-drivers BOARD_PLATFORM=bengal \
+		KBUILD_EXTRA_SYMBOLS="$(sym mmrm-driver) $ROOT/vendor/xiaomi/opensource/miev/Module.symvers"
+}
+
 xiaomi() {
 	# Xiaomi closed modules rebuilt from source (vendor/xiaomi/opensource)
 	X=$ROOT/vendor/xiaomi/opensource
@@ -103,4 +109,4 @@ collect() {
 	echo ">> $n tested modules in $OUT"
 }
 
-for s in ${@:-kernel vendor xiaomi collect}; do $s; done
+for s in ${@:-kernel vendor xiaomi display collect}; do $s; done
