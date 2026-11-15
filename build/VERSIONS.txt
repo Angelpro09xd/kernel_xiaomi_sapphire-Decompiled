@@ -1,0 +1,10 @@
+kernel_platform/msm-kernel 0d5de6065 sapphire_GKI: use leds-qti-flash instead of qpnp-flash-v2
+vendor/qcom/opensource/audio-kernel a673b7f dsp: spf-core: match sapphire close-all timeout (1000 ms)
+vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df037061f on remote branch
+vendor/qcom/opensource/dataipa d800248 Merge ff740c6b8a2c8c9937ece90c551176686ac33457 on remote branch
+vendor/qcom/opensource/datarmnet ec95489 Merge ee54d2fd87b05169f2dfb7d450ec09ecaaca6e17 on remote branch
+vendor/qcom/opensource/datarmnet-ext de8edc0 Merge ce01d67a9685d7f941a68d5379e665be3cbabe74 on remote branch
+vendor/qcom/opensource/mmrm-driver 0bdd754 Merge commit '1b16586dc771564229dc27a588b5a297c14c31f2' into mmrm-kernel-waipio.ln
+vendor/qcom/opensource/securemsm-kernel f70a1a7 Merge 95e3302e7957a143fb64eed5e364d74cbd0810df on remote branch
+vendor/qcom/opensource/video-driver 05bb100 Merge 58033f423cf3254a75fc4268c8ce1166ea6334f2 on remote branch
+vendor/qcom/opensource/wlan/platform 6ab1338 Merge 6ce40d5c60936dbd5e239c9085d9ea106b5b7fa6 on remote branch
