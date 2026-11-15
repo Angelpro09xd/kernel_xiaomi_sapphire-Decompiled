@@ -1,0 +1,35 @@
+From 9e9d887400249d422c262f9c6c02e790bafa05c8 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 12:13:30 +0100
+Subject: [PATCH 11/12] sapphire: panel_event_notifier: Xiaomi client ids
+
+The stock sapphire panel_event_notifier.ko (and every stock client:
+msm_drm, mi_thermal_interface, qti_battery_charger, touch, fingerprint)
+uses Xiaomi's enum with FINGERPRINT after SECONDARY_TOUCH and
+XM_SMART_CHG before MAX (names and order taken from the stock module).
+This also restores the stock CRC of panel_event_notifier_register.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/linux/soc/qcom/panel_event_notifier.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/linux/soc/qcom/panel_event_notifier.h b/include/linux/soc/qcom/panel_event_notifier.h
+index 05b94379d..718b4ad3b 100644
+--- a/include/linux/soc/qcom/panel_event_notifier.h
++++ b/include/linux/soc/qcom/panel_event_notifier.h
+@@ -22,9 +22,11 @@ enum panel_event_notifier_tag {
+ enum panel_event_notifier_client {
+ 	PANEL_EVENT_NOTIFIER_CLIENT_PRIMARY_TOUCH,
+ 	PANEL_EVENT_NOTIFIER_CLIENT_SECONDARY_TOUCH,
++	PANEL_EVENT_NOTIFIER_CLIENT_FINGERPRINT,	/* Xiaomi */
+ 	PANEL_EVENT_NOTIFIER_CLIENT_ECM,
+ 	PANEL_EVENT_NOTIFIER_CLIENT_THERMAL,
+ 	PANEL_EVENT_NOTIFIER_CLIENT_BATTERY_CHARGER,
++	PANEL_EVENT_NOTIFIER_CLIENT_XM_SMART_CHG,	/* Xiaomi */
+ 	PANEL_EVENT_NOTIFIER_CLIENT_MAX
+ };
+ 
+-- 
+2.53.0
+

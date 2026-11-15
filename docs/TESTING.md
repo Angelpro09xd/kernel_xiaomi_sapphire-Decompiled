@@ -138,3 +138,14 @@ Además, `patches/msm-kernel/0008` quita `has_xo_clk` en `q6v5_pas` para khaje, 
 La vuelta atrás siempre funciona:
 1. Desde el bootloader, `fastboot flash vendor_boot_a` con el original.
 2. Desde fastbootd, el `vendor_dlkm` bueno anterior.
+
+### Plan H: 270 de 317 (G2 + Xiaomi thermal/zram/panel notifier)
+
+| Módulo | Qué se hizo |
+|---|---|
+| `zram` | upstream 5.15 + `ZRAM_WRITEBACK` + la "ExtM" de Xiaomi (desde un árbol Xiaomi 5.15 de sm8550), con compresor `lzo-rle` y `low_compress_ratio` 75 como en stock (`patches/msm-kernel/0010`) |
+| `panel_event_notifier` | enum de clientes de Xiaomi (`FINGERPRINT`, `XM_SMART_CHG`), nombres y orden sacados del `.ko` de stock. Devuelve el CRC de stock a `panel_event_notifier_register` y desbloquea `qti_battery_charger` (`0011`) |
+| `mi_thermal_interface` | reconstruido (linaje marble + decompilado de stock): los 22 nodos de `thermal_message` de stock y el notifier SRCU exportado. Código idéntico instrucción a instrucción (`0012`) |
+| `bcl_pmic5`, `minidump` | sin cambios: eran diferencias de versión de CLO, no de Xiaomi |
+
+Resultado: arranca, `thermal_message` expone exactamente los nodos de stock y la carga funciona (comprobado por el usuario).
