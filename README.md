@@ -6,7 +6,7 @@ Xiaomi never published the kernel source for the Redmi Note 13 4G (`sapphire`/`s
 - the reconstructed sources, as **patches** on top of CodeLinaro;
 - the analysis and tools used.
 
-> **Status:** 264 of the 317 vendor modules built from this work (208 msm-kernel, 56 vendor) run on a Redmi Note 13 4G (Lunaris 3.13, stock GKI). They include the first-stage `vendor_boot` ramdisk, the GPU, Wi-Fi, IPA and the remote processors.
+> **Status:** 295 of the 317 vendor modules built from this work (220 msm-kernel, 57 Qualcomm vendor, 18 Xiaomi closed modules rebuilt from source) run on a Redmi Note 13 4G (Lunaris 3.13, stock GKI). They include the first-stage `vendor_boot` ramdisk, the GPU, Wi-Fi, IPA and the remote processors.
 >
 > - **Build tree:** the [`FirstPlace`](../../tree/FirstPlace) branch has the buildable kernel tree with only device-tested modules.
 > - **Details:** see [docs/TESTING.md](docs/TESTING.md).

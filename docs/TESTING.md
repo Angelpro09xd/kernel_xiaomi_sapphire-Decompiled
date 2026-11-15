@@ -149,3 +149,18 @@ La vuelta atrás siempre funciona:
 | `bcl_pmic5`, `minidump` | sin cambios: eran diferencias de versión de CLO, no de Xiaomi |
 
 Resultado: arranca, `thermal_message` expone exactamente los nodos de stock y la carga funciona (comprobado por el usuario).
+
+### Plan I: 295 de 317
+
+- **USB:**
+  - `usbpd`, reconstruido sobre CLO `r1-12800` con los cambios de Xiaomi: clase `Charging_Adapter`, verificación de cargadores PD, VDM SVID 0x2717, límites PPS del DT y exports para la pila de carga. Exports con CRC de stock 15/15.
+  - `dwc3-msm`, sobre `r1-12500`. Exports 10/10.
+  - Parche: `patches/msm-kernel/0013`.
+- **18 módulos cerrados de Xiaomi** reconstruidos desde fuentes de MiCode y de la comunidad, comparados con stock (funciones, CRC de exports, imports, cadenas y datos):
+  - `millet` (7 módulos), `binder_prio`, `perf_helper`, `mi_wmark`;
+  - `mi_memory`, `miev`, `bootinfo`, `swinfo`, que van en la primera etapa;
+  - `stm_nfc_i2c`, `nxp-nci`, `lct_tp`, `xiaomi_touch_game`.
+  - Las fuentes están en la rama `FirstPlace`, en `vendor/xiaomi/opensource`.
+- **Solo diferencias de versión de CLO:** `frpc-adsprpc`, `snd-usb-audio-qmi`, `msm_geni_serial`, `tz_log`, `usb_f_gsi`.
+
+Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modules` se ve que los módulos cargados son los nuestros, también los de la primera etapa: dependencias que solo tienen nuestras versiones, como `rproc_qcom_common` → `qcom_aoss`, `nxp_nci` → `smcinvoke_dlkm` y `qcom_ipc_logging` sin `minidump`.
