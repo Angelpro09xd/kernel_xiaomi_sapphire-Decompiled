@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan L
+# module  built path (relative to the tree root) - tested on device, plan M
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -199,6 +199,7 @@ qcom-pmu-lib kernel_platform/msm-kernel/out/drivers/soc/qcom/dcvs/qcom-pmu-lib.k
 qcom-pon kernel_platform/msm-kernel/out/drivers/power/reset/qcom-pon.ko
 qcom_q6v5 kernel_platform/msm-kernel/out/drivers/remoteproc/qcom_q6v5.ko
 qcom_q6v5_pas kernel_platform/msm-kernel/out/drivers/remoteproc/qcom_q6v5_pas.ko
+qcom-qpnp-qg kernel_platform/msm-kernel/out/drivers/power/supply/qcom/qcom-qpnp-qg.ko
 qcom_ramdump kernel_platform/msm-kernel/out/drivers/soc/qcom/qcom_ramdump.ko
 qcom-scm kernel_platform/msm-kernel/out/drivers/firmware/qcom-scm.ko
 qcom_smd kernel_platform/msm-kernel/out/drivers/rpmsg/qcom_smd.ko
@@ -220,6 +221,7 @@ qnoc-bengal kernel_platform/msm-kernel/out/drivers/interconnect/qcom/qnoc-bengal
 qnoc-qos-rpm kernel_platform/msm-kernel/out/drivers/interconnect/qcom/qnoc-qos-rpm.ko
 qpnp-pdphy kernel_platform/msm-kernel/out/drivers/usb/pd/qpnp-pdphy.ko
 qpnp-power-on kernel_platform/msm-kernel/out/drivers/input/misc/qpnp-power-on.ko
+qpnp-smb5-main kernel_platform/msm-kernel/out/drivers/power/supply/qcom/qpnp-smb5-main.ko
 qrng_dlkm vendor/qcom/opensource/securemsm-kernel/qrng_dlkm.ko
 qrtr kernel_platform/msm-kernel/out/net/qrtr/qrtr.ko
 qrtr-smd kernel_platform/msm-kernel/out/net/qrtr/qrtr-smd.ko

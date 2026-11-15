@@ -1,4 +1,4 @@
-kernel_platform/msm-kernel 8e5a7de7c sapphire: UFS phy and inline crypto like stock (CLO r1-12800)
+kernel_platform/msm-kernel 3f296b1b6 sapphire_GKI: disable QPNP_SMBLITE like stock
 vendor/qcom/opensource/audio-kernel a673b7f dsp: spf-core: match sapphire close-all timeout (1000 ms)
 vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df037061f on remote branch
 vendor/qcom/opensource/dataipa d31308d sapphire: ipahal: rule prefetch buffer size 128 like stock
