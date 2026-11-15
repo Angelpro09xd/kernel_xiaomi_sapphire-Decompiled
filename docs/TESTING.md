@@ -164,3 +164,21 @@ Resultado: arranca, `thermal_message` expone exactamente los nodos de stock y la
 - **Solo diferencias de versión de CLO:** `frpc-adsprpc`, `snd-usb-audio-qmi`, `msm_geni_serial`, `tz_log`, `usb_f_gsi`.
 
 Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modules` se ve que los módulos cargados son los nuestros, también los de la primera etapa: dependencias que solo tienen nuestras versiones, como `rproc_qcom_common` → `qcom_aoss`, `nxp_nci` → `smcinvoke_dlkm` y `qcom_ipc_logging` sin `minidump`.
+
+### Plan J: 304 de 317 (carga, batería, táctil y huella)
+
+- **Bombas de carga:**
+  - `sc8541_charger`: canales IIO de stock, incluido `cp_workmode` 0xe9.
+  - `bq25960_charger`: es una variante con registros de TI, no un simple cambio de nombre.
+- **Autenticación de batería:** `battery_auth_class` (+ onewire), `auth_battery`, `ds28e30_verify`, `slg_verify`, `stick_verify`. Exports con CRC de stock.
+- **Táctil `focaltech_ts_i2c` (FT5452J) y huella `xiaomi_fp`.**
+  - **Descalibrado en la primera prueba:** al pulsar abajo detectaba arriba.
+  - **Causa:** este panel da X en 1/8 de píxel pero **Y en 1/16** (un bit más, en el byte de área). La base FT3519T usaba 1/8 para los dos ejes.
+  - **Arreglo:** Y se calcula como en stock. Tras corregirlo, táctil, teclado y huella funcionan.
+- **Fallos reales de stock corregidos en vez de copiados:**
+  - mutex sin inicializar;
+  - tablas OF sin terminador;
+  - trabajo `BLANK_LP` sin inicializar en `focaltech`;
+  - uso de memoria liberada en `tp_data_dump`;
+  - notifier de la huella sin desregistrar;
+  - fuga de skb en `millet`.
