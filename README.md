@@ -8,8 +8,8 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **295 of the 317 vendor modules** come from this tree: 220 from `msm-kernel`, 57 from the Qualcomm vendor repos and 18 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`).
-- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 233 modules) and `vendor_dlkm` (214 modules).
+- **304 of the 317 vendor modules** come from this tree: 220 from `msm-kernel`, 57 from the Qualcomm vendor repos and 27 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`).
+- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 241 modules) and `vendor_dlkm` (223 modules).
 - The phone boots normally.
 - Verified working:
   - display, with the GPU (`msm_kgsl`, Adreno 610);
@@ -21,7 +21,7 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
   - charging, with a correct battery temperature (`qti_battery_charger`, `bcl_pmic5`);
   - power key, vibration and flashlight;
   - USB to PC and USB-PD fast charging (`usbpd` with the Xiaomi adapter verification, `dwc3-msm`);
-  - NFC, touch and in-display fingerprint (stock `focaltech`/`xiaomi_fp` on top of our `lct_tp` / `xiaomi_touch_game`).
+  - NFC, touch (`focaltech_ts_i2c`, FT5452J) and in-display fingerprint (`xiaomi_fp`).
 
 | Area | What is ours |
 |---|---|
@@ -32,7 +32,7 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 | Connectivity | Wi-Fi (`qca_cld3_wlan`, `cfg80211`, `icnss2`, `cnss_*`), BT/FM, IPA (`ipam`, `ipa_clientsm`, `gsim`, …), rmnet |
 | Xiaomi | `mi_thermal_interface` (thermal_message sysfs + notifier, reconstructed), `zram` with writeback + Xiaomi ExtM memory extension, `panel_event_notifier` with Xiaomi client ids |
 | USB | `usbpd` (Xiaomi `Charging_Adapter` PD verification, SVID 0x2717 VDM auth, PPS limits, exports for the charger stack), `dwc3-msm` |
-| Xiaomi closed modules | `millet` (core, binder, hs, pkg, sig, oem_cgroup) + `binder_gki`, `binder_prio`, `perf_helper`, `mi_wmark`, `mi_memory`, `miev`, `bootinfo`, `swinfo`, NFC (`stm_nfc_i2c` ST21NFC, `nxp-nci` SN1xx), `lct_tp`, `xiaomi_touch_game` |
+| Xiaomi closed modules | `millet` (core, binder, hs, pkg, sig, oem_cgroup) + `binder_gki`, `binder_prio`, `perf_helper`, `mi_wmark`, `mi_memory`, `miev`, `bootinfo`, `swinfo`, NFC (`stm_nfc_i2c` ST21NFC, `nxp-nci` SN1xx), `lct_tp`, `xiaomi_touch_game`, touch `focaltech_ts_i2c`, fingerprint `xiaomi_fp`, charge pumps `sc8541_charger`/`bq25960_charger`, battery authentication (`battery_auth_class`, `auth_battery`, `ds28e30_verify`, `slg_verify`, `stick_verify`) |
 | Platform | thermal and cooling, `bcl_pmic5`, `minidump`, PMIC ADC/GPIO/PON/RTC, USB gadget functions and PHYs, LEDs and vibrator, coresight/STM, DCVS (`qcom_dcvs`, `bwmon`, `memlat`), crypto, … |
 
 The full list, with the built path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
@@ -47,6 +47,8 @@ Xiaomi changed some **data** and **build options** in otherwise unmodified drive
 - the `spf_core` close-all timeout;
 - the Xiaomi `panel_event_notifier` client enum (`FINGERPRINT`, `XM_SMART_CHG`), which restores the stock CRC of `panel_event_notifier_register`;
 - the qrtr nameservice built as a separate `ns.ko`. Built into `qrtr.ko`, its exports collided with the stock `ns.ko` and first-stage init rebooted the phone.
+
+Where the stock Xiaomi modules have real bugs, they are fixed here instead of copied (uninitialised mutexes, OF match tables without sentinel, focaltech `BLANK_LP` work never initialised, `tp_data_dump` use-after-free, fingerprint notifier never unregistered, millet skb leak, sc8541 slave-mode overrun). Each fix is commented in the source.
 
 **Not yet covered** (they stay stock until they are verified on a device):
 - modules Xiaomi modified heavily:

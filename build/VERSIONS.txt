@@ -12,4 +12,4 @@ vendor/qcom/opensource/wlan/platform 6ab1338 Merge 6ce40d5c60936dbd5e239c9085d9e
 vendor/qcom/opensource/wlan/qcacld-3.0 694cefc xiaomi: import topaz-t-oss qcacld changes
 vendor/qcom/opensource/wlan/qca-wifi-host-cmn db3a22e Merge 21ff39ad64d57f1869b122a007385d7a1d89bdc0 on remote branch
 vendor/qcom/opensource/wlan/fw-api 8d871e1 Merge 7b7d8fcd8c62ffc4e2ad734ac8fd206077b48a54 on remote branch
-vendor/xiaomi/opensource   2d87644 Xiaomi sapphire closed vendor modules, rebuilt from source
+vendor/xiaomi/opensource   3bf4699 Add charger pumps, battery auth, touch and fingerprint (plan J)

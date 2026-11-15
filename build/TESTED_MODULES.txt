@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan I
+# module  built path (relative to the tree root) - tested on device, plan J
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -7,8 +7,10 @@ arm_smmu kernel_platform/msm-kernel/out/drivers/iommu/arm/arm-smmu/arm_smmu.ko
 audio_pkt_dlkm vendor/qcom/opensource/audio-kernel/ipc/audio_pkt_dlkm.ko
 audio_prm_dlkm vendor/qcom/opensource/audio-kernel/dsp/audio_prm_dlkm.ko
 audpkt_ion_dlkm vendor/qcom/opensource/audio-kernel/dsp/audpkt_ion_dlkm.ko
+auth_battery vendor/xiaomi/opensource/battery_auth/auth_battery.ko
 aw87xxx_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/aw87xxx/aw87xxx_dlkm.ko
 bam_dma kernel_platform/msm-kernel/out/drivers/dma/qcom/bam_dma.ko
+battery_auth_class vendor/xiaomi/opensource/battery_auth/battery_auth_class.ko
 bcl_pmic5 kernel_platform/msm-kernel/out/drivers/thermal/qcom/bcl_pmic5.ko
 bcl_soc kernel_platform/msm-kernel/out/drivers/thermal/qcom/bcl_soc.ko
 binder_gki vendor/xiaomi/opensource/millet/binder_gki.ko
@@ -16,6 +18,7 @@ binder_prio vendor/xiaomi/opensource/binder_prio/binder_prio.ko
 bolero_cdc_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/bolero/bolero_cdc_dlkm.ko
 boot_stats kernel_platform/msm-kernel/out/drivers/soc/qcom/boot_stats.ko
 bootinfo vendor/xiaomi/opensource/bootinfo/bootinfo.ko
+bq25960_charger vendor/xiaomi/opensource/bq25960/bq25960_charger.ko
 bt_fm_slim vendor/qcom/opensource/bt-kernel/slimbus/bt_fm_slim.ko
 btpower vendor/qcom/opensource/bt-kernel/pwr/btpower.ko
 bwmon kernel_platform/msm-kernel/out/drivers/soc/qcom/dcvs/bwmon.ko
@@ -53,10 +56,12 @@ dcc_v2 kernel_platform/msm-kernel/out/drivers/soc/qcom/dcc_v2.ko
 debug-regulator kernel_platform/msm-kernel/out/drivers/regulator/debug-regulator.ko
 debugcc-khaje kernel_platform/msm-kernel/out/drivers/clk/qcom/debugcc-khaje.ko
 dispcc-khaje kernel_platform/msm-kernel/out/drivers/clk/qcom/dispcc-khaje.ko
+ds28e30_verify vendor/xiaomi/opensource/battery_auth/ds28e30_verify.ko
 dwc3-msm kernel_platform/msm-kernel/out/drivers/usb/dwc3/dwc3-msm.ko
 ehset kernel_platform/msm-kernel/out/drivers/usb/misc/ehset.ko
 eud kernel_platform/msm-kernel/out/drivers/soc/qcom/eud.ko
 f_fs_ipc_log kernel_platform/msm-kernel/out/drivers/usb/gadget/function/f_fs_ipc_log.ko
+focaltech_ts_i2c vendor/xiaomi/opensource/focaltech/focaltech_ts_i2c.ko
 frpc-adsprpc kernel_platform/msm-kernel/out/drivers/char/frpc-adsprpc.ko
 fs1815_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/fs1815/fs1815_dlkm.ko
 fsa4480-i2c kernel_platform/msm-kernel/out/drivers/soc/qcom/fsa4480-i2c.ko
@@ -240,6 +245,7 @@ rproc_qcom_common kernel_platform/msm-kernel/out/drivers/remoteproc/rproc_qcom_c
 rq_stats kernel_platform/msm-kernel/out/drivers/soc/qcom/rq_stats.ko
 rtc-pm8xxx kernel_platform/msm-kernel/out/drivers/rtc/rtc-pm8xxx.ko
 rx_macro_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/bolero/rx_macro_dlkm.ko
+sc8541_charger vendor/xiaomi/opensource/sc8541/sc8541_charger.ko
 sched-walt kernel_platform/msm-kernel/out/kernel/sched/walt/sched-walt.ko
 sdhci-msm kernel_platform/msm-kernel/out/drivers/mmc/host/sdhci-msm.ko
 sdhci-msm-scaling kernel_platform/msm-kernel/out/drivers/mmc/host/sdhci-msm-scaling.ko
@@ -247,6 +253,7 @@ secure_buffer kernel_platform/msm-kernel/out/drivers/soc/qcom/secure_buffer.ko
 serial_num kernel_platform/msm-kernel/out/drivers/soc/qcom/serial_num.ko
 sg kernel_platform/msm-kernel/out/drivers/scsi/sg.ko
 simtray kernel_platform/msm-kernel/out/drivers/misc/simtray/simtray.ko
+slg_verify vendor/xiaomi/opensource/battery_auth/slg_verify.ko
 slim-qcom-ngd-ctrl kernel_platform/msm-kernel/out/drivers/slimbus/slim-qcom-ngd-ctrl.ko
 slimbus kernel_platform/msm-kernel/out/drivers/slimbus/slimbus.ko
 smcinvoke_dlkm vendor/qcom/opensource/securemsm-kernel/smcinvoke_dlkm.ko
@@ -262,6 +269,7 @@ spi-msm-geni kernel_platform/msm-kernel/out/drivers/spi/spi-msm-geni.ko
 spidev kernel_platform/msm-kernel/out/drivers/spi/spidev.ko
 spmi-pmic-arb kernel_platform/msm-kernel/out/drivers/spmi/spmi-pmic-arb.ko
 sps_drv kernel_platform/msm-kernel/out/drivers/soc/qcom/sps/sps_drv.ko
+stick_verify vendor/xiaomi/opensource/battery_auth/stick_verify.ko
 stm_console kernel_platform/msm-kernel/out/drivers/hwtracing/stm/stm_console.ko
 stm_core kernel_platform/msm-kernel/out/drivers/hwtracing/stm/stm_core.ko
 stm_ftrace kernel_platform/msm-kernel/out/drivers/hwtracing/stm/stm_ftrace.ko
@@ -291,6 +299,7 @@ wcd9xxx_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd9xxx_dlkm.ko
 wcd_core_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd_core_dlkm.ko
 wlan_firmware_service vendor/qcom/opensource/wlan/platform/cnss_utils/wlan_firmware_service.ko
 wsa881x_analog_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/wsa881x_analog_dlkm.ko
+xiaomi_fp vendor/xiaomi/opensource/xiaomi_fp/xiaomi_fp.ko
 xiaomi_touch_game vendor/xiaomi/opensource/xiaomi_touch/xiaomi_touch_game.ko
 zram kernel_platform/msm-kernel/out/drivers/block/zram/zram.ko
 zsmalloc kernel_platform/msm-kernel/out/mm/zsmalloc.ko

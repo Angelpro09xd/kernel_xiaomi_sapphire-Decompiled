@@ -83,6 +83,9 @@ xiaomi() {
 	xb xiaomi_touch KBUILD_EXTRA_SYMBOLS=$X/miev/Module.symvers
 	xb mi_memory          # Kbuild adds ufs_qcom_xiaomi.symvers (stock Xiaomi ufs_qcom exports)
 	xb nxp-nci KBUILD_EXTRA_SYMBOLS=$V/securemsm-kernel/Module.symvers
+	for d in battery_auth sc8541 bq25960 xiaomi_fp; do xb $d; done
+	# focaltech: our lct_tp/xiaomi_touch + the stock Xiaomi qpnp-smb5 export it uses
+	xb focaltech "KBUILD_EXTRA_SYMBOLS=$X/lct_tp/Module.symvers $X/xiaomi_touch/Module.symvers $X/focaltech/qpnp-smb5-stock.symvers"
 }
 
 collect() {
