@@ -238,3 +238,21 @@ Resultado: la pantalla funciona perfectamente (brillo, refresco y huella), confi
 - **Resultado:** arranca desde UFS, el almacenamiento y las fotos funcionan (confirmado por el usuario), y `/proc/modules` muestra que `ufs_qcom` ya no depende de `miev`, es decir, que es el nuestro.
 
 **Solo la cámara sigue de stock.**
+
+### Plan P: 317 de 317 (cámara). Ya no queda ningún módulo de stock
+
+`camera` reconstruido (`patches/camera-kernel/0002`, sobre la importación de topaz `0001`):
+- **Base de stock:** CLO `camera-kernel` `39da27a/b30da5d` (r1-07400/07900-DIVAR), más antigua que nuestra `acca4c8`. Se quitan 3 commits de `mem_mgr` de CLO que stock no tiene.
+- **Lo de Xiaomi:**
+  - *backport* de `notify_frame_skip` (de CLO `camera-kernel.lnx.4.0` `c782e8c`);
+  - driver de flash trasero por GPIO (`qcom,leds-back-gpio-flash`, nodo `flashlight` de sapphire) y `flash-type 2`;
+  - `SENSOR_CUSTOM_GPIO3` (`gpio-custom3`, lo usan 6 nodos de sensor de sapphire);
+  - tablas CSIPHY y tiempos del OPE de stock.
+- **Lo que rompía la cámara y se ha quitado:** el código de topaz para el Redmi Note 12 (antorcha I2C KTD2691 con `cci_client` nulo y secuencias `wl2866d`). Por eso la cámara se había quedado siempre de stock.
+- **Verificación:** 1.247 de 1.247 funciones, 70 de 70 exports con CRC de stock, 293 imports y datos idénticos.
+
+**Resultado:** la cámara abre y hace fotos a 108 MP (confirmado por el usuario). **El teléfono funciona con FirstKernel y los 317 módulos de vendor compilados desde código abierto.**
+
+**Pendiente para un build 100 % abierto:**
+- el Device Tree de sapphire en fuente;
+- que `build.sh` genere las imágenes.

@@ -1,0 +1,4450 @@
+From b9900f5a51e8ba86f76c530a3301fcae7e3a4eae Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 17:49:39 +0100
+Subject: [PATCH 2/2] sapphire: camera: match the stock sapphire camera module
+
+Stock camera.ko is CLO camera-kernel 39da27a/b30da5d (r1-07400/07900-DIVAR)
+plus Xiaomi changes; recovered from the stock module:
+- notify_frame_skip (Xiaomi backport of camera-kernel.lnx.4.0 c782e8c):
+  CRM __cam_req_mgr_notify_frame_skip, context/node ops, sensor frame-skip
+  array and OPCODE_SENSOR_FRAME_SKIP_UPDATE, tracepoint;
+- the back GPIO flash LED driver (qcom,leds-back-gpio-flash, sapphire
+  flashlight node) and cam_flash flash-type 2 (enf/enm GPIO);
+- SENSOR_CUSTOM_GPIO3 (gpio-custom3, used by 6 sapphire sensor nodes);
+- OPE/watchdog/event values and the csiphy 2.5 Gsps delta table.
+Drop the topaz-only hardware code that breaks sapphire (KTD2691 I2C
+torch with a NULL cci_client, wl2866d sequences) and the three CLO
+mem_mgr commits stock does not have. Two stock bugs fixed
+(led_gpio_flash probe success after free, NULL op-seq name).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ Kbuild                                        |   7 +-
+ drivers/cam_cdm/cam_cdm_hw_core.c             |   4 +-
+ drivers/cam_cdm/cam_cdm_virtual_core.c        |  20 +-
+ drivers/cam_core/cam_context.c                |  29 +
+ drivers/cam_core/cam_context.h                |  15 +
+ drivers/cam_core/cam_context_utils.c          |  11 +-
+ drivers/cam_core/cam_node.c                   |  22 +
+ .../cam_custom_hw_mgr/cam_custom_hw_mgr.c     |   2 -
+ drivers/cam_fd/fd_hw_mgr/cam_fd_hw_mgr.c      |  43 +-
+ drivers/cam_icp/cam_icp_context.c             |   4 -
+ .../icp_hw/icp_hw_mgr/cam_icp_hw_mgr.c        |  12 +-
+ drivers/cam_isp/cam_isp_context.c             |  32 +-
+ drivers/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.c   |   2 -
+ drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.c   |   7 +-
+ .../hw_utils/cam_isp_packet_parser.c          |   4 -
+ drivers/cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.c    |  15 +-
+ .../cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.c    |   2 -
+ drivers/cam_ope/cam_ope_context.c             |   1 -
+ drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.c   |  40 +-
+ drivers/cam_ope/ope_hw_mgr/ope_hw/ope_core.c  |  11 -
+ drivers/cam_req_mgr/cam_mem_mgr.c             | 104 +--
+ drivers/cam_req_mgr/cam_mem_mgr.h             |   6 -
+ drivers/cam_req_mgr/cam_mem_mgr_api.h         |   9 -
+ drivers/cam_req_mgr/cam_req_mgr_core.c        | 149 +++-
+ drivers/cam_req_mgr/cam_req_mgr_core.h        |   1 +
+ drivers/cam_req_mgr/cam_req_mgr_interface.h   |   4 +
+ .../cam_actuator/cam_actuator_core.c          |   3 -
+ .../cam_csiphy/cam_csiphy_core.c              |   5 +-
+ .../include/cam_csiphy_1_2_1_hwreg.h          |  12 +-
+ .../cam_eeprom/cam_eeprom_core.c              |  10 +-
+ .../cam_flash/cam_flash_core.c                |  50 +-
+ .../cam_flash/cam_flash_core.h                |   4 +
+ .../cam_flash/cam_flash_dev.c                 | 171 +---
+ .../cam_flash/cam_flash_dev.h                 |   8 +-
+ .../cam_flash/cam_flash_soc.c                 |  13 +
+ .../cam_sensor_module/cam_ois/cam_ois_core.c  |   3 -
+ .../cam_sensor/cam_sensor_core.c              | 134 ++-
+ .../cam_sensor/cam_sensor_core.h              |   9 +-
+ .../cam_sensor/cam_sensor_dev.c               |  37 +-
+ .../cam_sensor_io/cam_sensor_io.c             |   2 +-
+ .../cam_sensor_utils/cam_sensor_cmn_header.h  |   7 +-
+ .../cam_sensor_utils/cam_sensor_util.c        | 116 +--
+ drivers/cam_utils/cam_packet_util.c           |  20 +-
+ drivers/cam_utils/cam_packet_util.h           |   1 -
+ drivers/cam_utils/cam_soc_util.c              |  20 +-
+ drivers/cam_utils/cam_trace.h                 |  17 +
+ drivers/camera_main.c                         |   4 +-
+ drivers/leds/leds-msm-back-gpio-flash.c       | 303 +++++++
+ drivers/leds/leds-msm-back-gpio-flash.h       |  12 +
+ drivers/wl2866d/wl2866d.c                     | 767 ------------------
+ drivers/wl2866d/wl2866d.h                     |  25 -
+ 51 files changed, 848 insertions(+), 1461 deletions(-)
+ create mode 100644 drivers/leds/leds-msm-back-gpio-flash.c
+ create mode 100644 drivers/leds/leds-msm-back-gpio-flash.h
+ delete mode 100644 drivers/wl2866d/wl2866d.c
+ delete mode 100644 drivers/wl2866d/wl2866d.h
+
+diff --git a/Kbuild b/Kbuild
+index 9f68dc9..d2cbc75 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -184,7 +184,8 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
+ 	drivers/cam_sensor_module/cam_res_mgr/cam_res_mgr.o \
+ 	drivers/cam_sensor_module/cam_flash/cam_flash_dev.o \
+ 	drivers/cam_sensor_module/cam_flash/cam_flash_core.o \
+-	drivers/cam_sensor_module/cam_flash/cam_flash_soc.o
++	drivers/cam_sensor_module/cam_flash/cam_flash_soc.o \
++	drivers/leds/leds-msm-back-gpio-flash.o
+ 
+ camera-$(CONFIG_LEDS_QPNP_FLASH_V2) += \
+ 	drivers/cam_sensor_module/cam_flash/cam_flash_dev.o \
+@@ -231,9 +232,7 @@ camera-$(CONFIG_SPECTRA_TFE) += \
+ 	drivers/cam_isp/isp_hw_mgr/isp_hw/tfe_csid_hw/cam_tfe_csid530.o \
+ 	drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.o
+ 
+-
+-camera-y += drivers/camera_main.o \
+-	drivers/wl2866d/wl2866d.o
++camera-y += drivers/camera_main.o
+ 
+ obj-m += camera.o
+ BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/camera.ko
+diff --git a/drivers/cam_cdm/cam_cdm_hw_core.c b/drivers/cam_cdm/cam_cdm_hw_core.c
+index 09e68e2..d64af4d 100644
+--- a/drivers/cam_cdm/cam_cdm_hw_core.c
++++ b/drivers/cam_cdm/cam_cdm_hw_core.c
+@@ -860,7 +860,6 @@ static int cam_hw_cdm_arb_submit_bl(struct cam_hw_info *cdm_hw,
+ 			"CDM hw bl write failed tag=%d",
+ 			core->bl_fifo[fifo_idx].bl_tag -
+ 			1);
+-			cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
+ 			list_del_init(&node->entry);
+ 			kfree(node);
+ 			return -EIO;
+@@ -872,12 +871,11 @@ static int cam_hw_cdm_arb_submit_bl(struct cam_hw_info *cdm_hw,
+ 			"CDM hw commit failed tag=%d",
+ 			core->bl_fifo[fifo_idx].bl_tag -
+ 			1);
+-			cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
+ 			list_del_init(&node->entry);
+ 			kfree(node);
+ 			return -EIO;
+ 	}
+-	cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/cam_cdm/cam_cdm_virtual_core.c b/drivers/cam_cdm/cam_cdm_virtual_core.c
+index dde67a4..481d376 100644
+--- a/drivers/cam_cdm/cam_cdm_virtual_core.c
++++ b/drivers/cam_cdm/cam_cdm_virtual_core.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/delay.h>
+@@ -121,7 +120,7 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
+ 				cdm_cmd->cmd[i].len) {
+ 				CAM_ERR(CAM_CDM, "Not enough buffer");
+ 				rc = -EINVAL;
+-				goto end;
++				break;
+ 			}
+ 			CAM_DBG(CAM_CDM,
+ 				"hdl=%x vaddr=%pK offset=%d cmdlen=%d:%zu",
+@@ -139,7 +138,7 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
+ 					"write failed for cnt=%d:%d len %u",
+ 					i, req->data->cmd_arrary_count,
+ 					cdm_cmd->cmd[i].len);
+-				goto end;
++				break;
+ 			}
+ 		} else {
+ 			CAM_ERR(CAM_CDM,
+@@ -150,7 +149,7 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
+ 				"Sanity check failed for cmd_count=%d cnt=%d",
+ 				i, req->data->cmd_arrary_count);
+ 			rc = -EINVAL;
+-			goto end;
++			break;
+ 		}
+ 		if (!rc) {
+ 			struct cam_cdm_work_payload *payload;
+@@ -167,7 +166,7 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
+ 					GFP_KERNEL);
+ 				if (!node) {
+ 					rc = -ENOMEM;
+-					goto end;
++					break;
+ 				}
+ 				node->request_type = CAM_HW_CDM_BL_CB_CLIENT;
+ 				node->client_hdl = req->handle;
+@@ -201,20 +200,9 @@ int cam_virtual_cdm_submit_bl(struct cam_hw_info *cdm_hw,
+ 			if (!rc && (core->bl_tag == 63))
+ 				core->bl_tag = 0;
+ 		}
+-
+-		if (req->data->type == CAM_CDM_BL_CMD_TYPE_MEM_HANDLE)
+-			cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
+ 	}
+ 	mutex_unlock(&client->lock);
+ 	return rc;
+-
+-end:
+-	if (req->data->type == CAM_CDM_BL_CMD_TYPE_MEM_HANDLE)
+-		cam_mem_put_cpu_buf(cdm_cmd->cmd[i].bl_addr.mem_handle);
+-
+-	mutex_unlock(&client->lock);
+-	return rc;
+-
+ }
+ 
+ int cam_virtual_cdm_probe(struct platform_device *pdev)
+diff --git a/drivers/cam_core/cam_context.c b/drivers/cam_core/cam_context.c
+index 267b23d..6527240 100644
+--- a/drivers/cam_core/cam_context.c
++++ b/drivers/cam_core/cam_context.c
+@@ -182,6 +182,35 @@ int cam_context_handle_crm_apply_req(struct cam_context *ctx,
+ 	return rc;
+ }
+ 
++int cam_context_handle_crm_notify_frame_skip(
++	struct cam_context *ctx,
++	struct cam_req_mgr_apply_request *apply)
++{
++	int rc = 0;
++
++	if (!ctx->state_machine) {
++		CAM_ERR(CAM_CORE, "Context is not ready");
++		return -EINVAL;
++	}
++
++	if (!apply) {
++		CAM_ERR(CAM_CORE, "Invalid apply request payload");
++		return -EINVAL;
++	}
++
++	mutex_lock(&ctx->ctx_mutex);
++	if (ctx->state_machine[ctx->state].crm_ops.notify_frame_skip)
++		rc = ctx->state_machine[ctx->state].crm_ops.notify_frame_skip(
++			ctx, apply);
++	else
++		CAM_DBG(CAM_CORE,
++			"No crm notify_frame_skip in dev %d, state %d",
++			ctx->dev_hdl, ctx->state);
++	mutex_unlock(&ctx->ctx_mutex);
++
++	return rc;
++}
++
+ int cam_context_handle_crm_flush_req(struct cam_context *ctx,
+ 	struct cam_req_mgr_flush_request *flush)
+ {
+diff --git a/drivers/cam_core/cam_context.h b/drivers/cam_core/cam_context.h
+index 8858b14..af717a6 100644
+--- a/drivers/cam_core/cam_context.h
++++ b/drivers/cam_core/cam_context.h
+@@ -121,6 +121,7 @@ struct cam_ctx_ioctl_ops {
+  * @link:                  Link the context
+  * @unlink:                Unlink the context
+  * @apply_req:             Apply setting for the context
++ * @notify_frame_skip:     Notify device that a frame is skipped
+  * @flush_req:             Flush request to remove request ids
+  * @process_evt:           Handle event notification from CRM.(optional)
+  * @dump_req:              Dump information for the issue request
+@@ -135,6 +136,8 @@ struct cam_ctx_crm_ops {
+ 			struct cam_req_mgr_core_dev_link_setup *unlink);
+ 	int (*apply_req)(struct cam_context *ctx,
+ 			struct cam_req_mgr_apply_request *apply);
++	int (*notify_frame_skip)(struct cam_context *ctx,
++			struct cam_req_mgr_apply_request *apply);
+ 	int (*flush_req)(struct cam_context *ctx,
+ 			struct cam_req_mgr_flush_request *flush);
+ 	int (*process_evt)(struct cam_context *ctx,
+@@ -302,6 +305,18 @@ int cam_context_handle_crm_unlink(struct cam_context *ctx,
+ int cam_context_handle_crm_apply_req(struct cam_context *ctx,
+ 		struct cam_req_mgr_apply_request *apply);
+ 
++/**
++ * cam_context_handle_crm_notify_frame_skip()
++ *
++ * @brief:        Handle notify frame skip command
++ *
++ * @ctx:          Object pointer for cam_context
++ * @apply:        Notify frame skip command payload
++ *
++ */
++int cam_context_handle_crm_notify_frame_skip(
++	struct cam_context *ctx, struct cam_req_mgr_apply_request *apply);
++
+ /**
+  * cam_context_handle_crm_flush_req()
+  *
+diff --git a/drivers/cam_core/cam_context_utils.c b/drivers/cam_core/cam_context_utils.c
+index 72330fd..d3ea104 100644
+--- a/drivers/cam_core/cam_context_utils.c
++++ b/drivers/cam_core/cam_context_utils.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/debugfs.h>
+@@ -315,7 +314,6 @@ int32_t cam_context_config_dev_to_hw(
+ 		rc = -EFAULT;
+ 	}
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ }
+ 
+@@ -377,7 +375,6 @@ int32_t cam_context_prepare_dev_to_hw(struct cam_context *ctx,
+ 	if ((len < sizeof(struct cam_packet)) ||
+ 		(cmd->offset >= (len - sizeof(struct cam_packet)))) {
+ 		CAM_ERR(CAM_CTXT, "Not enough buf");
+-		cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 		return -EINVAL;
+ 
+ 	}
+@@ -493,7 +490,7 @@ int32_t cam_context_prepare_dev_to_hw(struct cam_context *ctx,
+ 				req->in_map_entries[j].sync_id, rc);
+ 		}
+ 	}
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
++
+ 	return rc;
+ put_ref:
+ 	for (--i; i >= 0; i--) {
+@@ -507,7 +504,6 @@ free_req:
+ 	req->ctx = NULL;
+ 	spin_unlock(&ctx->lock);
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ }
+ 
+@@ -1100,7 +1096,6 @@ static int cam_context_dump_context(struct cam_context *ctx,
+ 	if (dump_args->offset >= buf_len) {
+ 		CAM_WARN(CAM_CTXT, "dump buffer overshoot offset %zu len %zu",
+ 			dump_args->offset, buf_len);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -1112,7 +1107,6 @@ static int cam_context_dump_context(struct cam_context *ctx,
+ 	if (remain_len < min_len) {
+ 		CAM_WARN(CAM_CTXT, "dump buffer exhaust remain %zu min %u",
+ 			remain_len, min_len);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 	dst = (uint8_t *)cpu_addr + dump_args->offset;
+@@ -1137,8 +1131,7 @@ static int cam_context_dump_context(struct cam_context *ctx,
+ 	hdr->size = hdr->word_size * (addr - start);
+ 	dump_args->offset += hdr->size +
+ 		sizeof(struct cam_context_dump_header);
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+-	return 0;
++	return rc;
+ }
+ 
+ int32_t cam_context_dump_dev_to_hw(struct cam_context *ctx,
+diff --git a/drivers/cam_core/cam_node.c b/drivers/cam_core/cam_node.c
+index 4ad93c7..75ec613 100644
+--- a/drivers/cam_core/cam_node.c
++++ b/drivers/cam_core/cam_node.c
+@@ -571,6 +571,26 @@ static int __cam_node_crm_apply_req(struct cam_req_mgr_apply_request *apply)
+ 	return cam_context_handle_crm_apply_req(ctx, apply);
+ }
+ 
++static int __cam_node_crm_notify_frame_skip(
++	struct cam_req_mgr_apply_request *apply)
++{
++	struct cam_context *ctx = NULL;
++
++	if (!apply)
++		return -EINVAL;
++
++	ctx = (struct cam_context *) cam_get_device_priv(apply->dev_hdl);
++	if (!ctx) {
++		CAM_ERR(CAM_CORE, "Can not get context for handle %d",
++			apply->dev_hdl);
++		return -EINVAL;
++	}
++
++	trace_cam_apply_req("Node", apply->request_id);
++
++	return cam_context_handle_crm_notify_frame_skip(ctx, apply);
++}
++
+ static int __cam_node_crm_flush_req(struct cam_req_mgr_flush_request *flush)
+ {
+ 	struct cam_context *ctx = NULL;
+@@ -684,6 +704,8 @@ int cam_node_init(struct cam_node *node, struct cam_hw_mgr_intf *hw_mgr_intf,
+ 	node->crm_node_intf.flush_req = __cam_node_crm_flush_req;
+ 	node->crm_node_intf.process_evt = __cam_node_crm_process_evt;
+ 	node->crm_node_intf.dump_req = __cam_node_crm_dump_req;
++	node->crm_node_intf.notify_frame_skip =
++		__cam_node_crm_notify_frame_skip;
+ 
+ 	mutex_init(&node->list_mutex);
+ 	INIT_LIST_HEAD(&node->free_ctx_list);
+diff --git a/drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw_mgr.c b/drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw_mgr.c
+index 6ee4598..7587e41 100644
+--- a/drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw_mgr.c
++++ b/drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/slab.h>
+@@ -1132,7 +1131,6 @@ static int cam_custom_mgr_prepare_hw_update(void *hw_mgr_priv,
+ 	}
+ 
+ 	cam_custom_add_io_buffers(hw_mgr->img_iommu_hdl, prepare);
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 	return 0;
+ }
+ 
+diff --git a/drivers/cam_fd/fd_hw_mgr/cam_fd_hw_mgr.c b/drivers/cam_fd/fd_hw_mgr/cam_fd_hw_mgr.c
+index 025a29f..a293770 100644
+--- a/drivers/cam_fd/fd_hw_mgr/cam_fd_hw_mgr.c
++++ b/drivers/cam_fd/fd_hw_mgr/cam_fd_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -525,33 +524,6 @@ static int cam_fd_mgr_util_get_buf_map_requirement(uint32_t direction,
+ 	return 0;
+ }
+ 
+-static int cam_fd_mgr_put_cpu_buf(struct cam_hw_prepare_update_args *prepare)
+-{
+-	int i, rc;
+-	uint32_t plane;
+-	bool need_io_map, need_cpu_map;
+-	struct cam_buf_io_cfg *io_cfg;
+-
+-	io_cfg = (struct cam_buf_io_cfg *) ((uint8_t *)
+-		&prepare->packet->payload + prepare->packet->io_configs_offset);
+-
+-	if (!io_cfg)
+-		return -EINVAL;
+-
+-	for (i = 0; i < prepare->packet->num_io_configs; i++) {
+-		rc = cam_fd_mgr_util_get_buf_map_requirement(
+-			io_cfg[i].direction, io_cfg[i].resource_type,
+-			&need_io_map, &need_cpu_map);
+-
+-		if (rc || !need_cpu_map)
+-			continue;
+-
+-		for (plane = 0; plane < CAM_PACKET_MAX_PLANES; plane++)
+-			cam_mem_put_cpu_buf(io_cfg[i].mem_handle[plane]);
+-	}
+-	return 0;
+-}
+-
+ static int cam_fd_mgr_util_prepare_io_buf_info(int32_t iommu_hdl,
+ 	struct cam_hw_prepare_update_args *prepare,
+ 	struct cam_fd_hw_io_buffer *input_buf,
+@@ -648,8 +620,6 @@ static int cam_fd_mgr_util_prepare_io_buf_info(int32_t iommu_hdl,
+ 						"Invalid cpu buf %d %d %d",
+ 						io_cfg[i].direction,
+ 						io_cfg[i].resource_type, plane);
+-					cam_mem_put_cpu_buf(
+-						io_cfg[i].mem_handle[plane]);
+ 					rc = -EINVAL;
+ 					return rc;
+ 				}
+@@ -1627,7 +1597,6 @@ hw_dump:
+ 	if (fd_dump_args.buf_len <= dump_args->offset) {
+ 		CAM_WARN(CAM_FD, "dump offset overshoot len %zu offset %zu",
+ 			fd_dump_args.buf_len, dump_args->offset);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 	remain_len = fd_dump_args.buf_len - dump_args->offset;
+@@ -1637,7 +1606,6 @@ hw_dump:
+ 	if (remain_len < min_len) {
+ 		CAM_WARN(CAM_FD, "dump buffer exhaust remain %zu min %u",
+ 			remain_len, min_len);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -1669,14 +1637,12 @@ hw_dump:
+ 		if (rc) {
+ 			CAM_ERR(CAM_FD, "Hw Dump cmd fails req %lld rc %d",
+ 				frame_req->request_id, rc);
+-			cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 			return rc;
+ 		}
+ 	}
+ 	CAM_DBG(CAM_FD, "Offset before %zu after %zu",
+ 		dump_args->offset, fd_dump_args.offset);
+ 	dump_args->offset = fd_dump_args.offset;
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+@@ -1810,7 +1776,7 @@ static int cam_fd_mgr_hw_prepare_update(void *hw_mgr_priv,
+ 		&prestart_args, &kmd_buf);
+ 	if (rc) {
+ 		CAM_ERR(CAM_FD, "Error in hw update entries %d", rc);
+-		goto put_cpu_buf;
++		goto error;
+ 	}
+ 
+ 	/* get a free frame req from free list */
+@@ -1819,8 +1785,7 @@ static int cam_fd_mgr_hw_prepare_update(void *hw_mgr_priv,
+ 	if (rc || !frame_req) {
+ 		CAM_ERR(CAM_FD, "Get frame_req failed, rc=%d, hw_ctx=%pK",
+ 			rc, hw_ctx);
+-		rc = -ENOMEM;
+-		goto put_cpu_buf;
++		return -ENOMEM;
+ 	}
+ 
+ 	/* Setup frame request info and queue to pending list */
+@@ -1835,13 +1800,9 @@ static int cam_fd_mgr_hw_prepare_update(void *hw_mgr_priv,
+ 	 */
+ 	prepare->priv = frame_req;
+ 
+-	cam_fd_mgr_put_cpu_buf(prepare);
+ 	CAM_DBG(CAM_FD, "FramePrepare : Frame[%lld]", frame_req->request_id);
+ 
+ 	return 0;
+-
+-put_cpu_buf:
+-	cam_fd_mgr_put_cpu_buf(prepare);
+ error:
+ 	return rc;
+ }
+diff --git a/drivers/cam_icp/cam_icp_context.c b/drivers/cam_icp/cam_icp_context.c
+index 4d6e0ab..6a9f57b 100644
+--- a/drivers/cam_icp/cam_icp_context.c
++++ b/drivers/cam_icp/cam_icp_context.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/debugfs.h>
+@@ -157,7 +156,6 @@ static int __cam_icp_config_dev_in_ready(struct cam_context *ctx,
+ 		CAM_ERR(CAM_CTXT,
+ 			"Invalid offset, len: %zu cmd offset: %llu sizeof packet: %zu",
+ 			len, cmd->offset, sizeof(struct cam_packet));
+-		cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -169,7 +167,6 @@ static int __cam_icp_config_dev_in_ready(struct cam_context *ctx,
+ 	if (rc) {
+ 		CAM_ERR(CAM_CTXT, "Invalid packet params, remain length: %zu",
+ 			remain_len);
+-		cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 		return rc;
+ 	}
+ 
+@@ -184,7 +181,6 @@ static int __cam_icp_config_dev_in_ready(struct cam_context *ctx,
+ 	if (rc)
+ 		CAM_ERR(CAM_ICP, "Failed to prepare device");
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_icp/icp_hw/icp_hw_mgr/cam_icp_hw_mgr.c b/drivers/cam_icp/icp_hw/icp_hw_mgr/cam_icp_hw_mgr.c
+index 3ea4a76..8bd3705 100644
+--- a/drivers/cam_icp/icp_hw/icp_hw_mgr/cam_icp_hw_mgr.c
++++ b/drivers/cam_icp/icp_hw/icp_hw_mgr/cam_icp_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/uaccess.h>
+@@ -85,7 +84,7 @@ static int cam_icp_dump_io_cfg(struct cam_icp_hw_ctx_data *ctx_data,
+ 			used = 0;
+ 		}
+ 	}
+-	cam_mem_put_cpu_buf(buf_handle);
++
+ 	return rc;
+ }
+ 
+@@ -4139,7 +4138,6 @@ static int cam_icp_mgr_process_cmd_desc(struct cam_icp_hw_mgr *hw_mgr,
+ 
+ 			*fw_cmd_buf_iova_addr =
+ 				(*fw_cmd_buf_iova_addr + cmd_desc[i].offset);
+-
+ 			rc = cam_mem_get_cpu_buf(cmd_desc[i].mem_handle,
+ 				&cpu_addr, &len);
+ 			if (rc || !cpu_addr) {
+@@ -4156,12 +4154,9 @@ static int cam_icp_mgr_process_cmd_desc(struct cam_icp_hw_mgr *hw_mgr,
+ 				((len - cmd_desc[i].offset) <
+ 				cmd_desc[i].length)) {
+ 				CAM_ERR(CAM_ICP, "Invalid offset or length");
+-				cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 				return -EINVAL;
+ 			}
+ 			cpu_addr = cpu_addr + cmd_desc[i].offset;
+-
+-			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 		}
+ 	}
+ 
+@@ -5117,7 +5112,6 @@ hw_dump:
+ 		req_ts.tv_nsec/NSEC_PER_USEC,
+ 		cur_ts.tv_sec,
+ 		cur_ts.tv_nsec/NSEC_PER_USEC);
+-
+ 	rc  = cam_mem_get_cpu_buf(dump_args->buf_handle,
+ 		&icp_dump_args.cpu_addr, &icp_dump_args.buf_len);
+ 	if (rc) {
+@@ -5128,7 +5122,6 @@ hw_dump:
+ 	if (icp_dump_args.buf_len <= dump_args->offset) {
+ 		CAM_WARN(CAM_ICP, "dump buffer overshoot len %zu offset %zu",
+ 			icp_dump_args.buf_len, dump_args->offset);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -5139,7 +5132,6 @@ hw_dump:
+ 	if (remain_len < min_len) {
+ 		CAM_WARN(CAM_ICP, "dump buffer exhaust remain %zu min %u",
+ 			remain_len, min_len);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -5166,8 +5158,6 @@ hw_dump:
+ 	CAM_DBG(CAM_ICP, "Offset before %zu after %zu",
+ 		dump_args->offset, icp_dump_args.offset);
+ 	dump_args->offset = icp_dump_args.offset;
+-
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_isp/cam_isp_context.c b/drivers/cam_isp/cam_isp_context.c
+index 3ceefac..87cb3e7 100644
+--- a/drivers/cam_isp/cam_isp_context.c
++++ b/drivers/cam_isp/cam_isp_context.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/debugfs.h>
+@@ -335,8 +335,7 @@ static int cam_isp_ctx_dump_req(
+ 				CAM_ERR(CAM_ISP,
+ 					"Invalid offset exp %u actual %u",
+ 					req_isp->cfg[i].offset, (uint32_t)len);
+-				cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
+-				return -EINVAL;
++				return rc;
+ 			}
+ 			remain_len = len - req_isp->cfg[i].offset;
+ 
+@@ -346,8 +345,7 @@ static int cam_isp_ctx_dump_req(
+ 					"Invalid len exp %u remain_len %u",
+ 					req_isp->cfg[i].len,
+ 					(uint32_t)remain_len);
+-				cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
+-				return -EINVAL;
++				return rc;
+ 			}
+ 
+ 			buf_start = (uint32_t *)((uint8_t *) buf_addr +
+@@ -371,7 +369,6 @@ static int cam_isp_ctx_dump_req(
+ 			} else {
+ 				cam_cdm_util_dump_cmd_buf(buf_start, buf_end);
+ 			}
+-			cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
+ 		}
+ 	}
+ 	return rc;
+@@ -2541,7 +2538,6 @@ hw_dump:
+ 		spin_unlock_bh(&ctx->lock);
+ 		CAM_WARN(CAM_ISP, "Dump buffer overshoot len %zu offset %zu",
+ 			buf_len, dump_info->offset);
+-		cam_mem_put_cpu_buf(dump_info->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -2553,7 +2549,6 @@ hw_dump:
+ 		spin_unlock_bh(&ctx->lock);
+ 		CAM_WARN(CAM_ISP, "Dump buffer exhaust remain %zu min %u",
+ 			remain_len, min_len);
+-		cam_mem_put_cpu_buf(dump_info->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -2593,17 +2588,20 @@ hw_dump:
+ 	if (rc) {
+ 		CAM_ERR(CAM_ISP, "Dump event fail %lld",
+ 			req->request_id);
+-		goto end;
++		spin_unlock_bh(&ctx->lock);
++		return rc;
++	}
++	if (dump_only_event_record) {
++		spin_unlock_bh(&ctx->lock);
++		return rc;
+ 	}
+-	if (dump_only_event_record)
+-		goto end;
+-
+ 	rc = __cam_isp_ctx_dump_req_info(ctx, req, cpu_addr,
+ 		buf_len, &dump_info->offset);
+ 	if (rc) {
+ 		CAM_ERR(CAM_ISP, "Dump Req info fail %lld",
+ 			req->request_id);
+-		goto end;
++		spin_unlock_bh(&ctx->lock);
++		return rc;
+ 	}
+ 	spin_unlock_bh(&ctx->lock);
+ 
+@@ -2617,12 +2615,6 @@ hw_dump:
+ 			&dump_args);
+ 		dump_info->offset = dump_args.offset;
+ 	}
+-	cam_mem_put_cpu_buf(dump_info->buf_handle);
+-	return rc;
+-
+-end:
+-	spin_unlock_bh(&ctx->lock);
+-	cam_mem_put_cpu_buf(dump_info->buf_handle);
+ 	return rc;
+ }
+ 
+@@ -3751,7 +3743,6 @@ static int __cam_isp_ctx_config_dev_in_top_state(
+ 		"Preprocessing Config req_id %lld successful on ctx %u",
+ 		req->request_id, ctx->ctx_id);
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ 
+ put_ref:
+@@ -3765,7 +3756,6 @@ free_req:
+ 	list_add_tail(&req->list, &ctx->free_req_list);
+ 	spin_unlock_bh(&ctx->lock);
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.c b/drivers/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.c
+index e036aa5..5596f16 100644
+--- a/drivers/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.c
++++ b/drivers/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/slab.h>
+@@ -6061,7 +6060,6 @@ static int cam_ife_mgr_dump(void *hw_mgr_priv, void *args)
+ 		}
+ 	}
+ 	dump_args->offset = isp_hw_dump_args.offset;
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ end:
+ 	CAM_DBG(CAM_ISP, "offset %u", dump_args->offset);
+ 	return rc;
+diff --git a/drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.c b/drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.c
+index 7d8dd7f..4cfdb60 100644
+--- a/drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.c
++++ b/drivers/cam_isp/isp_hw_mgr/cam_tfe_hw_mgr.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/slab.h>
+@@ -1767,7 +1767,6 @@ void cam_tfe_cam_cdm_callback(uint32_t handle, void *userdata,
+ 				ctx->last_submit_bl_cmd.cmd[i].input_len - 1);
+ 
+ 			cam_cdm_util_dump_cmd_buf(buf_start, buf_end);
+-			cam_mem_put_cpu_buf(ctx->last_submit_bl_cmd.cmd[i].mem_handle);
+ 		}
+ 		if (ctx->packet != NULL)
+ 			cam_packet_dump_patch_info(ctx->packet,
+@@ -3290,7 +3289,6 @@ static int cam_tfe_mgr_dump(void *hw_mgr_priv, void *args)
+ 	}
+ 	dump_args->offset = isp_hw_dump_args.offset;
+ 	CAM_DBG(CAM_ISP, "offset %u", dump_args->offset);
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+@@ -3896,7 +3894,6 @@ static int cam_tfe_update_dual_config(
+ 		(cmd_desc->offset >=
+ 			(len - sizeof(struct cam_isp_tfe_dual_config)))) {
+ 		CAM_ERR(CAM_ISP, "not enough buffer provided");
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -3909,7 +3906,6 @@ static int cam_tfe_update_dual_config(
+ 		(remain_len -
+ 			offsetof(struct cam_isp_tfe_dual_config, stripes))) {
+ 		CAM_ERR(CAM_ISP, "not enough buffer for all the dual configs");
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -3971,7 +3967,6 @@ static int cam_tfe_update_dual_config(
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_isp/isp_hw_mgr/hw_utils/cam_isp_packet_parser.c b/drivers/cam_isp/isp_hw_mgr/hw_utils/cam_isp_packet_parser.c
+index 7c43f33..c566615 100644
+--- a/drivers/cam_isp/isp_hw_mgr/hw_utils/cam_isp_packet_parser.c
++++ b/drivers/cam_isp/isp_hw_mgr/hw_utils/cam_isp_packet_parser.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <media/cam_defs.h>
+@@ -118,7 +117,6 @@ static int cam_isp_update_dual_config(
+ 		(cmd_desc->offset >=
+ 		(len - sizeof(struct cam_isp_dual_config)))) {
+ 		CAM_ERR(CAM_ISP, "not enough buffer provided");
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		return -EINVAL;
+ 	}
+ 	remain_len = len - cmd_desc->offset;
+@@ -129,7 +127,6 @@ static int cam_isp_update_dual_config(
+ 		sizeof(struct cam_isp_dual_stripe_config)) >
+ 		(remain_len - offsetof(struct cam_isp_dual_config, stripes))) {
+ 		CAM_ERR(CAM_ISP, "not enough buffer for all the dual configs");
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		return -EINVAL;
+ 	}
+ 	for (i = 0; i < dual_config->num_ports; i++) {
+@@ -187,7 +184,6 @@ static int cam_isp_update_dual_config(
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.c b/drivers/cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.c
+index d69ca23..ba8c286 100644
+--- a/drivers/cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.c
++++ b/drivers/cam_jpeg/jpeg_hw/cam_jpeg_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/uaccess.h>
+@@ -155,7 +154,6 @@ static int cam_jpeg_mgr_process_irq(void *priv, void *data)
+ 		CAM_ERR(CAM_JPEG, "Invalid offset: %u cmd buf len: %zu",
+ 			p_cfg_req->hw_cfg_args.hw_update_entries[
+ 			CAM_JPEG_PARAM].offset, cmd_buf_len);
+-		cam_mem_put_cpu_buf(mem_hdl);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -182,7 +180,6 @@ static int cam_jpeg_mgr_process_irq(void *priv, void *data)
+ 	mutex_lock(&g_jpeg_hw_mgr.hw_mgr_mutex);
+ 	list_add_tail(&p_cfg_req->list, &hw_mgr->free_req_list);
+ 	mutex_unlock(&g_jpeg_hw_mgr.hw_mgr_mutex);
+-	cam_mem_put_cpu_buf(mem_hdl);
+ 	return rc;
+ }
+ 
+@@ -283,11 +280,7 @@ static int cam_jpeg_insert_cdm_change_base(
+ 
+ 	if (config_args->hw_update_entries[CAM_JPEG_CHBASE].offset >=
+ 		ch_base_len) {
+-		CAM_ERR(CAM_JPEG, "Not enough buf offset %d len %d",
+-			config_args->hw_update_entries[CAM_JPEG_CHBASE].offset,
+-			ch_base_len);
+-		cam_mem_put_cpu_buf(
+-			config_args->hw_update_entries[CAM_JPEG_CHBASE].handle);
++		CAM_ERR(CAM_JPEG, "Not enough buf");
+ 		return -EINVAL;
+ 	}
+ 	CAM_DBG(CAM_JPEG, "iova %pK len %zu offset %d",
+@@ -319,9 +312,6 @@ static int cam_jpeg_insert_cdm_change_base(
+ 	ch_base_iova_addr += size;
+ 	*ch_base_iova_addr = 0;
+ 
+-	cam_mem_put_cpu_buf(
+-		config_args->hw_update_entries[CAM_JPEG_CHBASE].handle);
+-
+ 	return rc;
+ }
+ 
+@@ -1596,7 +1586,6 @@ hw_dump:
+ 		CAM_WARN(CAM_JPEG, "dump offset overshoot len %zu offset %zu",
+ 			jpeg_dump_args.buf_len, dump_args->offset);
+ 		mutex_unlock(&hw_mgr->hw_mgr_mutex);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -1607,7 +1596,6 @@ hw_dump:
+ 		CAM_WARN(CAM_JPEG, "dump buffer exhaust remain %zu min %u",
+ 			remain_len, min_len);
+ 		mutex_unlock(&hw_mgr->hw_mgr_mutex);
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 		return -ENOSPC;
+ 	}
+ 
+@@ -1640,7 +1628,6 @@ hw_dump:
+ 	CAM_DBG(CAM_JPEG, "Offset before %u after %u",
+ 		dump_args->offset, jpeg_dump_args.offset);
+ 	dump_args->offset = jpeg_dump_args.offset;
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.c b/drivers/cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.c
+index f05b827..e1636a6 100644
+--- a/drivers/cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.c
++++ b/drivers/cam_lrme/lrme_hw_mgr/cam_lrme_hw_mgr.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -691,7 +690,6 @@ static int cam_lrme_mgr_hw_dump(void *hw_mgr_priv, void *hw_dump_args)
+ 	CAM_DBG(CAM_LRME, "Offset before %zu after %zu",
+ 		dump_args->offset, lrme_dump_args.offset);
+ 	dump_args->offset = lrme_dump_args.offset;
+-	cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_ope/cam_ope_context.c b/drivers/cam_ope/cam_ope_context.c
+index d7c1e94..4e34fb6 100644
+--- a/drivers/cam_ope/cam_ope_context.c
++++ b/drivers/cam_ope/cam_ope_context.c
+@@ -155,7 +155,6 @@ static int __cam_ope_config_dev_in_ready(struct cam_context *ctx,
+ 	if (rc)
+ 		CAM_ERR(CAM_OPE, "Failed to prepare device");
+ 
+-	cam_mem_put_cpu_buf((int32_t) cmd->packet_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.c b/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.c
+index a732c10..49a1900 100644
+--- a/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.c
++++ b/drivers/cam_ope/ope_hw_mgr/cam_ope_hw_mgr.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/uaccess.h>
+@@ -426,25 +426,6 @@ end:
+ 	return;
+ }
+ 
+-static int cam_ope_mgr_put_cmd_buf(struct cam_packet *packet)
+-{
+-	int i = 0;
+-	struct cam_cmd_buf_desc *cmd_desc = NULL;
+-
+-	cmd_desc = (struct cam_cmd_buf_desc *)
+-		((uint32_t *) &packet->payload + packet->cmd_buf_offset/4);
+-
+-	for (i = 0; i < packet->num_cmd_buf; i++) {
+-		if (cmd_desc[i].type != CAM_CMD_BUF_GENERIC ||
+-			cmd_desc[i].meta_data == OPE_CMD_META_GENERIC_BLOB)
+-			continue;
+-
+-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+-	}
+-
+-	return 0;
+-}
+-
+ static int cam_ope_dump_indirect(struct ope_cmd_buf_info *cmd_buf_info,
+ 	struct cam_ope_hang_dump *dump)
+ {
+@@ -474,7 +455,6 @@ static int cam_ope_dump_indirect(struct ope_cmd_buf_info *cmd_buf_info,
+ 			print_ptr += sizeof(struct cdm_dmi_cmd) /
+ 				sizeof(uint32_t);
+ 	}
+-	cam_mem_put_cpu_buf((int32_t) cmd_buf_info->mem_handle);
+ 	return rc;
+ }
+ 
+@@ -577,7 +557,6 @@ static int cam_ope_dump_frame_process(struct cam_packet *packet,
+ 
+ 	cam_ope_mgr_dump_cmd_buf(cpu_addr, dump);
+ 	cam_ope_mgr_dump_frame_set(cpu_addr, dump);
+-	cam_ope_mgr_put_cmd_buf(packet);
+ 	return rc;
+ }
+ 
+@@ -774,12 +753,14 @@ static int32_t cam_ope_process_request_timer(void *priv, void *data)
+ 			CAM_AXI_PATH_DATA_OPE_START_OFFSET;
+ 
+ 		if ((path_index < 0) || (path_index >= CAM_OPE_MAX_PER_PATH_VOTES)) {
++			/* xiaomi: log disabled in stock
+ 			CAM_WARN_RATE_LIMIT(CAM_OPE,
+ 				"Invalid path %d, start offset=%d, max=%d",
+ 				ctx_data->clk_info.axi_path[i]
+ 				.path_data_type,
+ 				CAM_AXI_PATH_DATA_OPE_START_OFFSET,
+ 				CAM_OPE_MAX_PER_PATH_VOTES);
++			 */
+ 				continue;
+ 		}
+ 
+@@ -1457,11 +1438,13 @@ static bool cam_ope_update_bw_v2(struct cam_ope_hw_mgr *hw_mgr,
+ 		CAM_AXI_PATH_DATA_OPE_START_OFFSET;
+ 
+ 		if ((path_index < 0) || (path_index >= CAM_OPE_MAX_PER_PATH_VOTES)) {
++			/* xiaomi: log disabled in stock
+ 			CAM_WARN_RATE_LIMIT(CAM_OPE,
+ 				"Invalid path %d, start offset=%d, max=%d",
+ 				ctx_data->clk_info.axi_path[i].path_data_type,
+ 				CAM_AXI_PATH_DATA_OPE_START_OFFSET,
+ 				CAM_OPE_MAX_PER_PATH_VOTES);
++			 */
+ 			continue;
+ 		}
+ 
+@@ -1494,11 +1477,13 @@ static bool cam_ope_update_bw_v2(struct cam_ope_hw_mgr *hw_mgr,
+ 			CAM_AXI_PATH_DATA_OPE_START_OFFSET;
+ 
+ 		if ((path_index < 0) || (path_index >= CAM_OPE_MAX_PER_PATH_VOTES)) {
++			/* xiaomi: log disabled in stock
+ 			CAM_WARN_RATE_LIMIT(CAM_OPE,
+ 				"Invalid path %d, start offset=%d, max=%d",
+ 				ctx_data->clk_info.axi_path[i].path_data_type,
+ 				CAM_AXI_PATH_DATA_OPE_START_OFFSET,
+ 				CAM_OPE_MAX_PER_PATH_VOTES);
++			 */
+ 			continue;
+ 		}
+ 		hw_mgr_clk_info->axi_path[path_index].path_data_type =
+@@ -2197,7 +2182,6 @@ static int cam_ope_mgr_process_cmd_buf_req(struct cam_ope_hw_mgr *hw_mgr,
+ 					ope_request->ope_kmd_buf.cpu_addr,
+ 					ope_request->ope_kmd_buf.iova_addr,
+ 					ope_request->ope_kmd_buf.iova_cdm_addr);
+-					cam_mem_put_cpu_buf(cmd_buf->mem_handle);
+ 					break;
+ 				} else if (cmd_buf->cmd_buf_usage ==
+ 					OPE_CMD_BUF_DEBUG) {
+@@ -2213,10 +2197,8 @@ static int cam_ope_mgr_process_cmd_buf_req(struct cam_ope_hw_mgr *hw_mgr,
+ 						cmd_buf->offset;
+ 					CAM_DBG(CAM_OPE, "dbg buf = %x",
+ 					ope_request->ope_debug_buf.cpu_addr);
+-					cam_mem_put_cpu_buf(cmd_buf->mem_handle);
+ 					break;
+ 				}
+-				cam_mem_put_cpu_buf(cmd_buf->mem_handle);
+ 				break;
+ 			}
+ 			case OPE_CMD_BUF_SCOPE_STRIPE: {
+@@ -2793,7 +2775,9 @@ static int cam_ope_mgr_acquire_hw(void *hw_priv, void *hw_acquire_args)
+ 	mutex_unlock(&ctx->ctx_mutex);
+ 	mutex_unlock(&hw_mgr->hw_mgr_mutex);
+ 
++	/* xiaomi: log disabled in stock
+ 	CAM_INFO(CAM_OPE, "OPE: %d acquire succesfull rc %d", ctx_id, rc);
++	 */
+ 	return rc;
+ 
+ free_bw_update:
+@@ -2866,11 +2850,13 @@ static int cam_ope_mgr_remove_bw(struct cam_ope_hw_mgr *hw_mgr, int ctx_id)
+ 		CAM_AXI_PATH_DATA_OPE_START_OFFSET;
+ 
+ 		if ((path_index < 0) || (path_index >= CAM_OPE_MAX_PER_PATH_VOTES)) {
++			/* xiaomi: log disabled in stock
+ 			CAM_WARN_RATE_LIMIT(CAM_OPE,
+ 				"Invalid path %d, start offset=%d, max=%d",
+ 				ctx_data->clk_info.axi_path[i].path_data_type,
+ 				CAM_AXI_PATH_DATA_OPE_START_OFFSET,
+ 				CAM_OPE_MAX_PER_PATH_VOTES);
++			 */
+ 			continue;
+ 		}
+ 
+@@ -3061,7 +3047,6 @@ static int cam_ope_mgr_release_hw(void *hw_priv, void *hw_release_args)
+ 	return rc;
+ }
+ 
+-
+ static int cam_ope_packet_generic_blob_handler(void *user_data,
+ 	uint32_t blob_type, uint32_t blob_size, uint8_t *blob_data)
+ {
+@@ -3318,15 +3303,14 @@ static int cam_ope_mgr_prepare_hw_update(void *hw_priv,
+ 		ctx_data->last_req_time);
+ 	cam_ope_req_timer_modify(ctx_data, ctx_data->req_timer_timeout);
+ 	set_bit(request_idx, ctx_data->bitmap);
+-	cam_ope_mgr_put_cmd_buf(packet);
+ 	mutex_unlock(&ctx_data->ctx_mutex);
++
+ 	CAM_DBG(CAM_REQ, "Prepare Hw update Successful request_id: %d  ctx: %d",
+ 		packet->header.request_id, ctx_data->ctx_id);
+ 	return rc;
+ 
+ end:
+ 	cam_free_clear((void *)ctx_data->req_list[request_idx]->cdm_cmd);
+-	cam_ope_mgr_put_cmd_buf(packet);
+ 	ctx_data->req_list[request_idx]->cdm_cmd = NULL;
+ req_cdm_mem_alloc_failed:
+ 	cam_free_clear((void *)ctx_data->req_list[request_idx]);
+diff --git a/drivers/cam_ope/ope_hw_mgr/ope_hw/ope_core.c b/drivers/cam_ope/ope_hw_mgr/ope_hw/ope_core.c
+index 60c677e..bb020f8 100644
+--- a/drivers/cam_ope/ope_hw_mgr/ope_hw/ope_core.c
++++ b/drivers/cam_ope/ope_hw_mgr/ope_hw/ope_core.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/of.h>
+@@ -587,7 +586,6 @@ static uint32_t *ope_create_frame_cmd_batch(struct cam_ope_hw_mgr *hw_mgr,
+ 				dmi_cmd = (struct cdm_dmi_cmd *)temp;
+ 				if (!dmi_cmd->addr) {
+ 					CAM_ERR(CAM_OPE, "Null dmi cmd addr");
+-					cam_mem_put_cpu_buf(frm_proc->cmd_buf[i][j].mem_handle);
+ 					return NULL;
+ 				}
+ 
+@@ -608,8 +606,6 @@ static uint32_t *ope_create_frame_cmd_batch(struct cam_ope_hw_mgr *hw_mgr,
+ 		if (hw_mgr->frame_dump_enable)
+ 			dump_frame_cmd(frm_proc, i, j,
+ 				iova_addr, kmd_buf, buf_len);
+-
+-		cam_mem_put_cpu_buf(frm_proc->cmd_buf[i][j].mem_handle);
+ 	}
+ 	return kmd_buf;
+ 
+@@ -749,8 +745,6 @@ static uint32_t *ope_create_frame_cmd(struct cam_ope_hw_mgr *hw_mgr,
+ 					if (!dmi_cmd->addr) {
+ 						CAM_ERR(CAM_OPE,
+ 							"Null dmi cmd addr");
+-						cam_mem_put_cpu_buf(
+-							frm_proc->cmd_buf[i][j].mem_handle);
+ 						return NULL;
+ 					}
+ 
+@@ -772,8 +766,6 @@ static uint32_t *ope_create_frame_cmd(struct cam_ope_hw_mgr *hw_mgr,
+ 			if (hw_mgr->frame_dump_enable)
+ 				dump_frame_cmd(frm_proc, i, j,
+ 					iova_addr, kmd_buf, buf_len);
+-
+-			cam_mem_put_cpu_buf(frm_proc->cmd_buf[i][j].mem_handle);
+ 		}
+ 	}
+ 	return kmd_buf;
+@@ -869,7 +861,6 @@ static uint32_t *ope_create_stripe_cmd(struct cam_ope_hw_mgr *hw_mgr,
+ 				dmi_cmd = (struct cdm_dmi_cmd *)temp;
+ 				if (!dmi_cmd->addr) {
+ 					CAM_ERR(CAM_OPE, "Null dmi cmd addr");
+-					cam_mem_put_cpu_buf(frm_proc->cmd_buf[i][k].mem_handle);
+ 					return NULL;
+ 				}
+ 
+@@ -888,8 +879,6 @@ static uint32_t *ope_create_stripe_cmd(struct cam_ope_hw_mgr *hw_mgr,
+ 		if (hw_mgr->frame_dump_enable)
+ 			dump_stripe_cmd(frm_proc, stripe_idx, i, k,
+ 				iova_addr, kmd_buf, buf_len);
+-
+-		cam_mem_put_cpu_buf(frm_proc->cmd_buf[i][k].mem_handle);
+ 	}
+ 
+ 	ope_dev = hw_mgr->ope_dev_intf[0]->hw_priv;
+diff --git a/drivers/cam_req_mgr/cam_mem_mgr.c b/drivers/cam_req_mgr/cam_mem_mgr.c
+index d4c2d08..2c51c7f 100644
+--- a/drivers/cam_req_mgr/cam_mem_mgr.c
++++ b/drivers/cam_req_mgr/cam_mem_mgr.c
+@@ -274,31 +274,24 @@ int cam_mem_get_cpu_buf(int32_t buf_handle, uintptr_t *vaddr_ptr, size_t *len)
+ 		return -EINVAL;
+ 
+ 	idx = CAM_MEM_MGR_GET_HDL_IDX(buf_handle);
+-
+ 	if (idx >= CAM_MEM_BUFQ_MAX || idx <= 0)
+ 		return -EINVAL;
+ 
+ 	if (!tbl.bufq[idx].active)
+ 		return -EPERM;
+ 
+-	if (buf_handle != tbl.bufq[idx].buf_handle) {
+-		CAM_ERR(CAM_MEM, "idx: %d Invalid buf handle %d",
+-				idx, buf_handle);
++	if (buf_handle != tbl.bufq[idx].buf_handle)
+ 		return -EINVAL;
+-	}
+ 
+-	if (!(tbl.bufq[idx].flags & CAM_MEM_FLAG_KMD_ACCESS)) {
+-		CAM_ERR(CAM_MEM, "idx: %d Invalid flag 0x%x",
+-					idx, tbl.bufq[idx].flags);
++	if (!(tbl.bufq[idx].flags & CAM_MEM_FLAG_KMD_ACCESS))
+ 		return -EINVAL;
+-	}
+ 
+-	if (tbl.bufq[idx].kmdvaddr && kref_get_unless_zero(&tbl.bufq[idx].krefcount)) {
++	if (tbl.bufq[idx].kmdvaddr) {
+ 		*vaddr_ptr = tbl.bufq[idx].kmdvaddr;
+ 		*len = tbl.bufq[idx].len;
+ 	} else {
+-		CAM_ERR(CAM_MEM, "No KMD access requested, kmdvddr= %p, idx= %d, buf_handle= %d",
+-			tbl.bufq[idx].kmdvaddr, idx, buf_handle);
++		CAM_ERR(CAM_MEM, "No KMD access was requested for 0x%x handle",
++			buf_handle);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -917,8 +910,6 @@ int cam_mem_mgr_alloc_and_map(struct cam_mem_mgr_alloc_cmd *cmd)
+ 	memcpy(tbl.bufq[idx].hdls, cmd->mmu_hdls,
+ 		sizeof(int32_t) * cmd->num_hdl);
+ 	tbl.bufq[idx].is_imported = false;
+-	kref_init(&tbl.bufq[idx].krefcount);
+-	tbl.bufq[idx].smmu_mapping_client = CAM_SMMU_MAPPING_USER;
+ 	mutex_unlock(&tbl.bufq[idx].q_lock);
+ 
+ 	cmd->out.buf_handle = tbl.bufq[idx].buf_handle;
+@@ -1043,8 +1034,6 @@ int cam_mem_mgr_map(struct cam_mem_mgr_map_cmd *cmd)
+ 		sizeof(int32_t) * cmd->num_hdl);
+ 	tbl.bufq[idx].is_imported = true;
+ 	tbl.bufq[idx].is_internal = is_internal;
+-	kref_init(&tbl.bufq[idx].krefcount);
+-	tbl.bufq[idx].smmu_mapping_client = CAM_SMMU_MAPPING_USER;
+ 	mutex_unlock(&tbl.bufq[idx].q_lock);
+ 
+ 	cmd->out.buf_handle = tbl.bufq[idx].buf_handle;
+@@ -1201,23 +1190,17 @@ void cam_mem_mgr_deinit(void)
+ 	mutex_destroy(&tbl.m_lock);
+ }
+ 
+-static void cam_mem_util_unmap(struct kref *kref)
++static int cam_mem_util_unmap(int32_t idx,
++	enum cam_smmu_mapping_client client)
+ {
+ 	int rc = 0;
+-	int32_t idx;
+ 	enum cam_smmu_region_id region = CAM_SMMU_REGION_SHARED;
+-	enum cam_smmu_mapping_client client;
+-	struct cam_mem_buf_queue *bufq =
+-		container_of(kref, typeof(*bufq), krefcount);
+ 
+-	idx = CAM_MEM_MGR_GET_HDL_IDX(bufq->buf_handle);
+ 	if (idx >= CAM_MEM_BUFQ_MAX || idx <= 0) {
+ 		CAM_ERR(CAM_MEM, "Incorrect index");
+-		return;
++		return -EINVAL;
+ 	}
+ 
+-	client = tbl.bufq[idx].smmu_mapping_client;
+-
+ 	CAM_DBG(CAM_MEM, "Flags = %X idx %d", tbl.bufq[idx].flags, idx);
+ 
+ 	mutex_lock(&tbl.m_lock);
+@@ -1226,7 +1209,7 @@ static void cam_mem_util_unmap(struct kref *kref)
+ 		CAM_WARN(CAM_MEM, "Buffer at idx=%d is already unmapped,",
+ 			idx);
+ 		mutex_unlock(&tbl.m_lock);
+-		return;
++		return 0;
+ 	}
+ 
+ 	if (tbl.bufq[idx].flags & CAM_MEM_FLAG_KMD_ACCESS) {
+@@ -1287,50 +1270,13 @@ static void cam_mem_util_unmap(struct kref *kref)
+ 	clear_bit(idx, tbl.bitmap);
+ 	mutex_unlock(&tbl.m_lock);
+ 
++	return rc;
+ }
+ 
+-void cam_mem_put_cpu_buf(int32_t buf_handle)
+-{
+-	int rc = 0;
+-	int idx;
+-
+-	if (!buf_handle) {
+-		CAM_ERR(CAM_MEM, "Invalid buf_handle");
+-		return;
+-	}
+-
+-	idx = CAM_MEM_MGR_GET_HDL_IDX(buf_handle);
+-	if (idx >= CAM_MEM_BUFQ_MAX || idx <= 0) {
+-		CAM_ERR(CAM_MEM, "idx: %d not valid", idx);
+-		return;
+-	}
+-
+-	if (!tbl.bufq[idx].active) {
+-		CAM_ERR(CAM_MEM, "idx: %d not active", idx);
+-		rc = -EPERM;
+-		return;
+-	}
+-
+-	if (buf_handle != tbl.bufq[idx].buf_handle) {
+-		CAM_ERR(CAM_MEM, "idx: %d Invalid buf handle %d",
+-				idx, buf_handle);
+-		rc = -EINVAL;
+-		return;
+-	}
+-
+-	if (kref_put(&tbl.bufq[idx].krefcount, cam_mem_util_unmap))
+-		CAM_DBG(CAM_MEM,
+-			"Called unmap from here, buf_handle: %u, idx: %d",
+-			buf_handle, idx);
+-
+-}
+-EXPORT_SYMBOL(cam_mem_put_cpu_buf);
+-
+-
+ int cam_mem_mgr_release(struct cam_mem_mgr_release_cmd *cmd)
+ {
+ 	int idx;
+-	int rc = 0;
++	int rc;
+ 
+ 	if (!atomic_read(&cam_mem_mgr_state)) {
+ 		CAM_ERR(CAM_MEM, "failed. mem_mgr not initialized");
+@@ -1362,11 +1308,7 @@ int cam_mem_mgr_release(struct cam_mem_mgr_release_cmd *cmd)
+ 	}
+ 
+ 	CAM_DBG(CAM_MEM, "Releasing hdl = %x, idx = %d", cmd->buf_handle, idx);
+-
+-	if (kref_put(&tbl.bufq[idx].krefcount, cam_mem_util_unmap))
+-		CAM_DBG(CAM_MEM,
+-			"Called unmap from here, buf_handle: %u, idx: %d",
+-			cmd->buf_handle, idx);
++	rc = cam_mem_util_unmap(idx, CAM_SMMU_MAPPING_USER);
+ 
+ 	return rc;
+ }
+@@ -1476,8 +1418,6 @@ int cam_mem_mgr_request_mem(struct cam_mem_mgr_request_desc *inp,
+ 	memcpy(tbl.bufq[idx].hdls, &smmu_hdl,
+ 		sizeof(int32_t));
+ 	tbl.bufq[idx].is_imported = false;
+-	kref_init(&tbl.bufq[idx].krefcount);
+-	tbl.bufq[idx].smmu_mapping_client = CAM_SMMU_MAPPING_KERNEL;
+ 	mutex_unlock(&tbl.bufq[idx].q_lock);
+ 
+ 	out->kva = kvaddr;
+@@ -1503,7 +1443,7 @@ EXPORT_SYMBOL(cam_mem_mgr_request_mem);
+ int cam_mem_mgr_release_mem(struct cam_mem_mgr_memory_desc *inp)
+ {
+ 	int32_t idx;
+-	int rc = 0;
++	int rc;
+ 
+ 	if (!atomic_read(&cam_mem_mgr_state)) {
+ 		CAM_ERR(CAM_MEM, "failed. mem_mgr not initialized");
+@@ -1537,12 +1477,7 @@ int cam_mem_mgr_release_mem(struct cam_mem_mgr_memory_desc *inp)
+ 	}
+ 
+ 	CAM_DBG(CAM_MEM, "Releasing hdl = %X", inp->mem_handle);
+-	if (kref_put(&tbl.bufq[idx].krefcount, cam_mem_util_unmap))
+-		CAM_DBG(CAM_MEM,
+-			"Called unmap from here, buf_handle: %u, idx: %d",
+-			tbl.bufq[idx].buf_handle, idx);
+-	else
+-		rc = -EINVAL;
++	rc = cam_mem_util_unmap(idx, CAM_SMMU_MAPPING_KERNEL);
+ 
+ 	return rc;
+ }
+@@ -1627,8 +1562,6 @@ int cam_mem_mgr_reserve_memory_region(struct cam_mem_mgr_request_desc *inp,
+ 	memcpy(tbl.bufq[idx].hdls, &smmu_hdl,
+ 		sizeof(int32_t));
+ 	tbl.bufq[idx].is_imported = false;
+-	kref_init(&tbl.bufq[idx].krefcount);
+-	tbl.bufq[idx].smmu_mapping_client = CAM_SMMU_MAPPING_KERNEL;
+ 	mutex_unlock(&tbl.bufq[idx].q_lock);
+ 
+ 	out->kva = 0;
+@@ -1713,12 +1646,9 @@ int cam_mem_mgr_free_memory_region(struct cam_mem_mgr_memory_desc *inp)
+ 	}
+ 
+ 	CAM_DBG(CAM_MEM, "Releasing hdl = %X", inp->mem_handle);
+-	if (kref_put(&tbl.bufq[idx].krefcount, cam_mem_util_unmap))
+-		CAM_DBG(CAM_MEM,
+-			"Called unmap from here, buf_handle: %u, idx: %d",
+-			inp->mem_handle, idx);
+-	else
+-		rc = -EINVAL;
++	rc = cam_mem_util_unmap(idx, CAM_SMMU_MAPPING_KERNEL);
++	if (rc)
++		CAM_ERR(CAM_MEM, "unmapping secondary heap failed");
+ 
+ 	return rc;
+ }
+diff --git a/drivers/cam_req_mgr/cam_mem_mgr.h b/drivers/cam_req_mgr/cam_mem_mgr.h
+index 69e2382..8612d3d 100644
+--- a/drivers/cam_req_mgr/cam_mem_mgr.h
++++ b/drivers/cam_req_mgr/cam_mem_mgr.h
+@@ -1,7 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ /*
+  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #ifndef _CAM_MEM_MGR_H_
+@@ -46,9 +45,6 @@ enum cam_smmu_mapping_client {
+  * @active:      state of the buffer
+  * @is_imported: Flag indicating if buffer is imported from an FD in user space
+  * @is_internal: Flag indicating kernel allocated buffer
+- * @krefcount:      Reference counter to track whether the buffer is
+- *                  mapped and in use
+- * @smmu_mapping_client: Client buffer (User or kernel)
+  */
+ struct cam_mem_buf_queue {
+ 	struct dma_buf *dma_buf;
+@@ -65,8 +61,6 @@ struct cam_mem_buf_queue {
+ 	bool active;
+ 	bool is_imported;
+ 	bool is_internal;
+-	struct kref krefcount;
+-	enum cam_smmu_mapping_client smmu_mapping_client;
+ };
+ 
+ /**
+diff --git a/drivers/cam_req_mgr/cam_mem_mgr_api.h b/drivers/cam_req_mgr/cam_mem_mgr_api.h
+index 6e28550..e216a46 100644
+--- a/drivers/cam_req_mgr/cam_mem_mgr_api.h
++++ b/drivers/cam_req_mgr/cam_mem_mgr_api.h
+@@ -1,7 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ /*
+  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #ifndef _CAM_MEM_MGR_API_H_
+@@ -91,14 +90,6 @@ int cam_mem_get_io_buf(int32_t buf_handle, int32_t mmu_handle,
+ int cam_mem_get_cpu_buf(int32_t buf_handle, uintptr_t *vaddr_ptr,
+ 	size_t *len);
+ 
+-/**
+- * @brief: This indicates end of CPU access
+- *
+- * @buf_handle: Handle for the buffer
+- *
+- */
+-void cam_mem_put_cpu_buf(int32_t buf_handle);
+-
+ static inline bool cam_mem_is_secure_buf(int32_t buf_handle)
+ {
+ 	return CAM_MEM_MGR_IS_SECURE_HDL(buf_handle);
+diff --git a/drivers/cam_req_mgr/cam_req_mgr_core.c b/drivers/cam_req_mgr/cam_req_mgr_core.c
+index 74be957..0d2a6b1 100644
+--- a/drivers/cam_req_mgr/cam_req_mgr_core.c
++++ b/drivers/cam_req_mgr/cam_req_mgr_core.c
+@@ -23,6 +23,8 @@ static struct cam_req_mgr_core_link g_links[MAXIMUM_LINKS_PER_SESSION];
+ 
+ void cam_req_mgr_core_link_reset(struct cam_req_mgr_core_link *link)
+ {
++	uint32_t pd = 0;
++
+ 	link->link_hdl = 0;
+ 	link->num_devs = 0;
+ 	link->max_delay = CAM_PIPELINE_DELAY_0;
+@@ -48,6 +50,11 @@ void cam_req_mgr_core_link_reset(struct cam_req_mgr_core_link *link)
+ 	link->initial_skip = true;
+ 	link->sof_timestamp = 0;
+ 	link->prev_sof_timestamp = 0;
++
++	for (pd = 0; pd < CAM_PIPELINE_DELAY_MAX; pd++) {
++		link->req.apply_data[pd].req_id = -1;
++		link->req.prev_apply_data[pd].req_id = -1;
++	}
+ }
+ 
+ void cam_req_mgr_handle_core_shutdown(void)
+@@ -213,6 +220,64 @@ static void __cam_req_mgr_find_dev_name(
+ 	}
+ }
+ 
++/**
++ * __cam_req_mgr_notify_frame_skip()
++ *
++ * @brief : Notify all devices of frame skipping
++ * @link  : link on which we are applying these settings
++ * @trigger : trigger point of the frame being skipped
++ *
++ */
++static int __cam_req_mgr_notify_frame_skip(
++	struct cam_req_mgr_core_link *link,
++	uint32_t trigger)
++{
++	int                                  rc = 0, i, pd, idx;
++	struct cam_req_mgr_apply_request     frame_skip;
++	struct cam_req_mgr_apply            *apply_data = NULL;
++	struct cam_req_mgr_connected_device *dev = NULL;
++	struct cam_req_mgr_tbl_slot         *slot = NULL;
++
++	apply_data = link->req.prev_apply_data;
++
++	for (i = 0; i < link->num_devs; i++) {
++		dev = &link->l_dev[i];
++		if (!dev)
++			continue;
++
++		pd = dev->dev_info.p_delay;
++		if (pd >= CAM_PIPELINE_DELAY_MAX) {
++			CAM_WARN(CAM_CRM, "pd %d greater than max",
++				pd);
++			continue;
++		}
++
++		idx = apply_data[pd].idx;
++		slot = &dev->pd_tbl->slot[idx];
++
++		if ((slot->dev_hdl == dev->dev_hdl) &&
++			(slot->is_applied)) {
++			slot->is_applied = false;
++			continue;
++		}
++
++		frame_skip.dev_hdl = dev->dev_hdl;
++		frame_skip.link_hdl = link->link_hdl;
++		frame_skip.request_id =
++			apply_data[pd].req_id;
++		frame_skip.trigger_point = trigger;
++		frame_skip.report_if_bubble = 0;
++
++		CAM_DBG(CAM_REQ,
++			"Notify_frame_skip: pd %d req_id %lld",
++			link->link_hdl, pd, apply_data[pd].req_id);
++		if ((dev->ops) && (dev->ops->notify_frame_skip))
++			dev->ops->notify_frame_skip(&frame_skip);
++	}
++
++	return rc;
++}
++
+ /**
+  * __cam_req_mgr_notify_error_on_link()
+  *
+@@ -664,10 +729,17 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 	struct cam_req_mgr_apply_request     apply_req;
+ 	struct cam_req_mgr_link_evt_data     evt_data;
+ 	struct cam_req_mgr_tbl_slot          *slot = NULL;
++	struct cam_req_mgr_apply             *apply_data = NULL;
+ 
+ 	apply_req.link_hdl = link->link_hdl;
+ 	apply_req.report_if_bubble = 0;
+ 
++	apply_data = link->req.apply_data;
++
++	/*
++	 * This For loop is to address the special operation requested
++	 * by device
++	 */
+ 	for (i = 0; i < link->num_devs; i++) {
+ 		dev = &link->l_dev[i];
+ 		if (!dev)
+@@ -679,7 +751,7 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 			continue;
+ 		}
+ 
+-		idx = link->req.apply_data[pd].idx;
++		idx = apply_data[pd].idx;
+ 		slot = &dev->pd_tbl->slot[idx];
+ 		/*
+ 		 * Just let flash go for this request and other
+@@ -695,12 +767,14 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 
+ 		apply_req.dev_hdl = dev->dev_hdl;
+ 		apply_req.request_id =
+-			link->req.apply_data[pd].req_id;
++			apply_data[pd].req_id;
+ 		apply_req.trigger_point = trigger;
+ 		if (dev->ops && dev->ops->apply_req) {
+ 			rc = dev->ops->apply_req(&apply_req);
+ 			if (rc) {
+ 				*failed_dev = dev;
++				__cam_req_mgr_notify_frame_skip(link,
++					trigger);
+ 				return rc;
+ 			}
+ 			CAM_DBG(CAM_REQ,
+@@ -721,11 +795,20 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 					pd);
+ 				continue;
+ 			}
+-			if (link->req.apply_data[pd].skip_idx ||
+-				link->req.apply_data[pd].req_id < 0) {
+-				CAM_DBG(CAM_CRM, "skip %d req_id %lld",
+-					link->req.apply_data[pd].skip_idx,
+-					link->req.apply_data[pd].req_id);
++			if (apply_data[pd].skip_idx ||
++				(apply_data[pd].req_id < 0)) {
++				CAM_DBG(CAM_CRM,
++					"dev %s skip %d req_id %lld",
++					dev->dev_info.name,
++					apply_data[pd].skip_idx,
++					apply_data[pd].req_id);
++				apply_req.dev_hdl = dev->dev_hdl;
++				apply_req.request_id =
++					link->req.prev_apply_data[pd].req_id;
++				apply_req.trigger_point = 0;
++				apply_req.report_if_bubble = 0;
++				if ((dev->ops) && (dev->ops->notify_frame_skip))
++					dev->ops->notify_frame_skip(&apply_req);
+ 				continue;
+ 			}
+ 			if (!(dev->dev_info.trigger & trigger))
+@@ -733,8 +816,8 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 
+ 			apply_req.dev_hdl = dev->dev_hdl;
+ 			apply_req.request_id =
+-				link->req.apply_data[pd].req_id;
+-			idx = link->req.apply_data[pd].idx;
++				apply_data[pd].req_id;
++			idx = apply_data[pd].idx;
+ 			slot = &dev->pd_tbl->slot[idx];
+ 			apply_req.report_if_bubble =
+ 				in_q->slot[idx].recover;
+@@ -747,7 +830,7 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 
+ 			apply_req.trigger_point = trigger;
+ 			CAM_DBG(CAM_REQ,
+-				"SEND: link_hdl: %x pd %d req_id %lld",
++				"SEND: %d link_hdl: %x pd %d req_id %lld",
+ 				link->link_hdl, pd, apply_req.request_id);
+ 			if (dev->ops && dev->ops->apply_req) {
+ 				rc = dev->ops->apply_req(&apply_req);
+@@ -773,7 +856,13 @@ static int __cam_req_mgr_send_req(struct cam_req_mgr_core_link *link,
+ 			if (dev->ops && dev->ops->process_evt)
+ 				dev->ops->process_evt(&evt_data);
+ 		}
++		__cam_req_mgr_notify_frame_skip(link, trigger);
++	} else {
++		memcpy(link->req.prev_apply_data, link->req.apply_data,
++			CAM_PIPELINE_DELAY_MAX *
++			sizeof(struct cam_req_mgr_apply));
+ 	}
++
+ 	return rc;
+ }
+ 
+@@ -1472,6 +1561,7 @@ static int __cam_req_mgr_process_req(struct cam_req_mgr_core_link *link,
+ 				rc = -EPERM;
+ 			}
+ 			spin_unlock_bh(&link->link_state_spin_lock);
++			__cam_req_mgr_notify_frame_skip(link, trigger);
+ 			goto end;
+ 		}
+ 	}
+@@ -2072,38 +2162,6 @@ static void __cam_req_mgr_unreserve_link(
+ 
+ /* Workqueue context processing section */
+ 
+-/**
+- * cam_req_mgr_process_send_req()
+- *
+- * @brief: This runs in workque thread context. Call core funcs to send
+- *         apply request id to drivers.
+- * @priv : link information.
+- * @data : contains information about frame_id, link etc.
+- *
+- * @return: 0 on success.
+- */
+-int cam_req_mgr_process_send_req(void *priv, void *data)
+-{
+-	int                                 rc = 0;
+-	struct cam_req_mgr_core_link        *link = NULL;
+-	struct cam_req_mgr_send_request     *send_req = NULL;
+-	struct cam_req_mgr_req_queue        *in_q = NULL;
+-	struct cam_req_mgr_connected_device *dev;
+-
+-	if (!data || !priv) {
+-		CAM_ERR(CAM_CRM, "input args NULL %pK %pK", data, priv);
+-		rc = -EINVAL;
+-		goto end;
+-	}
+-	link = (struct cam_req_mgr_core_link *)priv;
+-	send_req = (struct cam_req_mgr_send_request *)data;
+-	in_q = send_req->in_q;
+-
+-	rc = __cam_req_mgr_send_req(link, in_q, CAM_TRIGGER_POINT_SOF, &dev);
+-end:
+-	return rc;
+-}
+-
+ /**
+  * cam_req_mgr_process_flush_req()
+  *
+@@ -2117,6 +2175,7 @@ end:
+ int cam_req_mgr_process_flush_req(void *priv, void *data)
+ {
+ 	int                                  rc = 0, i = 0, idx = -1;
++	uint32_t                             pd = 0;
+ 	struct cam_req_mgr_flush_info       *flush_info = NULL;
+ 	struct cam_req_mgr_core_link        *link = NULL;
+ 	struct cam_req_mgr_req_queue        *in_q = NULL;
+@@ -2182,6 +2241,12 @@ int cam_req_mgr_process_flush_req(void *priv, void *data)
+ 		if (device->ops && device->ops->flush_req)
+ 			rc = device->ops->flush_req(&flush_req);
+ 	}
++
++	for (pd = 0; pd < CAM_PIPELINE_DELAY_MAX; pd++) {
++		link->req.apply_data[pd].req_id = -1;
++		link->req.prev_apply_data[pd].req_id = -1;
++	}
++
+ 	complete(&link->workq_comp);
+ 	mutex_unlock(&link->req.lock);
+ 
+diff --git a/drivers/cam_req_mgr/cam_req_mgr_core.h b/drivers/cam_req_mgr/cam_req_mgr_core.h
+index 3edecda..8beb8d8 100644
+--- a/drivers/cam_req_mgr/cam_req_mgr_core.h
++++ b/drivers/cam_req_mgr/cam_req_mgr_core.h
+@@ -281,6 +281,7 @@ struct cam_req_mgr_req_data {
+ 	struct cam_req_mgr_req_tbl   *l_tbl;
+ 	int32_t                       num_tbl;
+ 	struct cam_req_mgr_apply      apply_data[CAM_PIPELINE_DELAY_MAX];
++	struct cam_req_mgr_apply      prev_apply_data[CAM_PIPELINE_DELAY_MAX];
+ 	struct mutex                  lock;
+ };
+ 
+diff --git a/drivers/cam_req_mgr/cam_req_mgr_interface.h b/drivers/cam_req_mgr/cam_req_mgr_interface.h
+index 7c184d6..37653d2 100644
+--- a/drivers/cam_req_mgr/cam_req_mgr_interface.h
++++ b/drivers/cam_req_mgr/cam_req_mgr_interface.h
+@@ -56,6 +56,8 @@ typedef int (*cam_req_mgr_get_dev_info) (struct cam_req_mgr_device_info *);
+ typedef int (*cam_req_mgr_link_setup)(
+ 	struct cam_req_mgr_core_dev_link_setup *);
+ typedef int (*cam_req_mgr_apply_req)(struct cam_req_mgr_apply_request *);
++typedef int (*cam_req_mgr_notify_frame_skip)(
++	struct cam_req_mgr_apply_request *);
+ typedef int (*cam_req_mgr_flush_req)(struct cam_req_mgr_flush_request *);
+ typedef int (*cam_req_mgr_process_evt)(struct cam_req_mgr_link_evt_data *);
+ typedef int (*cam_req_mgr_dump_req)(struct cam_req_mgr_dump_info *);
+@@ -82,6 +84,7 @@ struct cam_req_mgr_crm_cb {
+  * @get_dev_info : payload to fetch device details
+  * @link_setup   : payload to establish link with device
+  * @apply_req    : payload to apply request id on a device linked
++ * @notify_frame_skip: payload to notify frame skip
+  * @flush_req    : payload to flush request
+  * @process_evt  : payload to generic event
+  * @dump_req     : payload to dump request
+@@ -90,6 +93,7 @@ struct cam_req_mgr_kmd_ops {
+ 	cam_req_mgr_get_dev_info     get_dev_info;
+ 	cam_req_mgr_link_setup       link_setup;
+ 	cam_req_mgr_apply_req        apply_req;
++	cam_req_mgr_notify_frame_skip notify_frame_skip;
+ 	cam_req_mgr_flush_req        flush_req;
+ 	cam_req_mgr_process_evt      process_evt;
+ 	cam_req_mgr_dump_req         dump_req;
+diff --git a/drivers/cam_sensor_module/cam_actuator/cam_actuator_core.c b/drivers/cam_sensor_module/cam_actuator/cam_actuator_core.c
+index 8159ea7..1555b01 100644
+--- a/drivers/cam_sensor_module/cam_actuator/cam_actuator_core.c
++++ b/drivers/cam_sensor_module/cam_actuator/cam_actuator_core.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -564,7 +563,6 @@ int32_t cam_actuator_i2c_pkt_parse(struct cam_actuator_ctrl_t *a_ctrl,
+ 				}
+ 				break;
+ 			}
+-			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 		}
+ 
+ 		if (a_ctrl->cam_act_state == CAM_ACTUATOR_ACQUIRE) {
+@@ -734,7 +732,6 @@ int32_t cam_actuator_i2c_pkt_parse(struct cam_actuator_ctrl_t *a_ctrl,
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(config.packet_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_sensor_module/cam_csiphy/cam_csiphy_core.c b/drivers/cam_sensor_module/cam_csiphy/cam_csiphy_core.c
+index 35047b2..77288db 100644
+--- a/drivers/cam_sensor_module/cam_csiphy/cam_csiphy_core.c
++++ b/drivers/cam_sensor_module/cam_csiphy/cam_csiphy_core.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -263,10 +263,7 @@ int32_t cam_cmd_buf_parser(struct csiphy_device *csiphy_dev,
+ 		csiphy_dev->csiphy_info.settle_time,
+ 		csiphy_dev->csiphy_info.data_rate);
+ 
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+-	cam_mem_put_cpu_buf(cfg_dev->packet_handle);
+ 	return rc;
+-
+ }
+ 
+ void cam_csiphy_cphy_irq_config(struct csiphy_device *csiphy_dev)
+diff --git a/drivers/cam_sensor_module/cam_csiphy/include/cam_csiphy_1_2_1_hwreg.h b/drivers/cam_sensor_module/cam_csiphy/include/cam_csiphy_1_2_1_hwreg.h
+index 2c273b9..9987b34 100644
+--- a/drivers/cam_sensor_module/cam_csiphy/include/cam_csiphy_1_2_1_hwreg.h
++++ b/drivers/cam_sensor_module/cam_csiphy/include/cam_csiphy_1_2_1_hwreg.h
+@@ -396,17 +396,21 @@ struct data_rate_settings_t data_rate_delta_table_1_2_1 = {
+ 		{
+ 			/* (2.5 * 10**3 * 2.28) rounded value*/
+ 			.bandwidth = 5700000000,
+-			.data_rate_reg_array_size = 9,
++			/* xiaomi (stock sapphire) 2.5Gsps PHY tuning */
++			.data_rate_reg_array_size = 12,
+ 			.csiphy_data_rate_regs = {
++				{0x9B4, 0x0C, 0x01, CSIPHY_DEFAULT_PARAMS},
++				{0xAB4, 0x0C, 0x01, CSIPHY_DEFAULT_PARAMS},
++				{0xBB4, 0x0C, 0x01, CSIPHY_DEFAULT_PARAMS},
+ 				{0x164, 0x0B, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 				{0x364, 0x0B, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 				{0x564, 0x0B, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 				{0x144, 0x32, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 				{0x344, 0x32, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 				{0x544, 0x32, 0x00, CSIPHY_DEFAULT_PARAMS},
+-				{0x16C, 0x25, 0x00, CSIPHY_DEFAULT_PARAMS},
+-				{0x36C, 0x25, 0x00, CSIPHY_DEFAULT_PARAMS},
+-				{0x56C, 0x25, 0x00, CSIPHY_DEFAULT_PARAMS},
++				{0x16C, 0x07, 0x00, CSIPHY_DEFAULT_PARAMS},
++				{0x36C, 0x07, 0x00, CSIPHY_DEFAULT_PARAMS},
++				{0x56C, 0x07, 0x00, CSIPHY_DEFAULT_PARAMS},
+ 			}
+ 		},
+ 		{
+diff --git a/drivers/cam_sensor_module/cam_eeprom/cam_eeprom_core.c b/drivers/cam_sensor_module/cam_eeprom/cam_eeprom_core.c
+index 3e5b3c4..8ea093f 100644
+--- a/drivers/cam_sensor_module/cam_eeprom/cam_eeprom_core.c
++++ b/drivers/cam_sensor_module/cam_eeprom/cam_eeprom_core.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -892,12 +892,9 @@ static int32_t cam_eeprom_parse_write_memory_packet(
+ 				break;
+ 			}
+ 		}
+-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	}
+-	return rc;
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	return rc;
+ }
+ 
+@@ -1054,12 +1051,9 @@ static int32_t cam_eeprom_init_pkt_parser(struct cam_eeprom_ctrl_t *e_ctrl,
+ 			}
+ 		}
+ 		e_ctrl->cal_data.num_map = num_map + 1;
+-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	}
+-	return rc;
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	return rc;
+ }
+ 
+@@ -1129,7 +1123,6 @@ static int32_t cam_eeprom_get_cal_data(struct cam_eeprom_ctrl_t *e_ctrl,
+ 				e_ctrl->cal_data.num_data);
+ 			memcpy(read_buffer, e_ctrl->cal_data.mapdata,
+ 					e_ctrl->cal_data.num_data);
+-			cam_mem_put_cpu_buf(io_cfg->mem_handle[0]);
+ 		} else {
+ 			CAM_ERR(CAM_EEPROM, "Invalid direction");
+ 			rc = -EINVAL;
+@@ -1378,7 +1371,6 @@ static int32_t cam_eeprom_pkt_parse(struct cam_eeprom_ctrl_t *e_ctrl, void *arg)
+ 		break;
+ 	}
+ 
+-	cam_mem_put_cpu_buf(dev_config.packet_handle);
+ 	return rc;
+ power_down:
+ 	cam_eeprom_power_down(e_ctrl);
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_core.c b/drivers/cam_sensor_module/cam_flash/cam_flash_core.c
+index 7f72971..8463485 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_core.c
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_core.c
+@@ -1,16 +1,17 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
++#include <linux/gpio.h>
+ 
+ #include "cam_sensor_cmn_header.h"
+ #include "cam_flash_core.h"
+ #include "cam_res_mgr_api.h"
+ #include "cam_common_util.h"
+ #include "cam_packet_util.h"
++#include <dt-bindings/msm-camera.h>
+ 
+ int cam_flash_led_prepare(struct led_trigger *trigger, int options,
+ 	int *max_current, bool is_wled)
+@@ -428,12 +429,25 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
+ int cam_flash_off(struct cam_flash_ctrl *flash_ctrl)
+ {
+ 	int rc = 0;
++	struct cam_flash_private_soc *soc_private = NULL;
+ 
+ 	if (!flash_ctrl) {
+ 		CAM_ERR(CAM_FLASH, "Flash control Null");
+ 		return -EINVAL;
+ 	}
+ 
++	soc_private = flash_ctrl->soc_info.soc_private;
++	if (soc_private->flash_type == CAM_FLASH_TYPE_GPIO) {
++		rc = gpio_direction_output(flash_ctrl->flash_enf_gpio,
++			CAM_FLASH_GPIO_OUT_LOW);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enf out low fail!!!: %d", rc);
++		rc = gpio_direction_output(flash_ctrl->flash_enm_gpio,
++			CAM_FLASH_GPIO_OUT_LOW);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enm out low fail!!!: %d", rc);
++	}
++
+ 	if (flash_ctrl->switch_trigger)
+ 		cam_res_mgr_led_trigger_event(flash_ctrl->switch_trigger,
+ 			(enum led_brightness)LED_SWITCH_OFF);
+@@ -459,12 +473,25 @@ static int cam_flash_low(
+ 	struct cam_flash_frame_setting *flash_data)
+ {
+ 	int i = 0, rc = 0;
++	struct cam_flash_private_soc *soc_private =
++		flash_ctrl->soc_info.soc_private;
+ 
+ 	if (!flash_data) {
+ 		CAM_ERR(CAM_FLASH, "Flash Data Null");
+ 		return -EINVAL;
+ 	}
+ 
++	if (soc_private->flash_type == CAM_FLASH_TYPE_GPIO) {
++		rc = gpio_direction_output(flash_ctrl->flash_enm_gpio,
++			CAM_FLASH_GPIO_OUT_HIGH);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enm out high fail!!!: %d", rc);
++		rc = gpio_direction_output(flash_ctrl->flash_enf_gpio,
++			CAM_FLASH_GPIO_OUT_LOW);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enf out low fail!!!: %d", rc);
++	}
++
+ 	for (i = 0; i < flash_ctrl->flash_num_sources; i++)
+ 		if (flash_ctrl->flash_trigger[i])
+ 			cam_res_mgr_led_trigger_event(
+@@ -484,12 +511,25 @@ static int cam_flash_high(
+ 	struct cam_flash_frame_setting *flash_data)
+ {
+ 	int i = 0, rc = 0;
++	struct cam_flash_private_soc *soc_private =
++		flash_ctrl->soc_info.soc_private;
+ 
+ 	if (!flash_data) {
+ 		CAM_ERR(CAM_FLASH, "Flash Data Null");
+ 		return -EINVAL;
+ 	}
+ 
++	if (soc_private->flash_type == CAM_FLASH_TYPE_GPIO) {
++		rc = gpio_direction_output(flash_ctrl->flash_enm_gpio,
++			CAM_FLASH_GPIO_OUT_HIGH);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enm out high fail!!!: %d", rc);
++		rc = gpio_direction_output(flash_ctrl->flash_enf_gpio,
++			CAM_FLASH_GPIO_OUT_HIGH);
++		if (rc)
++			CAM_ERR(CAM_FLASH, "flash enf out high fail!!!: %d", rc);
++	}
++
+ 	for (i = 0; i < flash_ctrl->torch_num_sources; i++)
+ 		if (flash_ctrl->torch_trigger[i])
+ 			cam_res_mgr_led_trigger_event(
+@@ -1109,7 +1149,6 @@ int cam_flash_i2c_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
+ 
+ 				break;
+ 			}
+-			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 		}
+ 		power_info = &fctrl->power_info;
+ 		if (!power_info) {
+@@ -1300,7 +1339,6 @@ update_req_mgr:
+ 			fctrl->bridge_intf.crm_cb->add_req(&add_req);
+ 		CAM_DBG(CAM_FLASH, "add req to req_mgr= %lld", add_req.req_id);
+ 	}
+-	cam_mem_put_cpu_buf(config.packet_handle);
+ 	return rc;
+ }
+ 
+@@ -1477,8 +1515,6 @@ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
+ 			rc = -EINVAL;
+ 			return rc;
+ 		}
+-
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		break;
+ 	}
+ 	case CAM_FLASH_PACKET_OPCODE_SET_OPS: {
+@@ -1573,8 +1609,6 @@ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
+ 			rc = -EINVAL;
+ 			return rc;
+ 		}
+-
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		break;
+ 	}
+ 	case CAM_FLASH_PACKET_OPCODE_NON_REALTIME_SET_OPS: {
+@@ -1717,7 +1751,6 @@ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
+ 			return rc;
+ 		}
+ 
+-		cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 		break;
+ 	}
+ 	case CAM_PKT_NOP_OPCODE: {
+@@ -1766,7 +1799,6 @@ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg)
+ 		CAM_DBG(CAM_FLASH, "add req to req_mgr= %lld", add_req.req_id);
+ 	}
+ 
+-	cam_mem_put_cpu_buf(config.packet_handle);
+ 	return rc;
+ }
+ 
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_core.h b/drivers/cam_sensor_module/cam_flash/cam_flash_core.h
+index f4e451c..2219fe2 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_core.h
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_core.h
+@@ -9,6 +9,10 @@
+ #include <media/cam_sensor.h>
+ #include "cam_flash_dev.h"
+ 
++/* GPIO flash (flash-type 2) pin levels, as used by the stock module */
++#define CAM_FLASH_GPIO_OUT_LOW   (0 << 1)
++#define CAM_FLASH_GPIO_OUT_HIGH  (1 << 1)
++
+ int cam_flash_publish_dev_info(struct cam_req_mgr_device_info *info);
+ int cam_flash_establish_link(struct cam_req_mgr_core_dev_link_setup *link);
+ int cam_flash_apply_request(struct cam_req_mgr_apply_request *apply);
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
+index a8ebf89..b519139 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.c
+@@ -9,94 +9,6 @@
+ #include "cam_flash_core.h"
+ #include "cam_common_util.h"
+ 
+-
+-//------add flash node-liyongyi-2022/9/28 start
+-struct cam_flash_ctrl *flash_fctrl = NULL;
+-int led_flash_state = 0;
+-struct cam_sensor_i2c_reg_array flash_init_array[3] = {{0x01, 0x00, 0, 0},
+-							{0x03, 0x56, 0, 0},
+-							{0x04, 0x2C, 0, 0}};
+-struct cam_sensor_i2c_reg_array flash_open_array[2] = {{0x04, 0x2C, 0, 0},
+-							{0x01, 0x02, 0, 0}};
+-struct cam_sensor_i2c_reg_array flash_close_array = {0x01, 0x00, 0, 0};
+-struct cam_sensor_i2c_reg_setting flash_init_setting= {flash_init_array,
+-						3,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						0,
+-						NULL,
+-						0};
+-struct cam_sensor_i2c_reg_setting flash_open_setting= {flash_open_array,
+-						2,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						0,
+-						NULL,
+-						0};
+-struct cam_sensor_i2c_reg_setting flash_close_setting= {&flash_close_array,
+-						1,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						CAMERA_SENSOR_I2C_TYPE_BYTE,
+-						0,
+-						NULL,
+-						0};
+-static enum led_brightness torch_brightness_get(struct led_classdev *cdev)
+-{
+-	return led_flash_state;
+-}
+-static void torch_brightness_set(struct led_classdev *cdev, enum led_brightness level)
+-{
+-	int rc = 0;
+-	uint32_t read_fault_flag = 0;
+-	CAM_ERR(CAM_FLASH,"set torch brightness level:%d", level);
+-
+-	if ((level > 0 && led_flash_state > 0) || (level == 0 && led_flash_state == 0))
+-	{
+-		led_flash_state = level;
+-		CAM_INFO(CAM_FLASH, "same state! no need to set");
+-		return;
+-	}
+-
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "regulator power up for flash failed %d",  rc);
+-		return;
+-	}
+-	rc = camera_io_dev_read(&flash_fctrl->io_master_info,0x05,&read_fault_flag,1,1);
+-	if (rc != 0)
+-	{
+-		CAM_ERR(CAM_FLASH, "Clear fault flag for ktd2691 flash failed %d",  rc);
+-	}
+-	if (level > 0) {
+-		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_init_setting);
+-		if (rc < 0) {
+-			CAM_ERR(CAM_FLASH, "init flash failed %d",  rc);
+-			return;
+-		}
+-		//flash_open_setting
+-		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_open_setting);
+-		if (rc < 0) {
+-			CAM_ERR(CAM_FLASH, "open flash failed %d",  rc);
+-			return;
+-		}
+-          	led_flash_state = level;
+-	} else {
+-		//flash_close_setting
+-		rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
+-		if (rc < 0) {
+-			CAM_ERR(CAM_FLASH, "close flash failed");
+-			return;
+-		}
+-          	led_flash_state = 0;
+-	}
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "regulator power down for flash failed %d",  rc);
+-		return;
+-	}
+-}
+-//------add flash node-liyongyi-2022/9/28 start
+-
+ static int32_t cam_flash_driver_cmd(struct cam_flash_ctrl *fctrl,
+ 		void *arg, struct cam_flash_private_soc *soc_private)
+ {
+@@ -298,7 +210,7 @@ release_mutex:
+ 	return rc;
+ }
+ 
+-static int32_t cam_flash_init_default_params(struct cam_flash_ctrl *fctrl)
++int32_t cam_flash_init_default_params(struct cam_flash_ctrl *fctrl)
+ {
+ 	/* Validate input parameters */
+ 	if (!fctrl) {
+@@ -344,13 +256,13 @@ static long cam_flash_subdev_ioctl(struct v4l2_subdev *sd,
+ 
+ 	fctrl = v4l2_get_subdevdata(sd);
+ 	soc_private = fctrl->soc_info.soc_private;
+-	//------Clear fault flag start
+-	rc = camera_io_dev_read(&fctrl->io_master_info,0x05,&read_fault_flag,1,1);
+-	if (rc == 0)
+-	{
+-		CAM_DBG(CAM_FLASH, "read_fault_flag %#x for ktd2691 flash",  read_fault_flag);
++	/* xiaomi: clear fault flag (KTD2691 I2C flash) */
++	rc = camera_io_dev_read(&fctrl->io_master_info, 0x05,
++		&read_fault_flag, 1, 1);
++	if (rc == 0) {
++		CAM_DBG(CAM_FLASH, "read_fault_flag %#x for ktd2691 flash", read_fault_flag);
+ 	}
+-	//------Clear fault  end
++	/* xiaomi: clear fault flag end */
+ 
+ 	switch (cmd) {
+ 	case VIDIOC_CAM_CONTROL: {
+@@ -622,45 +534,6 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
+ 		else
+ 			goto free_resource;
+ 	}
+-//------add flash node-liyongyi-2022/9/28 start
+-	flash_fctrl = fctrl;
+-	flash_fctrl->io_master_info.cci_client->cci_i2c_master = fctrl->cci_i2c_master;
+-	flash_fctrl->io_master_info.cci_client->i2c_freq_mode = I2C_FAST_MODE;
+-	flash_fctrl->io_master_info.cci_client->sid = (0xc8 >> 1);
+-	// register led_classdeev
+-	fctrl->cdev.name = "led:torch";
+-	fctrl->cdev.brightness_get = torch_brightness_get;
+-	fctrl->cdev.brightness_set = torch_brightness_set;
+-	fctrl->cdev.max_brightness = 255;
+-	rc = devm_led_classdev_register(&pdev->dev, &fctrl->cdev);
+-	if (rc < 0) {
+-		CAM_ERR(CAM_FLASH, "devm_led_classdev_register failed with %d", rc);
+-	}
+-
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "hzk regulator power up for flash failed %d",  rc);
+-		return -EINVAL;
+-	}
+-	rc = camera_io_dev_read(&flash_fctrl->io_master_info,0x06,&FlashDeviceId,1,1);
+-	if (rc != 0)
+-	{
+-		CAM_ERR(CAM_FLASH, "read id for ktd2691 flash failed %d",  rc);
+-	}
+-
+-	rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
+-	if (rc < 0) {
+-		CAM_ERR(CAM_FLASH, "hzk : init flash closed state failed %d",  rc);
+-		return -EINVAL;
+-	}
+-
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "hzk regulator power down for flash failed %d",  rc);
+-		return -EINVAL;
+-	}
+-
+-//------add flash node-liyongyi-2022/9/28 start
+ 
+ 	fctrl->bridge_intf.device_hdl = -1;
+ 	fctrl->bridge_intf.link_hdl = -1;
+@@ -673,7 +546,8 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
+ 	mutex_init(&(fctrl->flash_mutex));
+ 
+ 	fctrl->flash_state = CAM_FLASH_STATE_INIT;
+-	CAM_INFO(CAM_FLASH, "FlashDeviceId = %#x Probe success", FlashDeviceId);
++	CAM_INFO(CAM_FLASH, "FlashDeviceId = %#x Probe success",
++		FlashDeviceId);
+ 	return rc;
+ 
+ free_cci_resource:
+@@ -848,33 +722,6 @@ int32_t cam_flash_init_module(void)
+ 
+ void cam_flash_exit_module(void)
+ {
+-	int rc = -1;
+-
+-	if(!flash_fctrl) {
+-		CAM_ERR(CAM_FLASH, "flash_fctrl is NUll and skip close flash");
+-		goto exit;
+-	}
+-
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, true);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "hzk regulator power up for flash failed %d",  rc);
+-		goto exit;
+-	}
+-
+-	rc = camera_io_dev_write(&flash_fctrl->io_master_info, &flash_close_setting);
+-	if (rc < 0) {
+-		CAM_ERR(CAM_FLASH, "hzk : init flash closed state failed %d",  rc);
+-		goto exit;
+-	}
+-
+-	rc = cam_flash_i2c_power_ops(flash_fctrl, false);
+-	if (rc != 0) {
+-		CAM_ERR(CAM_FLASH, "hzk regulator power down for flash failed %d",  rc);
+-		goto exit;
+-	}
+-	CAM_ERR(CAM_FLASH, "hzk : close i2c flash when camera driver exit");
+-
+-exit:
+ 	platform_driver_unregister(&cam_flash_platform_driver);
+ 	i2c_del_driver(&cam_flash_i2c_driver);
+ }
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
+index d4cd47d..42e702b 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_dev.h
+@@ -192,6 +192,8 @@ struct cam_flash_func_tbl {
+  * @last_flush_req      : last request to flush
+  * @streamoff_count     : Count to hold the number of times stream off called
+  * @apply_streamoff     : variable to store when to apply stream off
++ * @flash_enm_gpio      : GPIO flash ENM pin (flash-type 2, "enm-gpio")
++ * @flash_enf_gpio      : GPIO flash ENF pin (flash-type 2, "enf-gpio")
+  */
+ struct cam_flash_ctrl {
+ 	char device_name[CAM_CTX_DEV_NAME_MAX_LENGTH];
+@@ -222,11 +224,11 @@ struct cam_flash_ctrl {
+ 	uint32_t                            last_flush_req;
+ 	uint32_t                            streamoff_count;
+ 	int32_t                             apply_streamoff;
+-  	//------add flash node-liyongyi-2022/9/28 start
+-	struct led_classdev                 cdev;
+-  	//------add flash node-liyongyi-2022/9/28 start
++	int32_t                             flash_enm_gpio;
++	int32_t                             flash_enf_gpio;
+ };
+ 
++int32_t cam_flash_init_default_params(struct cam_flash_ctrl *fctrl);
+ int cam_flash_pmic_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg);
+ int cam_flash_i2c_pkt_parser(struct cam_flash_ctrl *fctrl, void *arg);
+ int cam_flash_pmic_apply_setting(struct cam_flash_ctrl *fctrl, uint64_t req_id);
+diff --git a/drivers/cam_sensor_module/cam_flash/cam_flash_soc.c b/drivers/cam_sensor_module/cam_flash/cam_flash_soc.c
+index c9d0d26..c97649e 100644
+--- a/drivers/cam_sensor_module/cam_flash/cam_flash_soc.c
++++ b/drivers/cam_sensor_module/cam_flash/cam_flash_soc.c
+@@ -29,6 +29,19 @@ static int32_t cam_get_source_node_info(
+ 	if (rc) {
+ 		CAM_ERR(CAM_FLASH, "flash-type read failed rc=%d", rc);
+ 		soc_private->flash_type = CAM_FLASH_TYPE_PMIC;
++	} else if (soc_private->flash_type == CAM_FLASH_TYPE_GPIO) {
++		fctrl->flash_enf_gpio = of_get_named_gpio(of_node,
++			"enf-gpio", 0);
++		fctrl->flash_enm_gpio = of_get_named_gpio(of_node,
++			"enm-gpio", 0);
++		rc = gpio_request(fctrl->flash_enf_gpio, "flash_enf_gpio");
++		if (rc < 0)
++			CAM_ERR(CAM_FLASH,
++				"flash_enf_gpio request error rc=%d", rc);
++		rc = gpio_request(fctrl->flash_enm_gpio, "flash_enm_gpio");
++		if (rc < 0)
++			CAM_ERR(CAM_FLASH,
++				"flash_enf_gpio request error rc=%d", rc);
+ 	}
+ 
+ 	switch_src_node = of_parse_phandle(of_node, "switch-source", 0);
+diff --git a/drivers/cam_sensor_module/cam_ois/cam_ois_core.c b/drivers/cam_sensor_module/cam_ois/cam_ois_core.c
+index 6c25a3e..0cb705c 100644
+--- a/drivers/cam_sensor_module/cam_ois/cam_ois_core.c
++++ b/drivers/cam_sensor_module/cam_ois/cam_ois_core.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -569,7 +568,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
+ 			}
+ 			break;
+ 			}
+-			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 		}
+ 
+ 		if (o_ctrl->cam_ois_state != CAM_OIS_CONFIG) {
+@@ -728,7 +726,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
+ 			(csl_packet->header.op_code & 0xFFFFFF));
+ 		return -EINVAL;
+ 	}
+-	cam_mem_put_cpu_buf(dev_config.packet_handle);
+ 
+ 	if (!rc)
+ 		return rc;
+diff --git a/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.c b/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.c
+index d4e4c35..d2b5962 100644
+--- a/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.c
++++ b/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/module.h>
+@@ -78,6 +77,20 @@ static void cam_sensor_release_per_frame_resource(
+ 			}
+ 		}
+ 	}
++
++	if (s_ctrl->i2c_data.frame_skip != NULL) {
++		for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
++			i2c_set = &(s_ctrl->i2c_data.frame_skip[i]);
++			if (i2c_set->is_settings_valid == 1) {
++				i2c_set->is_settings_valid = -1;
++				rc = delete_request(i2c_set);
++				if (rc < 0)
++					CAM_ERR(CAM_SENSOR,
++						"delete request: %lld rc: %d",
++						i2c_set->request_id, rc);
++			}
++		}
++	}
+ }
+ 
+ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
+@@ -137,7 +150,6 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
+ 		CAM_ERR(CAM_SENSOR, "Invalid packet params");
+ 		rc = -EINVAL;
+ 		goto end;
+-
+ 	}
+ 
+ 	if ((csl_packet->header.op_code & 0xFFFFFF) !=
+@@ -240,6 +252,22 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
+ 		}
+ 		break;
+ 	}
++	case CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE: {
++		if ((s_ctrl->sensor_state == CAM_SENSOR_INIT) ||
++			(s_ctrl->sensor_state == CAM_SENSOR_ACQUIRE)) {
++			CAM_WARN(CAM_SENSOR,
++				"Rxed Update packets without linking");
++			goto end;
++		}
++
++		i2c_reg_settings =
++			&i2c_data->frame_skip[csl_packet->header.request_id %
++				MAX_PER_FRAME_ARRAY];
++		CAM_DBG(CAM_SENSOR, "Received not ready packet: %lld req: %lld",
++			csl_packet->header.request_id % MAX_PER_FRAME_ARRAY,
++			csl_packet->header.request_id);
++		break;
++	}
+ 	case CAM_SENSOR_PACKET_OPCODE_SENSOR_NOP: {
+ 		if ((s_ctrl->sensor_state == CAM_SENSOR_INIT) ||
+ 			(s_ctrl->sensor_state == CAM_SENSOR_ACQUIRE)) {
+@@ -275,8 +303,13 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
+ 		cam_sensor_update_req_mgr(s_ctrl, csl_packet);
+ 	}
+ 
++	if ((csl_packet->header.op_code & 0xFFFFFF) ==
++		CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE) {
++		i2c_reg_settings->request_id =
++			csl_packet->header.request_id;
++	}
++
+ end:
+-	cam_mem_put_cpu_buf(config.packet_handle);
+ 	return rc;
+ }
+ 
+@@ -527,11 +560,9 @@ int32_t cam_handle_mem_ptr(uint64_t handle, struct cam_sensor_ctrl_t *s_ctrl)
+ 				"Failed to parse the command Buffer Header");
+ 			goto end;
+ 		}
+-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(handle);
+ 	return rc;
+ }
+ 
+@@ -1217,6 +1248,7 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl,
+ 			break;
+ 		}
+ 		case CAM_SENSOR_PACKET_OPCODE_SENSOR_UPDATE:
++		case CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE:
+ 		case CAM_SENSOR_PACKET_OPCODE_SENSOR_PROBE:
+ 		default:
+ 			return 0;
+@@ -1237,11 +1269,16 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl,
+ 		}
+ 	} else {
+ 		offset = req_id % MAX_PER_FRAME_ARRAY;
+-		i2c_set = &(s_ctrl->i2c_data.per_frame[offset]);
+-		if (i2c_set->is_settings_valid == 1 &&
+-			i2c_set->request_id == req_id) {
++
++		if (opcode == CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE)
++			i2c_set = s_ctrl->i2c_data.frame_skip;
++		else
++			i2c_set = s_ctrl->i2c_data.per_frame;
++
++		if (i2c_set[offset].is_settings_valid == 1 &&
++			i2c_set[offset].request_id == req_id) {
+ 			list_for_each_entry(i2c_list,
+-				&(i2c_set->list_head), list) {
++				&(i2c_set[offset].list_head), list) {
+ 				rc = cam_sensor_i2c_modes_util(
+ 					&(s_ctrl->io_master_info),
+ 					i2c_list);
+@@ -1260,13 +1297,13 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl,
+ 		/* Change the logic dynamically */
+ 		for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
+ 			if ((req_id >=
+-				s_ctrl->i2c_data.per_frame[i].request_id) &&
++				i2c_set[i].request_id) &&
+ 				(top <
+-				s_ctrl->i2c_data.per_frame[i].request_id) &&
+-				(s_ctrl->i2c_data.per_frame[i].is_settings_valid
++				i2c_set[i].request_id) &&
++				(i2c_set[i].is_settings_valid
+ 					== 1)) {
+ 				del_req_id = top;
+-				top = s_ctrl->i2c_data.per_frame[i].request_id;
++				top = i2c_set[i].request_id;
+ 			}
+ 		}
+ 
+@@ -1286,12 +1323,12 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl,
+ 
+ 		for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
+ 			if ((del_req_id >
+-				 s_ctrl->i2c_data.per_frame[i].request_id) && (
+-				 s_ctrl->i2c_data.per_frame[i].is_settings_valid
++				 i2c_set[i].request_id) && (
++				 i2c_set[i].is_settings_valid
+ 					== 1)) {
+-				s_ctrl->i2c_data.per_frame[i].request_id = 0;
++				i2c_set[i].request_id = 0;
+ 				rc = delete_request(
+-					&(s_ctrl->i2c_data.per_frame[i]));
++					&(i2c_set[i]));
+ 				if (rc < 0)
+ 					CAM_ERR(CAM_SENSOR,
+ 						"Delete request Fail:%lld rc:%d",
+@@ -1307,6 +1344,8 @@ int32_t cam_sensor_apply_request(struct cam_req_mgr_apply_request *apply)
+ {
+ 	int32_t rc = 0;
+ 	struct cam_sensor_ctrl_t *s_ctrl = NULL;
++	enum cam_sensor_packet_opcodes opcode =
++		CAM_SENSOR_PACKET_OPCODE_SENSOR_UPDATE;
+ 
+ 	if (!apply)
+ 		return -EINVAL;
+@@ -1317,11 +1356,40 @@ int32_t cam_sensor_apply_request(struct cam_req_mgr_apply_request *apply)
+ 		CAM_ERR(CAM_SENSOR, "Device data is NULL");
+ 		return -EINVAL;
+ 	}
+-	CAM_DBG(CAM_REQ, " Sensor update req id: %lld", apply->request_id);
++
++	CAM_DBG(CAM_REQ, " Sensor[%d] update req id: %lld",
++		s_ctrl->soc_info.index, apply->request_id);
+ 	trace_cam_apply_req("Sensor", apply->request_id);
+ 	mutex_lock(&(s_ctrl->cam_sensor_mutex));
+ 	rc = cam_sensor_apply_settings(s_ctrl, apply->request_id,
+-		CAM_SENSOR_PACKET_OPCODE_SENSOR_UPDATE);
++		opcode);
++	mutex_unlock(&(s_ctrl->cam_sensor_mutex));
++	return rc;
++}
++
++int32_t cam_sensor_notify_frame_skip(struct cam_req_mgr_apply_request *apply)
++{
++	int32_t rc = 0;
++	struct cam_sensor_ctrl_t *s_ctrl = NULL;
++	enum cam_sensor_packet_opcodes opcode =
++		CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE;
++
++	if (!apply)
++		return -EINVAL;
++
++	s_ctrl = (struct cam_sensor_ctrl_t *)
++		cam_get_device_priv(apply->dev_hdl);
++	if (!s_ctrl) {
++		CAM_ERR(CAM_SENSOR, "Device data is NULL");
++		return -EINVAL;
++	}
++
++	CAM_DBG(CAM_REQ, " Sensor[%d] handle frame skip for req id: %lld",
++		s_ctrl->soc_info.index, apply->request_id);
++	trace_cam_notify_frame_skip("Sensor", apply->request_id);
++	mutex_lock(&(s_ctrl->cam_sensor_mutex));
++	rc = cam_sensor_apply_settings(s_ctrl, apply->request_id,
++		opcode);
+ 	mutex_unlock(&(s_ctrl->cam_sensor_mutex));
+ 	return rc;
+ }
+@@ -1356,6 +1424,12 @@ int32_t cam_sensor_flush_request(struct cam_req_mgr_flush_request *flush_req)
+ 		return -EINVAL;
+ 	}
+ 
++	if (s_ctrl->i2c_data.frame_skip == NULL) {
++		CAM_ERR(CAM_SENSOR, "i2c not ready data is NULL");
++		mutex_unlock(&(s_ctrl->cam_sensor_mutex));
++		return -EINVAL;
++	}
++
+ 	if (flush_req->type == CAM_REQ_MGR_FLUSH_TYPE_ALL) {
+ 		s_ctrl->last_flush_req = flush_req->req_id;
+ 		CAM_DBG(CAM_SENSOR, "last reqest to flush is %lld",
+@@ -1384,6 +1458,28 @@ int32_t cam_sensor_flush_request(struct cam_req_mgr_flush_request *flush_req)
+ 		}
+ 	}
+ 
++	for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
++		i2c_set = &(s_ctrl->i2c_data.frame_skip[i]);
++
++		if ((flush_req->type == CAM_REQ_MGR_FLUSH_TYPE_CANCEL_REQ)
++				&& (i2c_set->request_id != flush_req->req_id))
++			continue;
++
++		if (i2c_set->is_settings_valid == 1) {
++			rc = delete_request(i2c_set);
++			if (rc < 0)
++				CAM_ERR(CAM_SENSOR,
++					"delete request for not ready packet: %lld rc: %d",
++					i2c_set->request_id, rc);
++
++			if (flush_req->type ==
++				CAM_REQ_MGR_FLUSH_TYPE_CANCEL_REQ) {
++				cancel_req_id_found = 1;
++				break;
++			}
++		}
++	}
++
+ 	if (flush_req->type == CAM_REQ_MGR_FLUSH_TYPE_CANCEL_REQ &&
+ 		!cancel_req_id_found)
+ 		CAM_DBG(CAM_SENSOR,
+diff --git a/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.h b/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.h
+index b7a5923..5077768 100644
+--- a/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.h
++++ b/drivers/cam_sensor_module/cam_sensor/cam_sensor_core.h
+@@ -1,6 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ /*
+- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
++ * Copyright (c) 2017-2018,2020, The Linux Foundation. All rights reserved.
+  */
+ 
+ #ifndef _CAM_SENSOR_CORE_H_
+@@ -47,6 +47,13 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl, int64_t req_id,
+  */
+ int cam_sensor_apply_request(struct cam_req_mgr_apply_request *apply);
+ 
++/**
++ * @apply: Req mgr structure for notifying frame skip
++ *
++ * This API notifies a frame is skipped
++ */
++int cam_sensor_notify_frame_skip(struct cam_req_mgr_apply_request *apply);
++
+ /**
+  * @flush: Req mgr structure for flushing request
+  *
+diff --git a/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c b/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
+index e0a0548..e63e62d 100644
+--- a/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
++++ b/drivers/cam_sensor_module/cam_sensor/cam_sensor_dev.c
+@@ -175,25 +175,39 @@ static int32_t cam_sensor_driver_i2c_probe(struct i2c_client *client,
+ 		goto unreg_subdev;
+ 	}
+ 
++	s_ctrl->i2c_data.frame_skip =
++		kzalloc(sizeof(struct i2c_settings_array) *
++		MAX_PER_FRAME_ARRAY, GFP_KERNEL);
++	if (s_ctrl->i2c_data.frame_skip == NULL) {
++		rc = -ENOMEM;
++		goto free_perframe;
++	}
++
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.init_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.config_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.streamon_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.streamoff_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.read_settings.list_head));
+ 
+-	for (i = 0; i < MAX_PER_FRAME_ARRAY; i++)
++	for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
+ 		INIT_LIST_HEAD(&(s_ctrl->i2c_data.per_frame[i].list_head));
++		INIT_LIST_HEAD(&(s_ctrl->i2c_data.frame_skip[i].list_head));
++	}
+ 
+ 	s_ctrl->bridge_intf.device_hdl = -1;
+ 	s_ctrl->bridge_intf.link_hdl = -1;
+ 	s_ctrl->bridge_intf.ops.get_dev_info = cam_sensor_publish_dev_info;
+ 	s_ctrl->bridge_intf.ops.link_setup = cam_sensor_establish_link;
+ 	s_ctrl->bridge_intf.ops.apply_req = cam_sensor_apply_request;
++	s_ctrl->bridge_intf.ops.notify_frame_skip =
++		cam_sensor_notify_frame_skip;
+ 	s_ctrl->bridge_intf.ops.flush_req = cam_sensor_flush_request;
+ 
+ 	s_ctrl->sensordata->power_info.dev = soc_info->dev;
+ 
+ 	return rc;
++free_perframe:
++	kfree(s_ctrl->i2c_data.per_frame);
+ unreg_subdev:
+ 	cam_unregister_subdev(&(s_ctrl->v4l2_dev_str));
+ free_s_ctrl:
+@@ -223,6 +237,7 @@ static int cam_sensor_platform_remove(struct platform_device *pdev)
+ 		devm_clk_put(soc_info->dev, soc_info->clk[i]);
+ 
+ 	kfree(s_ctrl->i2c_data.per_frame);
++	kfree(s_ctrl->i2c_data.frame_skip);
+ 	platform_set_drvdata(pdev, NULL);
+ 	v4l2_set_subdevdata(&(s_ctrl->v4l2_dev_str.sd), NULL);
+ 	devm_kfree(&pdev->dev, s_ctrl);
+@@ -251,6 +266,7 @@ static int cam_sensor_driver_i2c_remove(struct i2c_client *client)
+ 		devm_clk_put(soc_info->dev, soc_info->clk[i]);
+ 
+ 	kfree(s_ctrl->i2c_data.per_frame);
++	kfree(s_ctrl->i2c_data.frame_skip);
+ 	v4l2_set_subdevdata(&(s_ctrl->v4l2_dev_str.sd), NULL);
+ 	kfree(s_ctrl);
+ 
+@@ -311,20 +327,32 @@ static int32_t cam_sensor_driver_platform_probe(
+ 		goto unreg_subdev;
+ 	}
+ 
++	s_ctrl->i2c_data.frame_skip =
++		kzalloc(sizeof(struct i2c_settings_array) *
++		MAX_PER_FRAME_ARRAY, GFP_KERNEL);
++	if (s_ctrl->i2c_data.frame_skip == NULL) {
++		rc = -ENOMEM;
++		goto free_perframe;
++	}
++
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.init_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.config_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.streamon_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.streamoff_settings.list_head));
+ 	INIT_LIST_HEAD(&(s_ctrl->i2c_data.read_settings.list_head));
+ 
+-	for (i = 0; i < MAX_PER_FRAME_ARRAY; i++)
++	for (i = 0; i < MAX_PER_FRAME_ARRAY; i++) {
+ 		INIT_LIST_HEAD(&(s_ctrl->i2c_data.per_frame[i].list_head));
++		INIT_LIST_HEAD(&(s_ctrl->i2c_data.frame_skip[i].list_head));
++	}
+ 
+ 	s_ctrl->bridge_intf.device_hdl = -1;
+ 	s_ctrl->bridge_intf.link_hdl = -1;
+ 	s_ctrl->bridge_intf.ops.get_dev_info = cam_sensor_publish_dev_info;
+ 	s_ctrl->bridge_intf.ops.link_setup = cam_sensor_establish_link;
+ 	s_ctrl->bridge_intf.ops.apply_req = cam_sensor_apply_request;
++	s_ctrl->bridge_intf.ops.notify_frame_skip =
++		cam_sensor_notify_frame_skip;
+ 	s_ctrl->bridge_intf.ops.flush_req = cam_sensor_flush_request;
+ 
+ 	s_ctrl->sensordata->power_info.dev = &pdev->dev;
+@@ -332,6 +360,8 @@ static int32_t cam_sensor_driver_platform_probe(
+ 	s_ctrl->sensor_state = CAM_SENSOR_INIT;
+ 
+ 	return rc;
++free_perframe:
++	kfree(s_ctrl->i2c_data.per_frame);
+ unreg_subdev:
+ 	cam_unregister_subdev(&(s_ctrl->v4l2_dev_str));
+ free_s_ctrl:
+@@ -369,7 +399,6 @@ static struct i2c_driver cam_sensor_driver_i2c = {
+ int cam_sensor_driver_init(void)
+ {
+ 	int32_t rc = 0;
+-	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]cam_sensor_driver_init E");
+ 
+ 	rc = platform_driver_register(&cam_sensor_platform_driver);
+ 	if (rc < 0) {
+@@ -382,7 +411,6 @@ int cam_sensor_driver_init(void)
+ 	if (rc)
+ 		CAM_ERR(CAM_SENSOR, "i2c_add_driver failed rc = %d", rc);
+ 
+-	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]sensor i2c_add_driver successful");
+ 	return rc;
+ }
+ 
+@@ -390,7 +418,6 @@ void cam_sensor_driver_exit(void)
+ {
+ 	platform_driver_unregister(&cam_sensor_platform_driver);
+ 	i2c_del_driver(&cam_sensor_driver_i2c);
+-	CAM_INFO(CAM_SENSOR, "[wl2866d DEBUG]sensor i2c_del_driver successful");
+ }
+ 
+ MODULE_DESCRIPTION("cam_sensor_driver");
+diff --git a/drivers/cam_sensor_module/cam_sensor_io/cam_sensor_io.c b/drivers/cam_sensor_module/cam_sensor_io/cam_sensor_io.c
+index 108c479..df5fb08 100644
+--- a/drivers/cam_sensor_module/cam_sensor_io/cam_sensor_io.c
++++ b/drivers/cam_sensor_module/cam_sensor_io/cam_sensor_io.c
+@@ -83,7 +83,7 @@ int32_t camera_io_dev_read(struct camera_io_master *io_master_info,
+ 		return cam_spi_read(io_master_info,
+ 			addr, data, addr_type, data_type);
+ 	} else {
+-		CAM_ERR(CAM_SENSOR, "Invalid Comm. Master:%d",
++		CAM_DBG(CAM_SENSOR, "Invalid Comm. Master:%d",
+ 			io_master_info->master_type);
+ 		return -EINVAL;
+ 	}
+diff --git a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
+index c28b8b0..38fe855 100644
+--- a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
++++ b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h
+@@ -142,10 +142,7 @@ enum msm_camera_power_seq_type {
+ 	SENSOR_STANDBY,
+ 	SENSOR_CUSTOM_GPIO1,
+ 	SENSOR_CUSTOM_GPIO2,
+-	SENSOR_WL2866D_DVDD1,
+-	SENSOR_WL2866D_DVDD2,
+-	SENSOR_WL2866D_AVDD1,
+-	SENSOR_WL2866D_AVDD2,
++	SENSOR_CUSTOM_GPIO3,
+ 	SENSOR_SEQ_TYPE_MAX,
+ };
+ 
+@@ -157,6 +154,7 @@ enum cam_sensor_packet_opcodes {
+ 	CAM_SENSOR_PACKET_OPCODE_SENSOR_CONFIG,
+ 	CAM_SENSOR_PACKET_OPCODE_SENSOR_STREAMOFF,
+ 	CAM_SENSOR_PACKET_OPCODE_SENSOR_READ,
++	CAM_SENSOR_PACKET_OPCODE_SENSOR_FRAME_SKIP_UPDATE,
+ 	CAM_SENSOR_PACKET_OPCODE_SENSOR_NOP = 127
+ };
+ 
+@@ -309,6 +307,7 @@ struct i2c_data_settings {
+ 	struct i2c_settings_array streamoff_settings;
+ 	struct i2c_settings_array read_settings;
+ 	struct i2c_settings_array *per_frame;
++	struct i2c_settings_array *frame_skip;
+ };
+ 
+ struct cam_sensor_power_ctrl_t {
+diff --git a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
+index b44d991..df06a77 100644
+--- a/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
++++ b/drivers/cam_sensor_module/cam_sensor_utils/cam_sensor_util.c
+@@ -1,26 +1,19 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/kernel.h>
+ #include "cam_sensor_util.h"
+ #include "cam_mem_mgr.h"
+ #include "cam_res_mgr_api.h"
+-/* hzk add for camera power up bengin*/
+-#include "wl2866d.h"
+-#define MAX_DELAY_TIME 65420
+-#define DELAY_SETP 1000
+-/* hzk add for camera power up end*/
+ 
+ #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
+ #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
+ 
+-/* hzk add for distinguish front i&&ii bengin */
++/* xiaomi: distinguish front i && ii dvdd voltage */
+ #define CAM_SENSOR_FRONT_MIN_VOLTAGE 1050000
+ #define CAM_SENSOR_FRONT_MAX_VOLTAGE 1200000
+-/* hzk add for distinguish front i&&ii end */
+ 
+ #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
+ 	(config_val >= min) && (config_val <= max))
+@@ -285,7 +278,6 @@ static int32_t cam_sensor_get_io_buffer(
+ 			io_cfg->direction);
+ 		rc = -EINVAL;
+ 	}
+-	cam_mem_put_cpu_buf(io_cfg->mem_handle[0]);
+ 	return rc;
+ }
+ 
+@@ -733,12 +725,9 @@ int cam_sensor_i2c_command_parser(
+ 			}
+ 		}
+ 		i2c_reg_settings->is_settings_valid = 1;
+-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	}
+-	return rc;
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
+ 	return rc;
+ }
+ 
+@@ -944,7 +933,7 @@ int32_t msm_camera_fill_vreg_params(
+ 						soc_info->rgltr_max_volt[j] =
+ 						power_setting[i].config_val;
+ 					}
+-					/* hzk add for modify dvdd voltage range bengin */
++					/* xiaomi: allow front dvdd 1.05V..1.2V */
+ 					else if (VALIDATE_VOLTAGE(
+ 						CAM_SENSOR_FRONT_MIN_VOLTAGE,
+ 						CAM_SENSOR_FRONT_MAX_VOLTAGE,
+@@ -953,7 +942,6 @@ int32_t msm_camera_fill_vreg_params(
+ 						soc_info->rgltr_max_volt[j] =
+ 						power_setting[i].config_val;
+ 					}
+-					/* hzk add for modify dvdd voltage range end */
+ 					break;
+ 				}
+ 			}
+@@ -1713,6 +1701,27 @@ int cam_sensor_util_init_gpio_pin_tbl(
+ 		rc = 0;
+ 	}
+ 
++	rc = of_property_read_u32(of_node, "gpio-custom3", &val);
++	if (rc != -EINVAL) {
++		if (rc < 0) {
++			CAM_ERR(CAM_SENSOR,
++				"read gpio-custom3 failed rc %d", rc);
++			goto free_gpio_info;
++		} else if (val >= gpio_array_size) {
++			CAM_ERR(CAM_SENSOR, "gpio-custom3 invalid %d", val);
++			rc = -EINVAL;
++			goto free_gpio_info;
++		}
++		gpio_num_info->gpio_num[SENSOR_CUSTOM_GPIO3] =
++			gconf->cam_gpio_common_tbl[val].gpio;
++		gpio_num_info->valid[SENSOR_CUSTOM_GPIO3] = 1;
++
++		CAM_DBG(CAM_SENSOR, "gpio-custom3 %d",
++			gpio_num_info->gpio_num[SENSOR_CUSTOM_GPIO3]);
++	} else {
++		rc = 0;
++	}
++
+ 	return rc;
+ 
+ free_gpio_info:
+@@ -1852,11 +1861,6 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 	int32_t vreg_idx = -1;
+ 	struct cam_sensor_power_setting *power_setting = NULL;
+ 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
+-	/* hzk add for camera power up bengin*/
+-	uint16_t wl2866_time_delay = 0;
+-	int wl2866_iotype = -1;
+-	int retry = 0;
+-	/* hzk add for camera power up end*/
+ 
+ 	CAM_DBG(CAM_SENSOR, "Enter");
+ 	if (!ctrl) {
+@@ -1920,6 +1924,7 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 		}
+ 
+ 		CAM_DBG(CAM_SENSOR, "seq_type %d", power_setting->seq_type);
++
+ 		switch (power_setting->seq_type) {
+ 		case SENSOR_MCLK:
+ 			if (power_setting->seq_val >= soc_info->num_clk) {
+@@ -1989,6 +1994,7 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 		case SENSOR_STANDBY:
+ 		case SENSOR_CUSTOM_GPIO1:
+ 		case SENSOR_CUSTOM_GPIO2:
++		case SENSOR_CUSTOM_GPIO3:
+ 			if (no_gpio) {
+ 				CAM_ERR(CAM_SENSOR, "request gpio failed");
+ 				goto power_up_failed;
+@@ -1998,8 +2004,8 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 				goto power_up_failed;
+ 			}
+ 			CAM_DBG(CAM_SENSOR, "gpio set val %d",
+-					gpio_num_info->gpio_num
+-					[power_setting->seq_type]);
++				gpio_num_info->gpio_num
++				[power_setting->seq_type]);
+ 
+ 			rc = msm_cam_sensor_handle_reg_gpio(
+ 				power_setting->seq_type,
+@@ -2076,37 +2082,6 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
+ 				goto power_up_failed;
+ 			}
+ 			break;
+-		/* hzk add for camera power up bengin*/
+-		case SENSOR_WL2866D_DVDD1:
+-		case SENSOR_WL2866D_DVDD2:
+-		case SENSOR_WL2866D_AVDD1:
+-		case SENSOR_WL2866D_AVDD2:
+-			//wl2866 out port num :
+-			//		OUT_DVDD1 = 0
+-			//		OUT_DVDD2 = 1
+-			//		OUT_AVDD1 = 2
+-			//		OUT_AVDD2 = 3
+-			//but we pre set SENSOR_WL2866D_DVDD1.
+-			wl2866_iotype = ((int)power_setting->seq_type) - SENSOR_WL2866D_DVDD1;
+-			for(retry = 0; retry < 3; retry++) {
+-				rc = wl2866d_camera_power_control(wl2866_iotype, power_setting->config_val);
+-				if(rc >= 0)
+-					break;
+-			}
+-			if (rc < 0) {
+-				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_up_io_type [%d]  failed seq-val[%d] config[%d] retry time: %d",power_setting->seq_type, power_setting->seq_val, power_setting->config_val, retry);
+-				goto power_up_failed;
+-			}
+-
+-			//if wl2866 exit, xml powerUpSequence delayMs now mean delay time
+-			wl2866_time_delay = DELAY_SETP * (power_setting->delay);
+-			if(MAX_DELAY_TIME < wl2866_time_delay) {
+-				wl2866_time_delay = MAX_DELAY_TIME;
+-			}
+-			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
+-			CAM_INFO(CAM_SENSOR,"power_setting->seq_type = [%d], wl2866_time_delay is [%d]", power_setting->seq_type, wl2866_time_delay);
+-			break;
+-			/* hzk add for camera power up end*/
+ 		default:
+ 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
+ 				power_setting->seq_type);
+@@ -2149,6 +2124,7 @@ power_up_failed:
+ 		case SENSOR_STANDBY:
+ 		case SENSOR_CUSTOM_GPIO1:
+ 		case SENSOR_CUSTOM_GPIO2:
++		case SENSOR_CUSTOM_GPIO3:
+ 			if (!gpio_num_info)
+ 				continue;
+ 			if (!gpio_num_info->valid
+@@ -2265,11 +2241,6 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
+ 	struct cam_sensor_power_setting *pd = NULL;
+ 	struct cam_sensor_power_setting *ps = NULL;
+ 	struct msm_camera_gpio_num_info *gpio_num_info = NULL;
+-	/* hzk add for camera power down bengin*/
+-	uint16_t wl2866_time_delay = 0;
+-	int wl2866_iotype = -1;
+-	int retry = 0;
+-	/* hzk add for camera power down end*/
+ 
+ 	CAM_DBG(CAM_SENSOR, "Enter");
+ 	if (!ctrl || !soc_info) {
+@@ -2321,6 +2292,7 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
+ 		case SENSOR_STANDBY:
+ 		case SENSOR_CUSTOM_GPIO1:
+ 		case SENSOR_CUSTOM_GPIO2:
++		case SENSOR_CUSTOM_GPIO3:
+ 
+ 			if (!gpio_num_info->valid[pd->seq_type])
+ 				continue;
+@@ -2390,40 +2362,10 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
+ 				CAM_ERR(CAM_SENSOR,
+ 					"Error disabling VREG GPIO");
+ 			break;
+-		/* hzk add for camera power down bengin*/
+-		case SENSOR_WL2866D_DVDD1:
+-		case SENSOR_WL2866D_DVDD2:
+-		case SENSOR_WL2866D_AVDD1:
+-		case SENSOR_WL2866D_AVDD2:
+-			//wl2866 out port num :
+-			//		OUT_DVDD1 = 0
+-			//		OUT_DVDD2 = 1
+-			//		OUT_AVDD1 = 2
+-			//		OUT_AVDD2 = 3
+-			//but we pre set SENSOR_WL2866D_DVDD1.
+-			wl2866_iotype = ((int)pd->seq_type) - SENSOR_WL2866D_DVDD1;
+-			for(retry = 0; retry < 3; retry++) {
+-				ret = wl2866d_camera_power_control(wl2866_iotype, pd->config_val);
+-				if(ret >= 0)
+-					break;
+-			}
+-			if (ret < 0) {
+-				CAM_ERR(CAM_SENSOR,"wl2866d_camera_power_down iotype [%d] seq-val[%d]config-val[%d] failed retry time: %d", pd->seq_type, pd->seq_val, pd->config_val, retry);
+-				break;
+-			}
+-			//if wl2866 exit, xml powerDownSequence delayMs now mean delay time
+-			wl2866_time_delay = DELAY_SETP * (pd->delay);
+-			if(MAX_DELAY_TIME < wl2866_time_delay) {
+-				wl2866_time_delay = MAX_DELAY_TIME;
+-			}
+-			usleep_range(wl2866_time_delay , wl2866_time_delay + 100);
+-			CAM_INFO(CAM_SENSOR,"wl2866d_iotype = [%d], wl2866_time_delay is [%d]", pd->seq_type, wl2866_time_delay);
+-			break;
+ 		default:
+ 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
+ 				pd->seq_type);
+ 			break;
+-			/* hzk add for camera power down end*/
+ 		}
+ 		if (pd->delay > 20)
+ 			msleep(pd->delay);
+diff --git a/drivers/cam_utils/cam_packet_util.c b/drivers/cam_utils/cam_packet_util.c
+index 818d136..69d823f 100644
+--- a/drivers/cam_utils/cam_packet_util.c
++++ b/drivers/cam_utils/cam_packet_util.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/types.h>
+@@ -128,16 +127,14 @@ int cam_packet_util_get_kmd_buffer(struct cam_packet *packet,
+ 		((size_t)cmd_desc->size > (len - (size_t)cmd_desc->offset))) {
+ 		CAM_ERR(CAM_UTIL, "invalid memory len:%zd and cmd desc size:%d",
+ 			len, cmd_desc->size);
+-		rc = -EINVAL;
+-		goto rel_kmd_buf;
++		return -EINVAL;
+ 	}
+ 
+ 	remain_len -= (size_t)cmd_desc->offset;
+ 	if ((size_t)packet->kmd_cmd_buf_offset >= remain_len) {
+ 		CAM_ERR(CAM_UTIL, "Invalid kmd cmd buf offset: %zu",
+ 			(size_t)packet->kmd_cmd_buf_offset);
+-		rc = -EINVAL;
+-		goto rel_kmd_buf;
++		return -EINVAL;
+ 	}
+ 
+ 	cpu_addr += (cmd_desc->offset / 4) + (packet->kmd_cmd_buf_offset / 4);
+@@ -154,8 +151,6 @@ int cam_packet_util_get_kmd_buffer(struct cam_packet *packet,
+ 	kmd_buf->size       = cmd_desc->size - cmd_desc->length;
+ 	kmd_buf->used_bytes = 0;
+ 
+-rel_kmd_buf:
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 	return rc;
+ }
+ 
+@@ -212,8 +207,6 @@ void cam_packet_dump_patch_info(struct cam_packet *packet,
+ 
+ 		if (!(*dst_cpu_addr))
+ 			CAM_ERR(CAM_ICP, "Null at dst addr %p", dst_cpu_addr);
+-
+-		cam_mem_put_cpu_buf(patch_desc[i].dst_buf_hdl);
+ 	}
+ }
+ 
+@@ -275,7 +268,6 @@ int cam_packet_util_process_patches(struct cam_packet *packet,
+ 			(size_t)patch_desc[i].dst_offset)) {
+ 			CAM_ERR(CAM_UTIL,
+ 				"Invalid dst buf patch offset");
+-			cam_mem_put_cpu_buf((int32_t)patch_desc[i].dst_buf_hdl);
+ 			return -EINVAL;
+ 		}
+ 
+@@ -289,7 +281,6 @@ int cam_packet_util_process_patches(struct cam_packet *packet,
+ 			"patch is done for dst %pK with src %pK value %llx",
+ 			dst_cpu_addr, src_buf_iova_addr,
+ 			*((uint64_t *)dst_cpu_addr));
+-		cam_mem_put_cpu_buf((int32_t)patch_desc[i].dst_buf_hdl);
+ 	}
+ 
+ 	return rc;
+@@ -330,16 +321,14 @@ int cam_packet_util_process_generic_cmd_buffer(
+ 		((size_t)cmd_buf->offset > (buf_size - sizeof(uint32_t)))) {
+ 		CAM_ERR(CAM_UTIL, "Invalid offset for cmd buf: %zu",
+ 			(size_t)cmd_buf->offset);
+-		rc = -EINVAL;
+-		goto end;
++		return -EINVAL;
+ 	}
+ 	remain_len -= (size_t)cmd_buf->offset;
+ 
+ 	if (remain_len < (size_t)cmd_buf->length) {
+ 		CAM_ERR(CAM_UTIL, "Invalid length for cmd buf: %zu",
+ 			(size_t)cmd_buf->length);
+-		rc = -EINVAL;
+-		goto end;
++		return -EINVAL;
+ 	}
+ 
+ 	blob_ptr = (uint32_t *)(((uint8_t *)cpu_addr) +
+@@ -389,6 +378,5 @@ int cam_packet_util_process_generic_cmd_buffer(
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_buf->mem_handle);
+ 	return rc;
+ }
+diff --git a/drivers/cam_utils/cam_packet_util.h b/drivers/cam_utils/cam_packet_util.h
+index 94e8fd5..62866a9 100644
+--- a/drivers/cam_utils/cam_packet_util.h
++++ b/drivers/cam_utils/cam_packet_util.h
+@@ -1,7 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0-only */
+ /*
+  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #ifndef _CAM_PACKET_UTIL_H_
+diff --git a/drivers/cam_utils/cam_soc_util.c b/drivers/cam_utils/cam_soc_util.c
+index bd7035a..764fa90 100644
+--- a/drivers/cam_utils/cam_soc_util.c
++++ b/drivers/cam_utils/cam_soc_util.c
+@@ -1,7 +1,6 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
+ #include <linux/of.h>
+@@ -2021,7 +2020,8 @@ static int cam_soc_util_dump_dmi_reg_range_user_buf(
+ 		CAM_ERR(CAM_UTIL,
+ 			"Invalid input args soc_info: %pK, dump_args: %pK",
+ 			soc_info, dump_args);
+-		return -EINVAL;
++		rc = -EINVAL;
++		goto end;
+ 	}
+ 
+ 	if (dmi_read->num_pre_writes > CAM_REG_DUMP_DMI_CONFIG_MAX ||
+@@ -2029,14 +2029,15 @@ static int cam_soc_util_dump_dmi_reg_range_user_buf(
+ 		CAM_ERR(CAM_UTIL,
+ 			"Invalid number of requested writes, pre: %d post: %d",
+ 			dmi_read->num_pre_writes, dmi_read->num_post_writes);
+-		return -EINVAL;
++		rc = -EINVAL;
++		goto end;
+ 	}
+ 
+ 	rc = cam_mem_get_cpu_buf(dump_args->buf_handle, &cpu_addr, &buf_len);
+ 	if (rc) {
+ 		CAM_ERR(CAM_UTIL, "Invalid handle %u rc %d",
+ 			dump_args->buf_handle, rc);
+-		return -EINVAL;
++		goto end;
+ 	}
+ 
+ 	if (buf_len <= dump_args->offset) {
+@@ -2122,8 +2123,6 @@ static int cam_soc_util_dump_dmi_reg_range_user_buf(
+ 		sizeof(struct cam_hw_soc_dump_header);
+ 
+ end:
+-	if (dump_args)
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+@@ -2148,13 +2147,13 @@ static int cam_soc_util_dump_cont_reg_range_user_buf(
+ 			"Invalid input args soc_info: %pK, dump_out_buffer: %pK reg_read: %pK",
+ 			soc_info, dump_args, reg_read);
+ 		rc = -EINVAL;
+-		return rc;
++		goto end;
+ 	}
+ 	rc = cam_mem_get_cpu_buf(dump_args->buf_handle, &cpu_addr, &buf_len);
+ 	if (rc) {
+ 		CAM_ERR(CAM_UTIL, "Invalid handle %u rc %d",
+ 			dump_args->buf_handle, rc);
+-		return rc;
++		goto end;
+ 	}
+ 	if (buf_len <= dump_args->offset) {
+ 		CAM_WARN(CAM_UTIL, "Dump offset overshoot %zu %zu",
+@@ -2204,8 +2203,6 @@ static int cam_soc_util_dump_cont_reg_range_user_buf(
+ 	dump_args->offset +=  hdr->size +
+ 		sizeof(struct cam_hw_soc_dump_header);
+ end:
+-	if (dump_args)
+-		cam_mem_put_cpu_buf(dump_args->buf_handle);
+ 	return rc;
+ }
+ 
+@@ -2297,8 +2294,6 @@ int cam_soc_util_reg_dump_to_cmd_buf(void *ctx,
+ 	if (rc || !cpu_addr || (buf_size == 0)) {
+ 		CAM_ERR(CAM_UTIL, "Failed in Get cpu addr, rc=%d, cpu_addr=%pK",
+ 			rc, (void *)cpu_addr);
+-		if (rc)
+-			return rc;
+ 		goto end;
+ 	}
+ 
+@@ -2500,6 +2495,5 @@ int cam_soc_util_reg_dump_to_cmd_buf(void *ctx,
+ 	}
+ 
+ end:
+-	cam_mem_put_cpu_buf(cmd_desc->mem_handle);
+ 	return rc;
+ }
+diff --git a/drivers/cam_utils/cam_trace.h b/drivers/cam_utils/cam_trace.h
+index be30708..f804b3a 100644
+--- a/drivers/cam_utils/cam_trace.h
++++ b/drivers/cam_utils/cam_trace.h
+@@ -142,6 +142,23 @@ TRACE_EVENT(cam_apply_req,
+ 	)
+ );
+ 
++TRACE_EVENT(cam_notify_frame_skip,
++	TP_PROTO(const char *entity, uint64_t req_id),
++	TP_ARGS(entity, req_id),
++	TP_STRUCT__entry(
++		__string(entity, entity)
++		__field(uint64_t, req_id)
++	),
++	TP_fast_assign(
++		__assign_str(entity, entity);
++		__entry->req_id = req_id;
++	),
++	TP_printk(
++		"%8s: NotifyFrameSkip request=%llu",
++			__get_str(entity), __entry->req_id
++	)
++);
++
+ TRACE_EVENT(cam_flush_req,
+ 	TP_PROTO(struct cam_req_mgr_core_link *link,
+ 		struct cam_req_mgr_flush_info *info),
+diff --git a/drivers/camera_main.c b/drivers/camera_main.c
+index 8ad4eca..0aba4e5 100644
+--- a/drivers/camera_main.c
++++ b/drivers/camera_main.c
+@@ -49,7 +49,7 @@
+ #include "cam_tfe_dev.h"
+ #include "cam_tfe_csid530.h"
+ #include "cam_top_tpg_v1.h"
+-#include "wl2866d.h"
++#include "leds-msm-back-gpio-flash.h"
+ 
+ struct camera_submodule_component {
+ 	int (*init)(void);
+@@ -91,12 +91,12 @@ static const struct camera_submodule_component camera_sensor[] = {
+ 	{&cam_res_mgr_init, &cam_res_mgr_exit},
+ 	{&cam_cci_init_module, &cam_cci_exit_module},
+ 	{&cam_csiphy_init_module, &cam_csiphy_exit_module},
+-	{&cam_wl2866_init_module, &cam_wl2866_exit_module},
+ 	{&cam_actuator_driver_init, &cam_actuator_driver_exit},
+ 	{&cam_sensor_driver_init, &cam_sensor_driver_exit},
+ 	{&cam_eeprom_driver_init, &cam_eeprom_driver_exit},
+ 	{&cam_ois_driver_init, &cam_ois_driver_exit},
+ 	{&cam_flash_init_module, &cam_flash_exit_module},
++	{&led_gpio_flash_init, &led_gpio_flash_exit},
+ #endif
+ };
+ 
+diff --git a/drivers/leds/leds-msm-back-gpio-flash.c b/drivers/leds/leds-msm-back-gpio-flash.c
+new file mode 100644
+index 0000000..01a6e05
+--- /dev/null
++++ b/drivers/leds/leds-msm-back-gpio-flash.c
+@@ -0,0 +1,303 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
++ *
++ * Back (rear camera) GPIO flash/torch LED driver, as bundled by Xiaomi in
++ * the sapphire camera module ("qcom,leds-back-gpio-flash"). Reconstructed
++ * from the stock sapphire camera.ko; based on the msm leds-msm-gpio-flash
++ * driver (MiCode spes-r-oss drivers/leds/leds-msm-back-gpio-flash.c).
++ */
++
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/err.h>
++#include <linux/delay.h>
++#include <linux/gpio.h>
++#include <linux/of.h>
++#include <linux/of_gpio.h>
++#include <linux/leds.h>
++#include <linux/slab.h>
++#include <linux/pinctrl/consumer.h>
++#include "leds-msm-back-gpio-flash.h"
++
++#define LED_GPIO_FLASH_DRIVER_NAME	"qcom,leds-back-gpio-flash"
++#define LED_TRIGGER_DEFAULT		"none"
++
++#define GPIO_OUT_LOW          (0 << 1)
++#define GPIO_OUT_HIGH         (1 << 1)
++
++/* brightness above this value selects the flash (not torch) sequence */
++#define LED_GPIO_FLASH_THRESHOLD	200
++
++enum msm_flash_seq_type_t {
++	FLASH_EN,
++	FLASH_NOW,
++};
++
++struct msm_flash_ctrl_seq {
++	enum msm_flash_seq_type_t seq_type;
++	uint8_t flash_on_val;
++	uint8_t torch_on_val;
++};
++
++struct led_gpio_flash_data {
++	int flash_en;
++	int flash_now;
++	int brightness;
++	struct led_classdev cdev;
++	struct pinctrl *pinctrl;
++	struct pinctrl_state *gpio_state_default;
++	struct msm_flash_ctrl_seq ctrl_seq[2];
++};
++
++static struct of_device_id led_gpio_flash_of_match[] = {
++	{.compatible = LED_GPIO_FLASH_DRIVER_NAME,},
++	{},
++};
++
++static void led_gpio_brightness_set(struct led_classdev *led_cdev,
++				    enum led_brightness value)
++{
++	int rc = 0;
++	struct led_gpio_flash_data *flash_led =
++	    container_of(led_cdev, struct led_gpio_flash_data, cdev);
++	int brightness = value;
++	int flash_en = 0, flash_now = 0;
++
++	if (brightness > LED_GPIO_FLASH_THRESHOLD) {
++		flash_en =
++			flash_led->ctrl_seq[FLASH_EN].flash_on_val;
++		flash_now =
++			flash_led->ctrl_seq[FLASH_NOW].flash_on_val;
++	} else if (brightness > LED_OFF) {
++		flash_en =
++			flash_led->ctrl_seq[FLASH_EN].torch_on_val;
++		flash_now =
++			flash_led->ctrl_seq[FLASH_NOW].torch_on_val;
++	} else {
++		flash_en = 0;
++		flash_now = 0;
++	}
++
++	rc = gpio_direction_output(flash_led->flash_en, flash_en);
++	if (rc) {
++		pr_err("%s:Failed to set gpio %d\n", __func__,
++		       flash_led->flash_en);
++		goto err;
++	}
++	rc = gpio_direction_output(flash_led->flash_now, flash_now);
++	if (rc) {
++		pr_err("%s:Failed to set gpio %d\n", __func__,
++		       flash_led->flash_now);
++		goto err;
++	}
++
++	pr_err("Brave %s:brightness %d, flash_en=%d, flash_now=%d\n",
++		__func__, brightness, flash_en, flash_now);
++	flash_led->brightness = brightness;
++err:
++	return;
++}
++
++static enum led_brightness led_gpio_brightness_get(struct led_classdev
++						   *led_cdev)
++{
++	struct led_gpio_flash_data *flash_led =
++	    container_of(led_cdev, struct led_gpio_flash_data, cdev);
++	return flash_led->brightness;
++}
++
++static int led_gpio_flash_probe(struct platform_device *pdev)
++{
++	int rc = 0;
++	const char *temp_str;
++	struct led_gpio_flash_data *flash_led = NULL;
++	struct device_node *node = pdev->dev.of_node;
++	const char *seq_name = NULL;
++	uint32_t array_flash_seq[2];
++	uint32_t array_torch_seq[2];
++	int i = 0;
++
++	flash_led = devm_kzalloc(&pdev->dev, sizeof(struct led_gpio_flash_data),
++				 GFP_KERNEL);
++	pr_err("***************************Brave************************\n");
++	if (flash_led == NULL) {
++		dev_err(&pdev->dev, "%s:%d Unable to allocate memory\n",
++			__func__, __LINE__);
++		return -ENOMEM;
++	}
++
++	flash_led->cdev.default_trigger = LED_TRIGGER_DEFAULT;
++	rc = of_property_read_string(node, "linux,default-trigger", &temp_str);
++	if (!rc)
++		flash_led->cdev.default_trigger = temp_str;
++
++	flash_led->pinctrl = devm_pinctrl_get(&pdev->dev);
++	if (IS_ERR(flash_led->pinctrl)) {
++		pr_err("%s:failed to get pinctrl\n", __func__);
++		return PTR_ERR(flash_led->pinctrl);
++	}
++
++	flash_led->gpio_state_default = pinctrl_lookup_state(flash_led->pinctrl,
++		"flash_sleep");
++	if (IS_ERR(flash_led->gpio_state_default)) {
++		pr_err("%s:can not get active pinstate\n", __func__);
++		return -EINVAL;
++	}
++
++	rc = pinctrl_select_state(flash_led->pinctrl,
++		flash_led->gpio_state_default);
++	if (rc)
++		pr_err("%s:set state failed!\n", __func__);
++
++	flash_led->flash_en = of_get_named_gpio(node, "qcom,flash-en", 0);
++	pr_err("Brave flash_led->flash_on = %d \n", flash_led->flash_en);
++	if (flash_led->flash_en < 0) {
++		dev_err(&pdev->dev,
++			"Looking up %s property in node %s failed. rc =  %d\n",
++			"flash-en", node->full_name, flash_led->flash_en);
++		/* stock returned the stale rc (0) here: fail the probe instead */
++		rc = flash_led->flash_en;
++		goto error;
++	}
++
++	flash_led->flash_now = of_get_named_gpio(node, "qcom,flash-now", 0);
++	if (flash_led->flash_now < 0) {
++		dev_err(&pdev->dev,
++			"Looking up %s property in node %s failed. rc =  %d\n",
++			"flash-now", node->full_name, flash_led->flash_now);
++		/* stock returned the stale rc (0) here: fail the probe instead */
++		rc = flash_led->flash_now;
++		goto error;
++	}
++
++	rc = of_property_read_string(node, "linux,name", &flash_led->cdev.name);
++	if (rc) {
++		dev_err(&pdev->dev, "%s: Failed to read linux name. rc = %d\n",
++			__func__, rc);
++		goto error;
++	}
++
++	rc = of_property_read_u32_array(node, "qcom,flash-seq-val",
++		array_flash_seq, 2);
++	if (rc < 0) {
++		pr_err("%s get flash op seq failed %d\n", __func__, __LINE__);
++		goto error;
++	}
++
++	rc = of_property_read_u32_array(node, "qcom,torch-seq-val",
++		array_torch_seq, 2);
++	if (rc < 0) {
++		pr_err("%s get torch op seq failed %d\n", __func__, __LINE__);
++		goto error;
++	}
++
++	for (i = 0; i < 2; i++) {
++		rc = of_property_read_string_index(node,
++			"qcom,op-seq", i, &seq_name);
++		pr_err("*****************Brave**********%s seq_name[%d] = %s\n",
++			__func__, i, seq_name);
++		if (rc < 0) {
++			dev_err(&pdev->dev, "%s failed %d\n",
++				__func__, __LINE__);
++			/* stock went on to strcmp() a NULL seq_name here */
++			continue;
++		}
++
++		if (!strcmp(seq_name, "flash_en")) {
++			flash_led->ctrl_seq[FLASH_EN].seq_type = FLASH_EN;
++			pr_err("**********************Brave********%s:%d seq_type[%d] %d\n",
++				__func__, __LINE__, i,
++				flash_led->ctrl_seq[FLASH_EN].seq_type);
++			if (array_flash_seq[i] == 0)
++				flash_led->ctrl_seq[FLASH_EN].flash_on_val =
++					GPIO_OUT_LOW;
++			else
++				flash_led->ctrl_seq[FLASH_EN].flash_on_val =
++					GPIO_OUT_HIGH;
++
++			if (array_torch_seq[i] == 0)
++				flash_led->ctrl_seq[FLASH_EN].torch_on_val =
++					GPIO_OUT_LOW;
++			else
++				flash_led->ctrl_seq[FLASH_EN].torch_on_val =
++					GPIO_OUT_HIGH;
++		} else if (!strcmp(seq_name, "flash_now")) {
++			flash_led->ctrl_seq[FLASH_NOW].seq_type = FLASH_NOW;
++			pr_err("*****************Brave********%s:%d seq_type[%d] %d\n",
++				__func__, __LINE__, i,
++				flash_led->ctrl_seq[i].seq_type);
++			if (array_flash_seq[i] == 0)
++				flash_led->ctrl_seq[FLASH_NOW].flash_on_val =
++					GPIO_OUT_LOW;
++			else
++				flash_led->ctrl_seq[FLASH_NOW].flash_on_val =
++					GPIO_OUT_HIGH;
++
++			if (array_torch_seq[i] == 0)
++				flash_led->ctrl_seq[FLASH_NOW].torch_on_val =
++					GPIO_OUT_LOW;
++			else
++				flash_led->ctrl_seq[FLASH_NOW].torch_on_val =
++					GPIO_OUT_HIGH;
++		}
++	}
++
++	platform_set_drvdata(pdev, flash_led);
++	flash_led->cdev.max_brightness = LED_FULL;
++	flash_led->cdev.brightness_set = led_gpio_brightness_set;
++	flash_led->cdev.brightness_get = led_gpio_brightness_get;
++
++	rc = led_classdev_register(&pdev->dev, &flash_led->cdev);
++	if (rc) {
++		dev_err(&pdev->dev, "%s: Failed to register led dev. rc = %d\n",
++			__func__, rc);
++		goto error;
++	}
++	pr_err("%s:probe successfully!\n", __func__);
++	return 0;
++
++error:
++	if (IS_ERR(flash_led->pinctrl))
++		devm_pinctrl_put(flash_led->pinctrl);
++
++	devm_kfree(&pdev->dev, flash_led);
++	return rc;
++}
++
++static int led_gpio_flash_remove(struct platform_device *pdev)
++{
++	struct led_gpio_flash_data *flash_led =
++	    (struct led_gpio_flash_data *)platform_get_drvdata(pdev);
++	if (IS_ERR(flash_led->pinctrl))
++		devm_pinctrl_put(flash_led->pinctrl);
++	led_classdev_unregister(&flash_led->cdev);
++	devm_kfree(&pdev->dev, flash_led);
++	return 0;
++}
++
++static struct platform_driver led_gpio_flash_driver = {
++	.probe = led_gpio_flash_probe,
++	.remove = led_gpio_flash_remove,
++	.driver = {
++		   .name = LED_GPIO_FLASH_DRIVER_NAME,
++		   .owner = THIS_MODULE,
++		   .of_match_table = led_gpio_flash_of_match,
++		   }
++};
++
++int led_gpio_flash_init(void)
++{
++	return platform_driver_register(&led_gpio_flash_driver);
++}
++
++void led_gpio_flash_exit(void)
++{
++	platform_driver_unregister(&led_gpio_flash_driver);
++}
++
++MODULE_DESCRIPTION("QCOM BACK GPIO LEDs driver");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("leds:leds-msm-back-gpio-flash");
+diff --git a/drivers/leds/leds-msm-back-gpio-flash.h b/drivers/leds/leds-msm-back-gpio-flash.h
+new file mode 100644
+index 0000000..28e8ad0
+--- /dev/null
++++ b/drivers/leds/leds-msm-back-gpio-flash.h
+@@ -0,0 +1,12 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
++ */
++
++#ifndef _LEDS_MSM_BACK_GPIO_FLASH_H_
++#define _LEDS_MSM_BACK_GPIO_FLASH_H_
++
++int led_gpio_flash_init(void);
++void led_gpio_flash_exit(void);
++
++#endif /* _LEDS_MSM_BACK_GPIO_FLASH_H_ */
+diff --git a/drivers/wl2866d/wl2866d.c b/drivers/wl2866d/wl2866d.c
+deleted file mode 100644
+index 802800a..0000000
+--- a/drivers/wl2866d/wl2866d.c
++++ /dev/null
+@@ -1,767 +0,0 @@
+-/*
+- * Copyright (C) 2022 XiaoMi, Inc.
+- */
+-#include <linux/module.h>
+-#include <linux/init.h>
+-#include <linux/slab.h>
+-#include <linux/ctype.h>
+-#include <linux/types.h>
+-#include <linux/delay.h>
+-#include <linux/of_device.h>
+-#include <linux/i2c.h>
+-#include <linux/of_gpio.h>
+-#include <linux/regulator/consumer.h>
+-#include <linux/fs.h>
+-#include <linux/miscdevice.h>
+-#include <linux/uaccess.h>
+-#include "wl2866d.h"
+-
+-#define WL2866D_MAX_CONFIG_NUM 16
+-#define WL2866D_IO_REG_LIMIT 20
+-#define WL2866D_IO_BUFFER_LIMIT 128
+-#define WL2866D_MISC_MAJOR 250
+-
+-#define CONTROL_GPIO54_ENABLE 0
+-
+-#define WL2866D_PWR_NUMBER 4
+-static const char* wl2866d_pwr_name[WL2866D_PWR_NUMBER]={
+-	"WL2866D_DVDD1",
+-	"WL2866D_DVDD2",
+-	"WL2866D_AVDD1",
+-	"WL2866D_AVDD2",
+-};
+-static int wl2866d_pwr_value[WL2866D_PWR_NUMBER]={
+-	1200, 1050, 2800, 2800
+-};
+-struct wl2866d_map {
+-	u8 reg;
+-	int value;
+-};
+-static const struct  wl2866d_map  wl2866d_on_config[] = {
+-	{0x03, 0x64},    //DVDD1    1.2 V
+-	{0x04, 0x4B},    //DVDD2    1.05 V
+-	{0x05, 0x80},    //AVDD1    2.8 V
+-	{0x06, 0x80},    //AVDD2    2.8 v
+-	{0x0E, 0x0F},
+-	{0x0E, 0x00},
+-	{0x02, 0x8F},
+-	{0x02, 0x00},
+-};
+-
+-/*!
+- * reg_value struct
+- */
+-struct reg_value {
+-    u8 u8Add;
+-    u8 u8Val;
+-};
+-
+-/*!
+- * wl2866d_data_t struct
+- */
+-struct wl2866d_data_t {
+-    struct i2c_client *i2c_client;
+-    struct regulator *vin1_regulator;
+-    u32 vin1_vol;
+-    struct regulator *vin2_regulator;
+-    u32 vin2_vol;
+-    int en_gpio;
+-    u8 chip_id;
+-    u8 id_reg;
+-    u8 id_val;
+-    u8 id_val1;
+-    u8 init_num;
+-    struct reg_value inits[WL2866D_MAX_CONFIG_NUM];
+-    u32 offset;
+-    bool on;
+-};
+-
+-/*!
+- * wl2866d_data
+- */
+-static struct wl2866d_data_t wl2866d_data;
+-struct mutex wl2866d_mutex;
+-#if CONTROL_GPIO54_ENABLE
+-static int iov_gpio; //gpio54, i2c pull control
+-#endif
+-
+-/*!
+- * wl2866d write reg function
+- *
+- * @param reg u8
+- * @param val u8
+- * @return  Error code indicating success or failure
+- */
+-static s32 wl2866d_write_reg(u8 reg, u8 val)
+-{
+-    u8 au8Buf[2] = {0};
+-    au8Buf[0] = reg;
+-    au8Buf[1] = val;
+-    if (i2c_master_send(wl2866d_data.i2c_client, au8Buf, 2) < 0)
+-    {
+-        pr_err("%s:write reg error:reg=%x,val=%x\n",
+-            __func__, reg, val);
+-        return -1;
+-    }
+-
+-    return 0;
+-}
+-
+-/*!
+- * wl2866d read reg function
+- *
+- * @param reg u8
+- * @param val u8 *
+- * @return  Error code indicating success or failure
+- */
+-static int wl2866d_read_reg(u8 reg, u8 *val)
+-{
+-    u8 au8RegBuf[1] = {0};
+-    u8 u8RdVal = 0;
+-    au8RegBuf[0] = reg;
+-    if (1 != i2c_master_send(wl2866d_data.i2c_client, au8RegBuf, 1))
+-    {
+-        pr_err("%s:write reg error:reg=%x\n", __func__, reg);
+-        return -1;
+-    }
+-    if (1 != i2c_master_recv(wl2866d_data.i2c_client, &u8RdVal, 1))
+-    {
+-        pr_err("%s:read reg error:reg=%x,val=%x\n",
+-                __func__, reg, u8RdVal);
+-        return -1;
+-    }
+-    *val = u8RdVal;
+-    printk("wl2866d_read_reg %02x@%02x\n", u8RdVal, reg);
+-    return 0;
+-}
+-
+-#if CONTROL_GPIO54_ENABLE
+-static void enable_i2c_pullup()
+-{
+-    int ret = 0;
+-    printk("try control gpio 54\n");
+-    if (!gpio_is_valid(iov_gpio))
+-    {
+-        pr_err("no iov pin available--no return");
+-        //return -EINVAL;
+-    }
+-    else{
+-        ret = devm_gpio_request_one(&wl2866d_data.i2c_client->dev, iov_gpio,
+-            GPIOF_OUT_INIT_HIGH, "wl2866d_iov");
+-        if (ret < 0)
+-        {
+-            pr_err("wl2866d_iov request failed %d\n", ret);
+-            //return ret;
+-        }
+-        else
+-        {
+-            pr_debug("%s: iov request ok\n", __func__);
+-            gpio_direction_output(iov_gpio, 1);
+-            printk("wl2866d:iov_gpio set high, free it.\n");
+-            devm_gpio_free(&wl2866d_data.i2c_client->dev, iov_gpio);
+-        }
+-    }
+-}
+-#endif
+-
+-/*!
+- * wl2866d power on function
+- *
+- * @param dev struct device *
+- * @return  Error code indicating success or failure
+- */
+-static int wl2866d_power_on(struct device *dev)
+-{
+-    int ret = 0;
+-    wl2866d_data.on = false;
+-
+-    mutex_init(&wl2866d_mutex);
+-    wl2866d_data.en_gpio = of_get_named_gpio(dev->of_node, "en-gpio", 0);
+-    if (!gpio_is_valid(wl2866d_data.en_gpio))
+-    {
+-        pr_err("no en pin available");
+-        return -EINVAL;
+-    }
+-
+-    ret = devm_gpio_request_one(dev, wl2866d_data.en_gpio,
+-        GPIOF_OUT_INIT_LOW, "wl2866d_en");
+-    if (ret < 0)
+-    {
+-        pr_err("wl2866d_en request failed %d\n", ret);
+-        return ret;
+-    } else {
+-		gpio_direction_output(wl2866d_data.en_gpio, 0);
+-		printk("wl2866d:en_gpio set low\n");
+-    }
+-
+-#if CONTROL_GPIO54_ENABLE
+-    iov_gpio = of_get_named_gpio(dev->of_node, "iov-gpio", 0);
+-    enable_i2c_pullup();
+-#endif
+-    return 0;
+-}
+-static int wl2866d_init_register(void)
+-{
+-    int i = 0;
+-    int rc = -1;
+-    u8 reg[16] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+-    u8 val[16] = {0x00,0x00,0x8f,0x64,0x4b,0x80,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+-
+-    for(i = 0; i < 16; i++){
+-        rc = wl2866d_write_reg(reg[i],val[i]);
+-		if(rc) {
+-			pr_err("%s write 0x%x 0x%x failed\n", __func__, reg[i], val[i]);
+-			return -1;
+-		}
+-    }
+-
+-    return 0;
+-}
+-
+-/*!
+- * wl2866d match id function
+- *
+- * @param dev struct device *
+- * @return  Error code indicating success or failure
+- */
+-static int wl2866d_match_id(struct device *dev)
+-{
+-    int ret = 0;
+-
+-    ret = of_property_read_u32(dev->of_node, "id_reg",
+-        (u32 *) &(wl2866d_data.id_reg));
+-    if (ret)
+-    {
+-        pr_err("id_reg missing or invalid\n");
+-        return ret;
+-    }
+-
+-    ret = of_property_read_u32(dev->of_node, "id_val",
+-                (u32 *) &(wl2866d_data.id_val));
+-    if (ret)
+-    {
+-        pr_err("id_val missing or invalid\n");
+-        return ret;
+-    }
+-
+-    ret = of_property_read_u32(dev->of_node, "id_val1",
+-                (u32 *) &(wl2866d_data.id_val1));
+-    if (ret)
+-    {
+-        pr_err("id_val1 missing or invalid\n");
+-        return ret;
+-    }
+-
+-    ret = wl2866d_read_reg(wl2866d_data.id_reg, &(wl2866d_data.chip_id));
+-    if (ret < 0 ||
+-	    (wl2866d_data.chip_id != wl2866d_data.id_val &&
+-	     wl2866d_data.chip_id != wl2866d_data.id_val1)
+-	    ) {
+-        pr_err("wl2866d: is not found %d %x\n", ret, wl2866d_data.chip_id);
+-        return -ENODEV;
+-    }
+-    pr_info("wl2866d: is found %d\n", wl2866d_data.chip_id);
+-    return 0;
+-}
+-
+-/*!
+- * wl2866d init dev function
+- *
+- * @param dev struct device *
+- * @return  Error code indicating success or failure
+- */
+-static int cam_wl2866_init_module_dev(struct device *dev)
+-{
+-    int ret = 0, i = 0;
+-    u32 inits[32];
+-    ret = of_property_read_u32(dev->of_node, "init_num",
+-        (u32 *) &(wl2866d_data.init_num));
+-    if (ret)
+-    {
+-        pr_err("init_num missing or invalid\n");
+-        return ret;
+-    }
+-
+-    ret = of_property_read_u32_array(dev->of_node, "inits",
+-        inits, wl2866d_data.init_num * 2);
+-    if (ret)
+-    {
+-        pr_err("inits missing or invalid\n");
+-        return ret;
+-    }
+-
+-    for (i = 0; i < wl2866d_data.init_num; i++)
+-    {
+-        wl2866d_data.inits[i].u8Add = inits[i * 2 + 0];
+-        wl2866d_data.inits[i].u8Val = inits[i * 2 + 1];
+-        ret = wl2866d_write_reg(wl2866d_data.inits[i].u8Add, wl2866d_data.inits[i].u8Val);
+-        if (ret < 0 )
+-        {
+-            pr_err("wl2866d: update failed %d\n", ret);
+-            return ret;
+-        }
+-    }
+-    printk("wl2866d:init done\n");
+-    return 0;
+-}
+-
+-//bit0:DVDD1, bit1:DVDD2, bit2:AVDD1, bit3:AVDD2
+-int wl2866d_camera_power_control(unsigned int out_iotype, int is_power_on)
+-{
+-    int ret = -1;
+-    unsigned char reg_val = 0, reg_read;
+-
+-    if (!wl2866d_data.on){
+-	    pr_err("wl2866d probe fail the function is not available\n");
+-	    return ret;
+-    }
+-
+-    if(out_iotype > OUT_AVDD2){
+-	    pr_err("out_iotype > OUT_AVDD2, para err\n");
+-	    return ret;
+-    }
+-
+-    mutex_lock(&wl2866d_mutex);
+-    ret = wl2866d_read_reg(wl2866d_on_config[VOL_ENABLE].reg, &reg_val);
+-    if (ret < 0)
+-    {
+-	    pr_err("wl2866d: read power out control reg failed\n");
+-	    goto fail_return;
+-    }
+-    printk("wl2866d pwr_ctrl: %s\n", wl2866d_pwr_name[out_iotype]);
+-
+-	/* Enable DISCHARGE mode to avoid leakage */
+-    ret = wl2866d_write_reg(wl2866d_on_config[DISCHARGE_ENABLE].reg, wl2866d_on_config[DISCHARGE_ENABLE].value);
+-    if(ret < 0)
+-    {
+-        pr_err("wl2866d set discharge enable failed \n");
+-    }
+-
+-    if(is_power_on) {
+-	    if(reg_val == 0) {
+-#if CONTROL_GPIO54_ENABLE
+-		    enable_i2c_pullup();
+-#endif
+-	    }
+-	    printk("wl2866d pwr_ctrl: power on, set voltage %d\n",
+-			    wl2866d_pwr_value[out_iotype]);
+-	    ret = wl2866d_read_reg(wl2866d_on_config[out_iotype].reg, &reg_read);
+-	    if(ret < 0 || reg_read != wl2866d_on_config[out_iotype].value){
+-			ret = wl2866d_write_reg(wl2866d_on_config[out_iotype].reg,
+-						wl2866d_on_config[out_iotype].value);
+-		    if (ret < 0 )
+-		    {
+-			    pr_err("wl2866d: set voltage fail %d\n", out_iotype);
+-			    goto fail_return;
+-		    }
+-	    } else {
+-		    printk("wl2866d: voltage is right, no need write reg\n");
+-        }
+-	    reg_val |= 1 << out_iotype;
+-	    printk("wl2866d pwr_ctrl: power on, set reg %02x\n", reg_val);
+-
+-        if ((1050000 == is_power_on) &&  (OUT_DVDD1 == out_iotype)) {
+-			ret = wl2866d_write_reg(wl2866d_on_config[out_iotype].reg, 0x4B);
+-            if (ret < 0)
+-                printk("hzk wl2866d pwr_ctrl set DVDD1 voltage failed\n");
+-            else
+-                printk("hzk set DVDD1 to 1.05V\n");
+-
+-        }
+-    }
+-    else{
+-	    reg_val &= ~(1 << out_iotype);
+-	    printk("wl2866d pwr_ctrl: power off, set reg %02x\n", reg_val);
+-    }
+-
+-    ret = wl2866d_write_reg(wl2866d_on_config[VOL_ENABLE].reg, reg_val);
+-    if (ret < 0) {
+-	    pr_err("wl2866d set %d enable failed\n", out_iotype);
+-	    goto fail_return;
+-    }
+-
+-fail_return:
+-    mutex_unlock(&wl2866d_mutex);
+-    return ret;
+-}
+-EXPORT_SYMBOL(wl2866d_camera_power_control);
+-
+-/*!
+- * wl2866d GetHexCh function
+- *
+- * @param value u8
+- * @param shift int
+- * @return char value
+- */
+-static char GetHexCh(
+-    u8 value,
+-    int shift)
+-{
+-    u8 data = (value >> shift) & 0x0F;
+-    char ch = 0;
+-    if(data >= 10)
+-    {
+-        ch = data - 10  + 'A';
+-    }
+-    else if (data >= 0)
+-    {
+-        ch = data + '0';
+-    }
+-    return ch;
+-}
+-
+-/*!
+- * wl2866d read function
+- *
+- * @param file struct file *
+- * @param buf char __user *
+- * @param count size_t
+- * @param offset loff_t *
+- * @return  read count
+- */
+-static ssize_t wl2866d_read(
+-    struct file *file,
+-    char __user *buf,
+-    size_t count,
+-    loff_t *offset)
+-{
+-    char *buffer = NULL;
+-    int ret = 0, num = 0, i = 0;
+-    u8 u8add = wl2866d_data.offset, u8val = 0;
+-    buffer = kmalloc(WL2866D_IO_BUFFER_LIMIT, GFP_KERNEL);
+-    if (buffer == NULL)
+-    {
+-        pr_err("wl2866d: malloc failed %d\n", ret);
+-        return -ENOMEM;
+-    }
+-    if (count > WL2866D_IO_REG_LIMIT)
+-    {
+-        pr_err("wl2866d: read count %d > %d\n", count, WL2866D_IO_REG_LIMIT);
+-        return -ERANGE;
+-    }
+-
+-    pr_debug("wl2866d: read %d registers from %02X to %02X.\n",
+-        count, u8add, (u8add + count - 1));
+-    for (i = 0; i < count; i++, u8add++)
+-    {
+-        ret = wl2866d_read_reg(u8add, &u8val);
+-        if (ret < 0)
+-        {
+-            pr_err("wl2866d: read %X failed %d\n", u8add, ret);
+-            kfree(buffer);
+-            return ret;
+-        }
+-        buffer[num++] = GetHexCh(u8add, 4);
+-        buffer[num++] = GetHexCh(u8add, 0);
+-        buffer[num++] = ' ';
+-        buffer[num++] = GetHexCh(u8val, 4);
+-        buffer[num++] = GetHexCh(u8val, 0);
+-        buffer[num++] = ' ';
+-        pr_debug("wl2866d: read REG[%02X %02X]\n", u8add, u8val);
+-    }
+-
+-    if(copy_to_user(buf, buffer, num))
+-		pr_err("wl2866d: %s copy_to_user failed\n", __func__);
+-
+-    kfree(buffer);
+-    return count;
+-}
+-
+-/*!
+- * wl2866d GetHex function
+- *
+- * @param ch char
+- * @return hex value
+- */
+-static u8 GetHex(
+-    char ch)
+-{
+-    u8 value = 0;
+-    if(ch >= 'a')
+-    {
+-        value = ch - 'a' + 10;
+-    }
+-    else if (ch >= 'A')
+-    {
+-        value = ch - 'A' + 10;
+-    }
+-    else if (ch >= '0')
+-    {
+-        value = ch - '0';
+-    }
+-    return value;
+-}
+-
+-/*!
+- * wl2866d write function
+- *
+- * @param file struct file *
+- * @param buf char __user *
+- * @param count size_t
+- * @param offset loff_t *
+- * @return  write count
+- */
+-static ssize_t wl2866d_write(
+-    struct file *file,
+-    const char __user *buf,
+-    size_t count,
+-    loff_t *offset)
+-{
+-    int ret = 0, i = 0;
+-    char *buffer = NULL;
+-    if (count > WL2866D_IO_BUFFER_LIMIT)
+-    {
+-        pr_err("wl2866d: write size %d > %d\n", count, WL2866D_IO_BUFFER_LIMIT);
+-        return -ERANGE;
+-    }
+-    buffer = memdup_user(buf, count);
+-    if (IS_ERR(buffer))
+-    {
+-        pr_err("wl2866d: can't get user data\n");
+-        return PTR_ERR(buffer);
+-    }
+-    pr_debug("wl2866d: write %d bytes.\n", count);
+-    for (i = 0; i < count; i += 6)
+-    {
+-        u8 u8add = (GetHex(buffer[i + 0]) << 4) | GetHex(buffer[i + 1]);
+-        u8 u8val = (GetHex(buffer[i + 3]) << 4) | GetHex(buffer[i + 4]);
+-        ret = wl2866d_write_reg(u8add, u8val);
+-        if (ret < 0 )
+-        {
+-            pr_err("wl2866d: write failed %d\n", ret);
+-            kfree(buffer);
+-            return -ENODEV;
+-        }
+-        pr_debug("wl2866d: write REG[%02X %02X]\n", u8add, u8val);
+-    }
+-    kfree(buffer);
+-    return count;
+-}
+-
+-/*!
+- * wl2866d seek function
+- *
+- * @param file struct file *
+- * @param offset loff_t
+- * @param whence int
+- * @return file pos
+- */
+-loff_t wl2866d_llseek(
+-    struct file *file,
+-    loff_t offset,
+-    int whence)
+-{
+-	switch (whence) {
+-	case SEEK_CUR:
+-		wl2866d_data.offset += offset;
+-        break;
+-	default:
+-        wl2866d_data.offset = 0;
+-		break;
+-	}
+-    pr_debug("wl2866d: update read pos to %02X\n", wl2866d_data.offset);
+-	return file->f_pos;;
+-}
+-
+-/*!
+- * wl2866d open function
+- *
+- * @param inode struct inode *
+- * @param file struct file *
+- * @return Error code indicating success or failure
+- */
+-static int wl2866d_open(
+-    struct inode *inode,
+-    struct file *file)
+-{
+-	if (!wl2866d_data.on)
+-    {
+-        pr_err("wl2866d: open failed.\n");
+-        return -ENODEV;
+-    }
+-    wl2866d_data.offset = 0;
+-	return 0;
+-}
+-
+-/*!
+- * file_operations struct
+- */
+-static const struct file_operations wl2866d_fops =
+-{
+-    .owner   = THIS_MODULE,
+-	.open    = wl2866d_open,
+-	.llseek  = wl2866d_llseek,
+-    .read    = wl2866d_read,
+-    .write   = wl2866d_write,
+-};
+-
+-/*!
+- * miscdevice struct
+- */
+-static struct miscdevice wl2866d_miscdev =
+-{
+-    .minor    = WL2866D_MISC_MAJOR,
+-    .name    = "wl2866d",
+-    .fops    = &wl2866d_fops,
+-};
+-
+-/*!
+- * wl2866d I2C probe function
+- *
+- * @param client struct i2c_client *
+- * @param id struct i2c_device_id *
+- * @return  Error code indicating success or failure
+- */
+-static int wl2866d_probe(
+-    struct i2c_client *client,
+-    const struct i2c_device_id *id)
+-{
+-    int ret = 0;
+-    memset(&wl2866d_data, 0, sizeof(struct wl2866d_data_t));
+-    wl2866d_data.i2c_client = client;
+-
+-    ret = wl2866d_power_on(&client->dev);
+-    if(ret)
+-    {
+-        pr_err("wl2866d_power_on failed %d\n", ret);
+-        return ret;
+-    }
+-
+-    ret = wl2866d_init_register();
+-    if(ret) {
+-		pr_err("wl2866d_init_register failed\n");
+-		return ret;
+-	}
+-
+-    ret = wl2866d_match_id(&client->dev);
+-    if(ret)
+-    {
+-        pr_err("wl2866d_match_id failed %d\n", ret);
+-        return ret;
+-    }
+-
+-    ret = cam_wl2866_init_module_dev(&client->dev);
+-    if (ret)
+-    {
+-        pr_err("cam_wl2866_init_module_dev failed %d\n", ret);
+-        return -ENODEV;
+-    }
+-
+-    ret = misc_register(&wl2866d_miscdev);
+-    if (ret < 0)
+-    {
+-        pr_err("failed to register wl2866d device\n");
+-        return ret;
+-    }
+-    wl2866d_data.on = true;
+-    wl2866d_camera_power_control(OUT_DVDD1, 0);
+-    wl2866d_camera_power_control(OUT_DVDD2, 0);
+-    wl2866d_camera_power_control(OUT_AVDD1, 0);
+-    wl2866d_camera_power_control(OUT_AVDD2, 0);
+-
+-	pr_info("wl2866d_probe successed!\n");
+-    return 0;
+-}
+-
+-/*!
+- * wl2866d I2C remove function
+- *
+- * @param client struct i2c_client *
+- * @return  Error code indicating success or failure
+- */
+-static int wl2866d_remove(
+-    struct i2c_client *client)
+-{
+-    int ret = 0;
+-    misc_deregister(&wl2866d_miscdev);
+-    if (ret < 0)
+-    {
+-        pr_err("failed to deregister wl2866d device\n");
+-        return ret;
+-    }
+-    wl2866d_data.on = false;
+-    pr_info("deregister wl2866d device ok\n");
+-    return 0;
+-}
+-
+-/*!
+- * i2c_device_id struct
+- */
+-static const struct i2c_device_id wl2866d_id[] =
+-{
+-    {"ovti,wl2866d-i2c", 0},
+-    {},
+-};
+-
+-MODULE_DEVICE_TABLE(i2c, wl2866d_id);
+-
+-#ifdef CONFIG_OF
+-static const struct of_device_id wl2866d_i2c_of_match_table[] = {
+-		{ .compatible = "ovti,wl2866d-i2c" },
+-		{},
+-};
+-MODULE_DEVICE_TABLE(of, wl2866d_i2c_of_match_table);
+-#endif
+-
+-/*!
+- * i2c_driver struct
+- */
+-static struct i2c_driver wl2866d_i2c_driver =
+-{
+-    .driver =
+-        {
+-          .owner = THIS_MODULE,
+-          .name  = "ovti,wl2866d-i2c",
+-	    .of_match_table = of_match_ptr(wl2866d_i2c_of_match_table),
+-        .probe_type = PROBE_FORCE_SYNCHRONOUS,
+-        },
+-    .probe  = wl2866d_probe,
+-    .remove = wl2866d_remove,
+-    .id_table = wl2866d_id,
+-};
+-
+-/*!
+- * wl2866d init function
+- *
+- * @return  Error code indicating success or failure
+- */
+-int cam_wl2866_init_module(void)
+-{
+-    u8 ret = 0;
+-    int num_retry = 3;
+-
+-    ret = i2c_add_driver(&wl2866d_i2c_driver);
+-    if (ret != 0)
+-    {
+-        pr_err("%s: add wl2866d driver failed, error=%d\n",
+-            __func__, ret);
+-        return ret;
+-    }
+-    do{
+-        i2c_del_driver(&wl2866d_i2c_driver);
+-        ret = i2c_add_driver(&wl2866d_i2c_driver);
+-        if (ret != 0){
+-        pr_err("%s: add wl2866d driver failed, error=%d\n",
+-            __func__, ret);
+-        return ret;
+-        }
+-        pr_info("wl2866d driver retry num:%d\n", num_retry);
+-        num_retry--;
+-    }while ((!wl2866d_data.on)&&(num_retry > 0));
+-
+-    pr_info("%s: add wl2866d driver success\n", __func__);
+-    return ret;
+-}
+-
+-/*!
+- * WL2866D cleanup function
+- */
+-void cam_wl2866_exit_module(void)
+-{
+-    i2c_del_driver(&wl2866d_i2c_driver);
+-    pr_info("%s: delete wl2866d driver success\n", __func__);
+-}
+-
+-MODULE_DESCRIPTION("WL2866D Power IC Driver");
+-MODULE_LICENSE("GPL");
+-MODULE_VERSION("1.0");
+diff --git a/drivers/wl2866d/wl2866d.h b/drivers/wl2866d/wl2866d.h
+deleted file mode 100644
+index b2d8aac..0000000
+--- a/drivers/wl2866d/wl2866d.h
++++ /dev/null
+@@ -1,25 +0,0 @@
+-/*
+- * Copyright (C) 2022 XiaoMi, Inc.
+- */
+-#ifndef __WL2866D_H
+-#define __WL2866D_H
+-
+-enum {
+-	OUT_DVDD1,
+-	OUT_DVDD2,
+-	OUT_AVDD1,
+-	OUT_AVDD2,
+-	VOL_ENABLE,
+-	VOL_DISABLE,
+-	DISCHARGE_ENABLE,
+-	DISCHARGE_DISABLE,
+-};
+-
+-/* wl2866 init module */
+-int cam_wl2866_init_module(void);
+-
+-/* wl2866 exit module */
+-void cam_wl2866_exit_module(void);
+-
+-int wl2866d_camera_power_control(unsigned int out_iotype, int is_power_on);
+-#endif /* __WL2866D_H */
+-- 
+2.53.0
+
