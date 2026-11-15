@@ -1,0 +1,39 @@
+From f6d50c507d479c85a89e5ce603ac44e65c21a005 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 11:05:20 +0100
+Subject: [PATCH] sapphire: kgsl: khaje uses page pools like stock
+
+The stock sapphire msm_kgsl.ko has the kgsl page pools (kgsl_pool_*)
+and process reclaim, i.e. it was built without CONFIG_QCOM_KGSL_USE_SHMEM.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ config/gki_khajedisp.conf | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/config/gki_khajedisp.conf b/config/gki_khajedisp.conf
+index ddc889c..3c77875 100644
+--- a/config/gki_khajedisp.conf
++++ b/config/gki_khajedisp.conf
+@@ -4,8 +4,9 @@ CONFIG_QCOM_KGSL_IDLE_TIMEOUT = 80
+ CONFIG_QCOM_KGSL_CONTEXT_DEBUG = y
+ CONFIG_QCOM_ADRENO_DEFAULT_GOVERNOR = \"msm-adreno-tz\"
+ 
++# sapphire: stock msm_kgsl uses the kgsl page pools (no USE_SHMEM)
++# but keeps process reclaim
+ ifneq ($(CONFIG_SHMEM),)
+-	CONFIG_QCOM_KGSL_USE_SHMEM = y
+ 	CONFIG_QCOM_KGSL_PROCESS_RECLAIM = y
+ endif
+ 
+@@ -16,6 +17,5 @@ ccflags-y += -DCONFIG_DEVFREQ_GOV_QCOM_ADRENO_TZ=1 \
+ 		-DCONFIG_QCOM_ADRENO_DEFAULT_GOVERNOR=\"msm-adreno-tz\"
+ 
+ ifneq ($(CONFIG_SHMEM),)
+-	ccflags-y += -DCONFIG_QCOM_KGSL_USE_SHMEM=1 \
+-			-DCONFIG_QCOM_KGSL_PROCESS_RECLAIM=1
++	ccflags-y += -DCONFIG_QCOM_KGSL_PROCESS_RECLAIM=1
+ endif
+-- 
+2.53.0
+

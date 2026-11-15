@@ -104,3 +104,37 @@ Diagnóstico de D (1), leyendo los datos de Android desde OrangeFox (slot b, `/d
 - **Causa:** Xiaomi recalibró la tabla del termistor de 30k de la batería (`adcmap_batt_therm_30k` en `qcom-vadc-common`). Con la tabla de CLO, la temperatura sale disparada.
 - **Cómo se encontró:** comparando todos los objetos de datos, no solo las funciones, de cada módulo con el de stock. Así apareció también el ajuste de tiempos del I2C GENI.
 - **Arreglo:** `patches/msm-kernel/0007`.
+
+### Plan E: GPU, driver WiFi e IPA (`vendor_dlkm`, 182 nuestros)
+
+Antes de flashear, la comparación con stock (funciones, exports, datos) mostró diferencias de **configuración**, no de código:
+- `msm_kgsl`: stock usa los page pools de kgsl, sin `QCOM_KGSL_USE_SHMEM` → `patches/graphics-kernel/0001`.
+- `qca_cld3_wlan`: faltaban `/dev/wlan` (`WLAN_CTRL_NAME=wlan`) y `cld80211`/`ptt_sock` (`CONFIG_CNSS_GENL`), que pone el build de Android.
+- `ipam`: `IPA3_0_HW_RULE_PREFETCH_BUF_SIZE` vale 128 en stock y 256 en CLO → `patches/dataipa/0001`.
+
+Resultado: arranca y todo funciona (pantalla con nuestra GPU, WiFi, datos móviles, BT).
+
+### Plan F y G: ramdisk de primera etapa en `vendor_boot`
+
+| Intento | Qué | Resultado |
+|---|---|---|
+| F | 212 en el ramdisk + 191 en `vendor_dlkm` | bootloop (también cae la recovery del slot a) |
+| G1 | solo `vendor_boot`: 67 módulos de primera etapa con CRC iguales a stock, `vendor_dlkm` = E | arranca |
+| G2 | F + arreglos: 213 en el ramdisk + 191 en `vendor_dlkm` (264 de 317 nuestros) | arranca |
+
+Causa del bootloop de F, encontrada offline (pstore no sirve en este teléfono: el bootloader borra ramoops en cada reinicio):
+- Nuestro msm-kernel compilaba el *nameservice* de qrtr **dentro** de `qrtr.ko`, mientras que stock tiene un `ns.ko` aparte en `modules.load`.
+- Los dos exportan `qrtr_ns_init`, `qrtr_ns_remove` y `qrtr_get_service_id`, así que `ns.ko` no carga.
+- El first-stage init es estricto y reinicia el teléfono.
+- **Arreglo:** `patches/msm-kernel/0009`.
+
+**Comprobaciones antes de cada `vendor_boot`:**
+- sin símbolos sin resolver (ramdisk solo y ramdisk + `vendor_dlkm`);
+- **sin exports duplicados** en lo que realmente se carga;
+- cambios en el cierre de dependencias de la primera etapa.
+
+Además, `patches/msm-kernel/0008` quita `has_xo_clk` en `q6v5_pas` para khaje, igual que stock.
+
+La vuelta atrás siempre funciona:
+1. Desde el bootloader, `fastboot flash vendor_boot_a` con el original.
+2. Desde fastbootd, el `vendor_dlkm` bueno anterior.

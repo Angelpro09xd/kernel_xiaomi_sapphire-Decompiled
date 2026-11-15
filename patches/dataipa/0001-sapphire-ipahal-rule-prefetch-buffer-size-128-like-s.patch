@@ -1,0 +1,29 @@
+From d31308d039fed06ad8c82ebed1ff8895f25e07b9 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 11:05:20 +0100
+Subject: [PATCH] sapphire: ipahal: rule prefetch buffer size 128 like stock
+
+The stock sapphire ipam.ko has prefetech_buf_size = 128 in every
+ipahal_fltrt_objs entry; this tree had 256.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/platform/msm/ipa/ipa_v3/ipahal/ipahal_fltrt_i.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/platform/msm/ipa/ipa_v3/ipahal/ipahal_fltrt_i.h b/drivers/platform/msm/ipa/ipa_v3/ipahal/ipahal_fltrt_i.h
+index a35efd4..4d4f58a 100644
+--- a/drivers/platform/msm/ipa/ipa_v3/ipahal/ipahal_fltrt_i.h
++++ b/drivers/platform/msm/ipa/ipa_v3/ipahal/ipahal_fltrt_i.h
+@@ -44,7 +44,7 @@ enum ipa_fltrt_equations {
+ #define IPA3_0_HW_TBL_ADDR_MASK (127)
+ #define IPA3_0_HW_RULE_BUF_SIZE (256)
+ #define IPA3_0_HW_RULE_START_ALIGNMENT (7)
+-#define IPA3_0_HW_RULE_PREFETCH_BUF_SIZE (256)
++#define IPA3_0_HW_RULE_PREFETCH_BUF_SIZE (128)
+ 
+ 
+ /*
+-- 
+2.53.0
+
