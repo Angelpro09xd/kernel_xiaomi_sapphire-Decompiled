@@ -1,4 +1,4 @@
-# sapphire kernel — FirstPlace
+# sapphire kernel — FirstKernel
 
 Open-source kernel tree for the **Redmi Note 13 4G** (`sapphire` / `sapphiren`, Qualcomm SM6225 "khaje", Android 13-5.15 GKI). It contains **only modules that have been tested and work on a real device**. The branch grows as more modules are verified.
 
