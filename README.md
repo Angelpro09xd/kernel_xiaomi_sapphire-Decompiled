@@ -8,13 +8,16 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **47 vendor modules** built from this tree replace every stock module in `vendor_dlkm` (except camera).
+- **173 modules** built from this tree are loaded from `vendor_dlkm` instead of the stock ones: 50 from the vendor repos and 123 from `msm-kernel`.
+- `vendor_boot` (first-stage ramdisk and recovery) is untouched.
 - The phone boots normally.
 - Verified working:
   - speakers: stereo, top and bottom (FourSemi fs1815 x2);
   - headset (jack detection and buttons) and microphone;
   - Wi-Fi;
-  - Bluetooth, including Bluetooth audio.
+  - Bluetooth, including Bluetooth audio;
+  - charging, with a correct battery temperature;
+  - power key, vibration and flashlight.
 
 | Area | Modules |
 |---|---|
@@ -22,19 +25,25 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 | Wi-Fi platform (5) | `icnss2`, `cnss_utils`, `cnss_nl`, `cnss_prealloc`, `wlan_firmware_service` |
 | Bluetooth / FM (3) | `btpower`, `bt_fm_slim`, `radio-i2c-rtc6226-qca` |
 | Data (6) | `gsim`, `ipanetm`, `rndisipam`, `rmnet_core`, `rmnet_ctl`, `rmnet_wlan` |
-| Crypto (3) | `qce50`, `qcedev-mod`, `qcrypto-msm` |
-| Video (2) | `msm_video`, `mmrm_test_module` |
+| Crypto / TZ (5) | `qce50`, `qcedev-mod`, `qcrypto-msm`, `smcinvoke`, `hdcp_qseecom` |
+| Video (3) | `msm_video`, `msm-mmrm`, `mmrm_test_module` |
+| msm-kernel (123) | SoC/QTI drivers (`drivers/soc`, 31), coresight/STM tracing (18), thermal and cooling (`tsens`, `qti_*_cdev`, `lmh`, …, 17), USB gadget functions/PHYs/BAM (12), UFS/USB PHYs (7), LEDs and vibrator (5), PMIC ADC (`qcom-spmi-adc5`, `qcom-vadc-common`), PMIC GPIO/MPP, power key/PON, RTC, PWM, cpufreq governors, GENI I2C/SPI, `spidev`, `sg`, remoteproc helpers, … |
 
-The full list, with the source path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
+The full list, with the built path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
 
-**Not yet covered:**
-- the `vendor_boot` ramdisk modules (first stage), including `qcom_q6v5_pas` and `frpc-adsprpc`;
+Data tables matter, not only code. Xiaomi changed some data in otherwise unmodified drivers. These were recovered from the stock modules by comparing every data object, and ported:
+- the battery NTC table `adcmap_batt_therm_30k`: with the CLO table the phone shut itself down for "battery over temperature" right after boot;
+- the GENI I2C SCL timings.
+
+**Not yet covered** (they stay stock until they are verified on a device):
+- the 90 first-stage `vendor_boot` ramdisk modules;
+- remoteproc (`qcom_q6v5_pas`) and `frpc-adsprpc`;
+- GPU (`msm_kgsl`);
+- the Wi-Fi driver (`qca_cld3_wlan`);
+- the IPA core (`ipam`);
 - the camera;
-- the Wi-Fi driver `qcacld-3.0` (`wlan.ko`, in the `vendor` partition);
-- display and touch;
-- the Xiaomi charging, fingerprint and NFC drivers.
-
-These stay stock until they are verified on a device.
+- modules Xiaomi modified heavily: display (`msm_drm`), charger (`qpnp-smb5`), fuel gauge (`qpnp-qg`), `dwc3-msm`, `mi_thermal_interface`, `bcl_pmic5`;
+- the Xiaomi-only charging, fingerprint, touch and NFC drivers.
 
 ## Layout
 

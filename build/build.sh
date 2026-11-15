@@ -47,8 +47,8 @@ with open(sys.argv[2], 'w') as f:
 PY
 	(cd $K && scripts/config --file out/.config -d LTO_CLANG_FULL -e LTO_CLANG_THIN -d TRIM_UNUSED_KSYMS -u UNUSED_KSYMS_WHITELIST)
 	$MK -C $K O=out olddefconfig >/dev/null
-	echo ">> msm-kernel: vmlinux + modules_prepare"
-	$MK -C $K O=out vmlinux modules_prepare
+	echo ">> msm-kernel: vmlinux + modules"
+	$MK -C $K O=out vmlinux modules
 	# BTF base for the vendor modules (the stock vmlinux carries no BTF)
 	cp $K/out/vmlinux $G/vmlinux
 }
@@ -72,12 +72,12 @@ vendor() {
 }
 
 collect() {
-	# copy only the device-tested modules (build/TESTED_MODULES.txt), stripped like stock
+	# copy only the device-tested modules (build/TESTED_MODULES.txt, paths relative to the tree root), stripped like stock
 	mkdir -p $OUT
 	local n=0
 	while read -r m path; do
 		case $m in ''|\#*) continue ;; esac
-		llvm-strip --strip-debug -o $OUT/$m.ko $ROOT/vendor/qcom/opensource/$path
+		llvm-strip --strip-debug -o $OUT/$m.ko $ROOT/$path
 		n=$((n + 1))
 	done < $ROOT/build/TESTED_MODULES.txt
 	echo ">> $n tested modules in $OUT"
