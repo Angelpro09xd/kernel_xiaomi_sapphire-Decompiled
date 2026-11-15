@@ -84,6 +84,9 @@ xiaomi() {
 	xb mi_memory          # Kbuild adds ufs_qcom_xiaomi.symvers (stock Xiaomi ufs_qcom exports)
 	xb nxp-nci KBUILD_EXTRA_SYMBOLS=$V/securemsm-kernel/Module.symvers
 	for d in battery_auth sc8541 bq25960 xiaomi_fp; do xb $d; done
+	for d in cp_qc30 pd_policy_manager; do xb $d; done
+	# xm_smart_chg: stock Xiaomi qpnp-smb5 exports (stock CRCs) + our miev
+	xb xm_smart_chg "KBUILD_EXTRA_SYMBOLS=$X/xm_smart_chg/qpnp-smb5-stock.symvers $X/miev/Module.symvers"
 	# focaltech: our lct_tp/xiaomi_touch + the stock Xiaomi qpnp-smb5 export it uses
 	xb focaltech "KBUILD_EXTRA_SYMBOLS=$X/lct_tp/Module.symvers $X/xiaomi_touch/Module.symvers $X/focaltech/qpnp-smb5-stock.symvers"
 }

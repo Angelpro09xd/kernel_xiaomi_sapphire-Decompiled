@@ -8,8 +8,8 @@ The reverse-engineering work behind it (decompiled stock modules, analysis, patc
 
 Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android13-8`):
 
-- **304 of the 317 vendor modules** come from this tree: 220 from `msm-kernel`, 57 from the Qualcomm vendor repos and 27 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`).
-- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 241 modules) and `vendor_dlkm` (223 modules).
+- **311 of the 317 vendor modules** come from this tree: 224 from `msm-kernel`, 57 from the Qualcomm vendor repos and 30 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`).
+- They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 248 modules) and `vendor_dlkm` (226 modules).
 - The phone boots normally.
 - Verified working:
   - display, with the GPU (`msm_kgsl`, Adreno 610);
@@ -20,7 +20,9 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
   - mobile data / IPA;
   - charging, with a correct battery temperature (`qti_battery_charger`, `bcl_pmic5`);
   - power key, vibration and flashlight;
-  - USB to PC and USB-PD fast charging (`usbpd` with the Xiaomi adapter verification, `dwc3-msm`);
+  - USB to PC (`usbpd` with the Xiaomi adapter verification, `dwc3-msm`);
+  - storage with our UFS PHY and inline crypto (`phy-qcom-ufs`, `crypto-qti-*`), camera photos;
+  - charging; the rebuilt fast-charging policy (`pd_policy_manager`, `cp_qc30`, `xm_smart_chg`) loads and runs, a fast-charger test is still pending.
   - NFC, touch (`focaltech_ts_i2c`, FT5452J) and in-display fingerprint (`xiaomi_fp`).
 
 | Area | What is ours |
@@ -32,7 +34,7 @@ Tested on sapphiren with Lunaris AOSP 3.13 (stock prebuilt GKI `5.15.178-android
 | Connectivity | Wi-Fi (`qca_cld3_wlan`, `cfg80211`, `icnss2`, `cnss_*`), BT/FM, IPA (`ipam`, `ipa_clientsm`, `gsim`, …), rmnet |
 | Xiaomi | `mi_thermal_interface` (thermal_message sysfs + notifier, reconstructed), `zram` with writeback + Xiaomi ExtM memory extension, `panel_event_notifier` with Xiaomi client ids |
 | USB | `usbpd` (Xiaomi `Charging_Adapter` PD verification, SVID 0x2717 VDM auth, PPS limits, exports for the charger stack), `dwc3-msm` |
-| Xiaomi closed modules | `millet` (core, binder, hs, pkg, sig, oem_cgroup) + `binder_gki`, `binder_prio`, `perf_helper`, `mi_wmark`, `mi_memory`, `miev`, `bootinfo`, `swinfo`, NFC (`stm_nfc_i2c` ST21NFC, `nxp-nci` SN1xx), `lct_tp`, `xiaomi_touch_game`, touch `focaltech_ts_i2c`, fingerprint `xiaomi_fp`, charge pumps `sc8541_charger`/`bq25960_charger`, battery authentication (`battery_auth_class`, `auth_battery`, `ds28e30_verify`, `slg_verify`, `stick_verify`) |
+| Xiaomi closed modules | `millet` (core, binder, hs, pkg, sig, oem_cgroup) + `binder_gki`, `binder_prio`, `perf_helper`, `mi_wmark`, `mi_memory`, `miev`, `bootinfo`, `swinfo`, NFC (`stm_nfc_i2c` ST21NFC, `nxp-nci` SN1xx), `lct_tp`, `xiaomi_touch_game`, touch `focaltech_ts_i2c`, fingerprint `xiaomi_fp`, charge pumps `sc8541_charger`/`bq25960_charger`, charging policy `cp_qc30`/`pd_policy_manager` (sapphire N7 CP 2:1/1:1 layer)/`xm_smart_chg`, battery authentication (`battery_auth_class`, `auth_battery`, `ds28e30_verify`, `slg_verify`, `stick_verify`) |
 | Platform | thermal and cooling, `bcl_pmic5`, `minidump`, PMIC ADC/GPIO/PON/RTC, USB gadget functions and PHYs, LEDs and vibrator, coresight/STM, DCVS (`qcom_dcvs`, `bwmon`, `memlat`), crypto, … |
 
 The full list, with the built path of each module, is in [`build/TESTED_MODULES.txt`](build/TESTED_MODULES.txt).
@@ -54,8 +56,8 @@ Where the stock Xiaomi modules have real bugs, they are fixed here instead of co
 - modules Xiaomi modified heavily:
   - display `msm_drm`;
   - charger `qpnp-smb5` and fuel gauge `qpnp-qg`;
-  - `ufs_qcom` (its Xiaomi build also exports `get_ufs_data`, used by `mi_memory`);
-- the UFS crypto chain tied to `ufs_qcom`: `phy-qcom-ufs`, `ufshcd-crypto-qti`, `crypto-qti-*`, `cqhci`;
+  - `ufs_qcom`: the Xiaomi build is a private copy of the whole UFS core (mi_ufs + CLD) that embeds UFS firmware images and can reflash the UFS chip at boot, so it stays stock for safety (public mi_ufs sources exist only for socrates/sky);
+- `ufshcd-crypto-qti` (paired with the stock `ufs_qcom`);
 - the Xiaomi-only closed drivers:
   - charge pumps and PD policy;
   - battery authentication;

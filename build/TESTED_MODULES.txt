@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan J
+# module  built path (relative to the tree root) - tested on device, plan L
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -46,10 +46,14 @@ coresight-tgu kernel_platform/msm-kernel/out/drivers/hwtracing/coresight/coresig
 coresight-tmc kernel_platform/msm-kernel/out/drivers/hwtracing/coresight/coresight-tmc.ko
 coresight-tpda kernel_platform/msm-kernel/out/drivers/hwtracing/coresight/coresight-tpda.ko
 coresight-tpdm kernel_platform/msm-kernel/out/drivers/hwtracing/coresight/coresight-tpdm.ko
+cp_qc30 vendor/xiaomi/opensource/cp_qc30/cp_qc30.ko
 cpu_hotplug kernel_platform/msm-kernel/out/drivers/thermal/qcom/cpu_hotplug.ko
 cpufreq_ondemand kernel_platform/msm-kernel/out/drivers/cpufreq/cpufreq_ondemand.ko
 cpufreq_userspace kernel_platform/msm-kernel/out/drivers/cpufreq/cpufreq_userspace.ko
 cpumaxfreq kernel_platform/msm-kernel/out/drivers/cpufreq/cpumaxfreq.ko
+cqhci kernel_platform/msm-kernel/out/drivers/mmc/host/cqhci.ko
+crypto-qti-common kernel_platform/msm-kernel/out/drivers/soc/qcom/crypto-qti-common.ko
+crypto-qti-tz kernel_platform/msm-kernel/out/drivers/soc/qcom/crypto-qti-tz.ko
 cx_ipeak kernel_platform/msm-kernel/out/drivers/soc/qcom/cx_ipeak.ko
 cx_ipeak_cdev kernel_platform/msm-kernel/out/drivers/thermal/qcom/cx_ipeak_cdev.ko
 dcc_v2 kernel_platform/msm-kernel/out/drivers/soc/qcom/dcc_v2.ko
@@ -134,12 +138,14 @@ nvmem_qcom-spmi-sdam kernel_platform/msm-kernel/out/drivers/nvmem/nvmem_qcom-spm
 nvmem_qfprom kernel_platform/msm-kernel/out/drivers/nvmem/nvmem_qfprom.ko
 nxp-nci vendor/xiaomi/opensource/nxp-nci/nxp-nci.ko
 panel_event_notifier kernel_platform/msm-kernel/out/drivers/soc/qcom/panel_event_notifier.ko
+pd_policy_manager vendor/xiaomi/opensource/pd_policy_manager/pd_policy_manager.ko
 pdr_interface kernel_platform/msm-kernel/out/drivers/soc/qcom/pdr_interface.ko
 perf_helper vendor/xiaomi/opensource/perf_helper/perf_helper.ko
 phy-generic kernel_platform/msm-kernel/out/drivers/usb/phy/phy-generic.ko
 phy-msm-snps-hs kernel_platform/msm-kernel/out/drivers/usb/phy/phy-msm-snps-hs.ko
 phy-msm-ssusb-qmp kernel_platform/msm-kernel/out/drivers/usb/phy/phy-msm-ssusb-qmp.ko
 phy-qcom-emu kernel_platform/msm-kernel/out/drivers/usb/phy/phy-qcom-emu.ko
+phy-qcom-ufs kernel_platform/msm-kernel/out/drivers/phy/qualcomm/phy-qcom-ufs.ko
 phy-qcom-ufs-qmp-v4 kernel_platform/msm-kernel/out/drivers/phy/qualcomm/phy-qcom-ufs-qmp-v4.ko
 phy-qcom-ufs-qmp-v4-crow kernel_platform/msm-kernel/out/drivers/phy/qualcomm/phy-qcom-ufs-qmp-v4-crow.ko
 phy-qcom-ufs-qmp-v4-kalama kernel_platform/msm-kernel/out/drivers/phy/qualcomm/phy-qcom-ufs-qmp-v4-kalama.ko
@@ -301,5 +307,6 @@ wlan_firmware_service vendor/qcom/opensource/wlan/platform/cnss_utils/wlan_firmw
 wsa881x_analog_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/wsa881x_analog_dlkm.ko
 xiaomi_fp vendor/xiaomi/opensource/xiaomi_fp/xiaomi_fp.ko
 xiaomi_touch_game vendor/xiaomi/opensource/xiaomi_touch/xiaomi_touch_game.ko
+xm_smart_chg vendor/xiaomi/opensource/xm_smart_chg/xm_smart_chg.ko
 zram kernel_platform/msm-kernel/out/drivers/block/zram/zram.ko
 zsmalloc kernel_platform/msm-kernel/out/mm/zsmalloc.ko
