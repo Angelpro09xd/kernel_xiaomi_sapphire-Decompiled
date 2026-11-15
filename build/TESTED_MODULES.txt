@@ -1,4 +1,4 @@
-# module  built path (relative to the tree root) - tested on device, plan N
+# module  built path (relative to the tree root) - tested on device, plan O
 adsp_loader_dlkm vendor/qcom/opensource/audio-kernel/dsp/adsp_loader_dlkm.ko
 altmode-glink kernel_platform/msm-kernel/out/drivers/soc/qcom/altmode-glink.ko
 ant_check kernel_platform/msm-kernel/out/drivers/misc/ant_check.ko
@@ -294,6 +294,8 @@ thermal_pause kernel_platform/msm-kernel/out/drivers/thermal/qcom/thermal_pause.
 tx_macro_dlkm vendor/qcom/opensource/audio-kernel/asoc/codecs/bolero/tx_macro_dlkm.ko
 tz_log_dlkm vendor/qcom/opensource/securemsm-kernel/tz_log_dlkm.ko
 ucsi_glink kernel_platform/msm-kernel/out/drivers/usb/typec/ucsi/ucsi_glink.ko
+ufs_qcom kernel_platform/msm-kernel/out/drivers/scsi/ufs/ufs_qcom.ko
+ufshcd-crypto-qti kernel_platform/msm-kernel/out/drivers/scsi/ufs/ufshcd-crypto-qti.ko
 usb_bam kernel_platform/msm-kernel/out/drivers/soc/qcom/usb_bam.ko
 usb_f_ccid kernel_platform/msm-kernel/out/drivers/usb/gadget/function/usb_f_ccid.ko
 usb_f_cdev kernel_platform/msm-kernel/out/drivers/usb/gadget/function/usb_f_cdev.ko

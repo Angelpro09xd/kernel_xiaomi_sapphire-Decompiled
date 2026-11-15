@@ -1,4 +1,4 @@
-kernel_platform/msm-kernel 3f296b1b6 sapphire_GKI: disable QPNP_SMBLITE like stock
+kernel_platform/msm-kernel a4a6dfc1d sapphire: ufs-qcom: Xiaomi UFS diagnostics for mi_memory
 vendor/qcom/opensource/audio-kernel a673b7f dsp: spf-core: match sapphire close-all timeout (1000 ms)
 vendor/qcom/opensource/bt-kernel 2c59aa2 Merge c99d95afe9ec718056caf84ef0110c1df037061f on remote branch
 vendor/qcom/opensource/dataipa d31308d sapphire: ipahal: rule prefetch buffer size 128 like stock
@@ -13,4 +13,4 @@ vendor/qcom/opensource/wlan/platform 6ab1338 Merge 6ce40d5c60936dbd5e239c9085d9e
 vendor/qcom/opensource/wlan/qcacld-3.0 694cefc xiaomi: import topaz-t-oss qcacld changes
 vendor/qcom/opensource/wlan/qca-wifi-host-cmn db3a22e Merge 21ff39ad64d57f1869b122a007385d7a1d89bdc0 on remote branch
 vendor/qcom/opensource/wlan/fw-api 8d871e1 Merge 7b7d8fcd8c62ffc4e2ad734ac8fd206077b48a54 on remote branch
-vendor/xiaomi/opensource   760ea50 Add Xiaomi charging policy: cp_qc30, pd_policy_manager, xm_smart_chg
+vendor/xiaomi/opensource   df2cf9b mi_memory: use the UFS diagnostics from our ufs-qcom.h
