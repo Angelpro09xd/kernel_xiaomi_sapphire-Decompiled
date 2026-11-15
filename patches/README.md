@@ -14,3 +14,4 @@ Apply with `git am` on top of the listed CodeLinaro base revision.
 Build options that are not patches but must match stock:
 - `qcacld-3.0`: build with `CONFIG_CNSS_GENL=m WLAN_CTRL_NAME=wlan`, as the Android build does. Without them there is no `/dev/wlan` and no `cld80211`.
 - The vendor build recipe for every repo is `build/build.sh` on the `FirstKernel` branch.
+| display-drivers | vendor/qcom/opensource/display-drivers (LA.VENDOR.13.2.1.r1-09000-DIVAR; stock msm_drm was built from r1-07900) | 7d4a0bd432860498aad9e5e269d485959d204070 |

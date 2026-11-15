@@ -207,3 +207,20 @@ Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modul
 - **Config:** `QPNP_SMBLITE` desactivado, como en stock, porque `battery.c` exporta ahora `set_fv_ageing` (`patches/msm-kernel/0015`, `0016`).
 
 **Resultado:** arranca y carga (100 %, 4.418 mV, 22 °C); el usuario confirma que todo funciona. Quedan de stock `msm_drm`, `ufs_qcom` + `ufshcd-crypto-qti` y la cámara.
+
+### Plan N: 314 de 317 (pantalla)
+
+`msm_drm` reconstruido (`patches/display-drivers/0001`):
+- **Capa `mi_disp` de Xiaomi:** sale del código oficial de MiCode `vendor_opensource_display-drivers` rama `xun-t-oss` (Redmi Pad SE, mismo SoC khaje y mismo ODM). Se le han quitado las partes solo de la tablet: el chip de retroiluminación ktz8866, la secuencia de encendido de su panel, CABC en lugar de HBM_FOD y unos valores fijos del PHY DSI.
+- **Lo propio de sapphire**, desde el decompilado de stock:
+  - 94 comandos (120/90/60 Hz, HBM L1-L5, dimming);
+  - HBM local / FOD para la huella;
+  - doze/AOD, ESD y `/sys/android_lcd`.
+- **Verificación:** 48/48 exports y 690/690 imports con CRC de stock; 821/835 objetos de datos idénticos.
+- **Fallos de stock corregidos:**
+  - buffer de `lc_wp_info` más pequeño que su parámetro;
+  - `strcpy` sin límite;
+  - puntero nulo en el IRQ de ESD (`&&` en lugar de `||`);
+  - `sde_conn` nulo en el kickoff.
+
+Resultado: la pantalla funciona perfectamente (brillo, refresco y huella), confirmado por el usuario. Quedan de stock `ufs_qcom` + `ufshcd-crypto-qti` (por seguridad) y la cámara.
