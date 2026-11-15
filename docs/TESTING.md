@@ -71,3 +71,18 @@ Qué conviene probar:
 - huella
 - NFC
 - vídeo (decodificación HW)
+
+## Resultados (2026-11-15, sapphiren, Lunaris 3.13, GKI prebuilt 5.15.178)
+
+Pruebas sobre `vendor_dlkm` (ramdisk de `vendor_boot` intacto):
+
+| Plan | Módulos nuestros | Resultado |
+|---|---|---|
+| C3 | 39 (audio, WiFi plataforma, BT, vídeo, crypto, rmnet; núcleo ADSP e IPA de stock) | arranca, todo OK |
+| C4 | C3 + `rndisipam`, `ipanetm` (41) | arranca |
+| C2 | C4 + núcleo ADSP (`adsp_loader`, `gpr`, `spf_core`, `q6_notifier`, `q6_pdr`, `snd_event`) = 47 | arranca |
+| C5 | C2 + timeout de `spf_core` igual a stock (47) | arranca: altavoces estéreo, auricular, micro, WiFi, BT, audio BT |
+
+El "bootloop" que se vio antes con C2 **no venía de los módulos**: los 6 del núcleo ADSP son iguales a stock función a función y byte a byte en datos. Venía de `recovery_a`, que contenía una recovery que no arranca en el slot a: cuando Android pide reiniciar a recovery, el teléfono queda en bucle. **Antes de probar, deja en el slot de prueba una recovery que arranque.**
+
+Lista exacta de módulos probados y árbol compilable: rama [`FirstPlace`](../../../tree/FirstPlace).

@@ -1,0 +1,31 @@
+From a673b7fbd304715e523370007142d41a9ca9d2b6 Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 01:13:26 +0100
+Subject: [PATCH] dsp: spf-core: match sapphire close-all timeout (1000 ms)
+
+The stock sapphire spf_core_dlkm.ko waits 250 jiffies (HZ=250, 1 s) for
+the APM close-all response instead of the CLO default of 5 s. Everything
+else in spf_core (and in gpr, q6_notifier, q6_pdr, snd_event and
+adsp_loader) already matches stock function by function.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ dsp/spf-core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dsp/spf-core.c b/dsp/spf-core.c
+index 17c190b..7241fa0 100644
+--- a/dsp/spf-core.c
++++ b/dsp/spf-core.c
+@@ -26,7 +26,7 @@
+ 
+ #define APM_STATE_READY_TIMEOUT_MS    10000
+ #define Q6_READY_TIMEOUT_MS 1000
+-#define Q6_CLOSE_ALL_TIMEOUT_MS 5000
++#define Q6_CLOSE_ALL_TIMEOUT_MS 1000
+ #define APM_CMD_GET_SPF_STATE 0x01001021
+ #define APM_CMD_CLOSE_ALL 0x01001013
+ #define APM_CMD_RSP_GET_SPF_STATE 0x02001007
+-- 
+2.53.0
+
