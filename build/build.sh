@@ -100,7 +100,8 @@ xiaomi() {
 
 dt() {
 	# sapphire device tree from source: out/dtb.img (vendor_boot dtb, 6 DTBs) + out/dtbo.img (47 entries)
-	# needs the CLO dtc fork tools (QDTC=<dir> or PATH) and AOSP mkdtboimg.py
+	# needs the CLO dtc fork tools (QDTC=<dir> or PATH), AOSP libufdt ufdt_apply_overlay
+	# (UFDT_APPLY_OVERLAY=<path> or PATH) and AOSP mkdtboimg.py
 	KERNEL_DIR=$K bash $ROOT/devicetree/build.sh
 	cp $ROOT/devicetree/out/dtb.img $ROOT/devicetree/out/dtbo.img $OUT/ 2>/dev/null || { mkdir -p $OUT; cp $ROOT/devicetree/out/dtb.img $ROOT/devicetree/out/dtbo.img $OUT/; }
 }

@@ -10,7 +10,8 @@ Tested on sapphiren with Lunaris AOSP 3.13, running **`5.15.194-android13-8-Firs
 
 - **All 317 of the 317 vendor modules** come from this tree: 228 from `msm-kernel`, 59 from the Qualcomm vendor repos and 30 Xiaomi closed modules rebuilt from source (`vendor/xiaomi/opensource`). No stock module is left.
 - They are loaded from both `vendor_boot` (first-stage ramdisk and recovery, 253 modules) and `vendor_dlkm` (230 modules).
-- The device tree comes from source too: `devicetree/` builds the vendor_boot DTB (6 khaje DTBs) and `dtbo.img` (47 entries), semantically identical to stock (`make verify`); the phone boots with both (`ro.boot.dtbo_idx=46`, sapphiren).
+- The device tree comes from source too: `devicetree/` builds the vendor_boot DTB (6 khaje DTBs) and `dtbo.img` (47 entries), semantically identical to stock (`make verify`), with the stock node order and `__symbols__` (base DTBs merged with AOSP libufdt like the stock build; the camera CPAS driver needs that order). The phone boots with both (`ro.boot.dtbo_idx=46`, sapphiren).
+- Tested as a full ROM: an official Lunaris 3.13 (Android 16) build for sapphire that ships this kernel, its modules and this device tree (everything works, camera included).
 - The phone boots normally.
 - Verified working:
   - display (`msm_drm` with the Xiaomi `mi_disp` layer: brightness, 60/90/120 Hz, AOD, FOD/HBM for the fingerprint) and the GPU (`msm_kgsl`, Adreno 610);
@@ -89,7 +90,7 @@ CLANG_DIR=/path/to/clang-r450784e QDTC=/path/to/clo-dtc build/build.sh   # -> ou
 ```
 
 The GKI full-LTO link needs more than 20 GB of RAM (`LTO=thin` builds the same ABI with less).
-The device tree build needs the CLO dtc fork (`fdtoverlaymerge`) and AOSP `mkdtboimg.py`, see `devicetree/README.md`.
+The device tree build needs the CLO dtc fork (`fdtoverlaymerge`), AOSP libufdt `ufdt_apply_overlay` (`UFDT_APPLY_OVERLAY=<path>`, build recipe in `devicetree/build.sh`) and AOSP `mkdtboimg.py`, see `devicetree/README.md`.
 
 
 You need:
