@@ -1,0 +1,26 @@
+From 3f296b1b65f6d4050c1963b5bce5b9b5d2e20f0c Mon Sep 17 00:00:00 2001
+From: Angelpro09xd <167892325+Angelpro09xd@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 16:05:28 +0100
+Subject: [PATCH 16/16] sapphire_GKI: disable QPNP_SMBLITE like stock
+
+battery.c (linked into both smb5 and smblite) now exports set_fv_ageing
+as on stock; sapphire never ships qpnp-smblite-main.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/configs/vendor/sapphire_GKI.config | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/configs/vendor/sapphire_GKI.config b/arch/arm64/configs/vendor/sapphire_GKI.config
+index 006cad84b..482df3a3b 100644
+--- a/arch/arm64/configs/vendor/sapphire_GKI.config
++++ b/arch/arm64/configs/vendor/sapphire_GKI.config
+@@ -304,3 +304,5 @@ CONFIG_LEDS_QTI_FLASH=m
+ # zram: writeback + Xiaomi ExtM memory extension, like stock
+ CONFIG_ZRAM_WRITEBACK=y
+ CONFIG_MIUI_ZRAM_MEMORY_TRACKING=y
++# sapphire uses PMI632/smb5, not smblite (stock does not ship qpnp-smblite-main)
++# CONFIG_QPNP_SMBLITE is not set
+-- 
+2.53.0
+

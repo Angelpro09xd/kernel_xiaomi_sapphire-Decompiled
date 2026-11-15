@@ -196,3 +196,14 @@ Resultado: arranca y todo funciona (comprobado por el usuario). Por `/proc/modul
   - El `ufs_qcom` de Xiaomi es una copia completa del núcleo UFS (`mi_ufs` + CLD), con 3 firmwares de UFS incrustados que puede flashear al arrancar.
   - Solo hay fuentes públicas de `mi_ufs` para socrates y sky. Topaz y creek (bengal 5.15) no lo tienen.
 - **Numeración IIO:** la cabecera `qti_power_supply_iio.h` de la importación de topaz desplaza 0x15 el bloque de Xiaomi respecto a stock. Los módulos probados usan los números de stock; la cabecera se corregirá con el parche de `smb5`/`qg`.
+
+### Plan M: 313 de 317 (cargador y medidor de batería)
+
+- **`qpnp-smb5` reconstruido:**
+  - 15 exports con CRC de stock, 147 imports, las mismas tablas de carga y `struct smb_charger` idéntica (`real_charger_type` en 0x128c);
+  - 314 de 370 funciones idénticas en el decompilado, y las otras 56 con la misma lógica.
+- **`qpnp-qg` reconstruido:** además corrige fallos de stock (fuga de `pm_relax` y trabajos sin cancelar).
+- **Cabecera `qti_power_supply_iio.h`:** recupera la numeración `PSY_IIO_*` de stock y topaz.
+- **Config:** `QPNP_SMBLITE` desactivado, como en stock, porque `battery.c` exporta ahora `set_fv_ageing` (`patches/msm-kernel/0015`, `0016`).
+
+**Resultado:** arranca y carga (100 %, 4.418 mV, 22 °C); el usuario confirma que todo funciona. Quedan de stock `msm_drm`, `ufs_qcom` + `ufshcd-crypto-qti` y la cámara.
