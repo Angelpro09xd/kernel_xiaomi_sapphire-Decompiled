@@ -1,5 +1,9 @@
 # Redmi Note 13 4G (sapphire / sapphiren) — kernel reverse engineering
 
+> **Archived — frozen reference.** This repository keeps the sapphire kernel exactly as it was reverse-engineered and tested (branch `FirstKernel`: the decompiled tree that boots and runs everything on the phone). It is intentionally left as close to the original as possible and will not change.
+>
+> Development continues in [The-Angel-Place-Sapphire](https://github.com/The-Angel-Place-Sapphire): [kernel_xiaomi_sapphire](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire), [kernel_xiaomi_sapphire-modules](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire-modules), [kernel_xiaomi_sapphire-devicetrees](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire-devicetrees).
+
 Xiaomi never published the kernel source for the Redmi Note 13 4G (`sapphire`/`sapphiren`, Qualcomm SM6225 "khaje", 5.15 GKI). This repository holds the work to rebuild it as open source:
 
 - the stock vendor modules **decompiled**;
