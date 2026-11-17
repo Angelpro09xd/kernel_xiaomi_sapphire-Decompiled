@@ -1,5 +1,9 @@
 # sapphire kernel — FirstKernel
 
+> **Archived — frozen reference.** This repository keeps the sapphire kernel exactly as it was reverse-engineered and tested (branch `FirstKernel`: the decompiled tree that boots and runs everything on the phone). It is intentionally left as close to the original as possible and will not change.
+>
+> Development continues in [The-Angel-Place-Sapphire](https://github.com/The-Angel-Place-Sapphire): [kernel_xiaomi_sapphire](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire), [kernel_xiaomi_sapphire-modules](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire-modules), [kernel_xiaomi_sapphire-devicetrees](https://github.com/The-Angel-Place-Sapphire/kernel_xiaomi_sapphire-devicetrees).
+
 Open-source kernel tree for the **Redmi Note 13 4G** (`sapphire` / `sapphiren`, Qualcomm SM6225 "khaje", Android 13-5.15 GKI). Everything here has been **tested and works on a real device**. The phone runs entirely on a kernel built from this source: the GKI kernel (**FirstKernel**), all 317 vendor modules and the device tree.
 
 The reverse-engineering work behind it (decompiled stock modules, analysis, patches, tools) is on the [`main`](../../tree/main) branch.
